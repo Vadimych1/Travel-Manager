@@ -1,2 +1,4 @@
 *.bd
 __pycache__
+database
+servertest.py

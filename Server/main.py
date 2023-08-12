@@ -17,55 +17,24 @@ import colors
 
 # classification
 from classifier import Classifier
-
+from logger import Log
 # dir change
 try:
     os.chdir("./Server/")
 except:
     pass
 
-# logger
-loglevels: dict[str:int] = {
-    "DEBUG": 0,
-    "MESSAGE": 9,
-    "WARN": 19,
-    "ERROR": 29,
-    "NONE": 30
-}
+# Logger
 
-min_log_level:int = 0
-def log(msg, level="msg"):
-    msg:str = "["+str(datetime.datetime.now())+"] ["+("INFO" if level == "msg" else "ERROR" if level == "err" else "WARN" if level == "warn" else "DEBUG" if level == "wmsg" else "INFO")+"] "+msg
-
-    if level=="msg":
-        msg = colors.color(msg, "rgb(0, 250, 20)")
-    elif level=="err":
-        msg = colors.color(msg, "rgb(250, 10, 10)")
-    elif level=="warn":
-        msg = colors.color(msg, "rgb(250, 250, 10)")
-    elif level=="wmsg":
-        msg = colors.color(msg, "rgb(0, 0, 255)")
-
-    if min_log_level > 0:
-        if level!="wmsg":
-            if min_log_level < 10 and level == "msg":
-              print(msg)
-            elif min_log_level < 20 and level == "warn":
-                print(msg)
-            elif min_log_level < 30 and level == "err":
-                print(msg)  
-    else:
-        print(msg)
-
-# NOTE logger testing
-# log("Message", "msg")
-# log("Error", "err")
-# log("Warn", "warn")
-# log("Debug", "wmsg")
+# NOTE Logger testing
+# Log("Message", "msg")
+# Log("Error", "err")
+# Log("Warn", "warn")
+# Log("Debug", "wmsg")
 
 # database create
-log("Loading database")
-DATABASE = sqlite.connect(r"./database/main.bd")
+Log("Loading database")
+DATABASE = sqlite.connect(r"./database/main.bd", check_same_thread=False)
 
 # Creating table "users"
 CURSOR = DATABASE.cursor()
@@ -81,7 +50,7 @@ DATABASE.commit()
 
 
 # Create server
-log("Loading server")
+Log("Loading server")
 SERVER = sock.create_server(("", 2020), family=sock.AF_INET)
 SERVER.listen()
 isRunning = True
@@ -114,25 +83,28 @@ def random_key(length):
     return id
 
 def handle(s, ip):
-    log("Handling request", "wmsg")
+    Log("Handling request", "wmsg")
 
     try:
         req_type = s.recv(4)
-        req_type = struct.unpack(">I", req_type)
-
+        req_type = struct.unpack(">I", req_type)[0]
+        
+        Log(f"Reqest type: {req_type}")
 
         if req_type == 0:
             data_len = s.recv(4)
-            data_len = struct.unpack(">I", data_len)
+            data_len = struct.unpack(">I", data_len)[0]
 
             data = s.recv(data_len)
             data = json.loads(data.decode("utf-8"))
 
-            CURSOR.execute(f"SELECT * FROM users WHERE email={data['email']}")
-            uid, email, name, password, subscribedto, jwtcode = CURSOR.fetchone()[0]
-
+            Log("Executing", "wmsg")
+            CURSOR.execute(f'SELECT * FROM users WHERE email="{data["email"]}"')
+            Log("Fetching", "wmsg")
+            uid, email, name, password, subscribedto, jwtcode = CURSOR.fetchall()[0]
+            Log("Checking", "wmsg")
             if data["password"] == password:
-                log("User logged in", "wmsg")
+                Log("User Logged in", "wmsg")
                 
                 answ = json.dumps(jwt.encode({"username":email, "password":password}, jwtcode))
                 answ = answ.encode()
@@ -143,73 +115,100 @@ def handle(s, ip):
                 j = j.encode()
                 lj = len(j)
 
+                Log("Successful log in by password")
                 s.send(struct.pack(">I", 1)+struct.pack(">I", l)+answ+struct.pack(">I", lj)+j)
-                # NOTE FORMAT: CODE(4):JWTLEN(4):JWT:JSONLEN(4):JSON
             else:
-                log("User tried to log in. Uncorrect password", "warn")
+                Log("User tried to Log in. Uncorrect password", "warn")
                 s.send(struct.pack(">I", 0))
         elif req_type == 1:
             data_len = s.recv(4)
-            data_len = struct.unpack(">I", data_len)
+            data_len = struct.unpack(">I", data_len)[0]
+
+            Log("Received data length", "wmsg")
 
             data = s.recv(data_len)
             data = json.loads(data.decode("utf-8"))
 
-            CURSOR.execute(f"SELECT * FROM users WHERE email={data['email']}")
+            Log("Checking is user exists", "wmsg")
+
+            CURSOR.execute(f'SELECT * FROM users WHERE email="{data["email"]}"')
             users = CURSOR.fetchall()
 
+            Log(f"Users: {users}", "wmsg")
+            
             if len(users) == 0:
                 key = random_key(16)
 
-                jwt_s = jwt.encode({"username":data["email"]}, key)
+                jwt_s = jwt.encode({"username":data["email"]}, key, algorithm="HS256")
                 jwt_s = str(jwt_s).encode()
 
-                user = (data["email"], data["name"], data["password"], "notsub", key)
-                CURSOR.execute("INSERT INTO users VALUES(?, ?, ?, ?, ?);", user)
+                user = (None, data["email"], data["name"], data["password"], "notsub", key)
+                CURSOR.execute("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);", user)
+                DATABASE.commit()
 
                 l = len(jwt_s)
+
+                Log(f"User {data['email']} created", "msg")
 
                 s.send(struct.pack(">I", 1)+struct.pack(">I", l)+jwt_s)
                 # NOTE FORMAT: CODE(4):JWTLEN(4):JWT
             else:
-                s.send(struct.pack(">I", 0))
+                Log(f"User {data['email']} already exists", "warn")
+                d = "User already exists.".encode()
+                s.send(struct.pack(">I", 0)+struct.pack(">I", len(d))+d)
         elif req_type == 2:
+            Log("Receiving data length", "wmsg")
             data_len = s.recv(4)
-            data_len = struct.unpack(">I", data_len)
+            data_len = struct.unpack(">I", data_len)[0]
 
+            Log("Receiving data", "wmsg")
             data = s.recv(data_len)
             data = data.decode("utf-8")
 
+            Log("Spliting", "wmsg")
             username, jwt_s = data.split("|")
 
-            CURSOR.execute(f"SELECT * FROM users WHERE email={username}")
-            uid, email, name, password, subscribedto, jwtcode = CURSOR.fetchone()[0]
+            try:
+                Log("Username: "+ username)
+                CURSOR.execute(f'SELECT * FROM users WHERE email="{username}"')
+
+                uid, email, name, password, subscribedto, jwtcode = CURSOR.fetchall()[0]
+            except:
+                Log("User is not exists")
+                data = str(e).encode()
+                s.send(struct.pack(">I", 0)+struct.pack(">I", len(data))+data)
 
             try:
-                dec = jwt.decode(jwt_s, jwtcode)
-                if dec["password"] == password:
+                dec = jwt.decode(jwt_s, jwtcode, algorithms=["HS256"])
+                if dec["username"] == email:
                     j = json.dumps({"name": name, "subto": subscribedto})
                     j = j.encode()
+
                     l = len(j)
 
                     s.send(struct.pack(">I", 1)+struct.pack(">I", l)+j)
-                    # NOTE FORMAT: CODE(4):JSONLEN(4):JSON
-            except:
-                s.send(struct.pack(">I", 0))
+                else:
+                    raise ValueError("JWT username is not matching")
+
+                Log("Successful log in by JWT")
+            except Exception as e:
+                Log("Error while logging in by JWT: "+str(e), "err")
+                data = str(e).encode()
+                s.send(struct.pack(">I", 0)+struct.pack(">I", len(data))+data)
         elif req_type == 3:
             jl = s.recv(4)
-            jl = struct.unpack(">I", jl)
+            jl = struct.unpack(">I", jl)[0]
 
             j = s.recv(jl)
             j = j.decode("utf-8")
 
             js = json.loads(j)
 
-            CURSOR.execute(f"SELECT * FROM users WHERE email={js['username']}")
+            CURSOR.execute(f'SELECT * FROM users WHERE email="{js["username"]}"')
             if len(CURSOR.fetchall()) > 0:
                 data = json.dumps({"pleasure": Classifier().pleasure_process_data(js["acts"], js["days"], js["humans"], js["cost"]), 
                                    "cost": Classifier().cost_process_data(js["acts"], js["days"], js["humans"], js["cost"])})
-                log(data, "wmsg")
+                Log(data, "wmsg")
                 data = data.encode()
 
                 dl = len(data)
@@ -219,16 +218,15 @@ def handle(s, ip):
                 s.send(struct.pack(">I", 0))
         else:
             s.send(struct.pack(">I", 0))
-        # ERROR CODE IS 0, SUCCESS IS 1
     except Exception as e:
-        log("Error in request handle: "+str(e), "err")
+        Log("Error in request handle: "+str(e), "err")
 
 # mainloop
-log("Running server")
+Log("Running server")
 while isRunning:
     try:
         conn, ip = SERVER.accept()
         threading.Thread(target=handle, args=(conn, ip)).start()
-        log("Thread started. Request handling", "wmsg")
+        Log("Thread started. Request handling", "wmsg")
     except Exception as e:
-        log("Exception in mainloop: "+str(e), "err")
+        Log("Exception in mainloop: "+str(e), "err")
