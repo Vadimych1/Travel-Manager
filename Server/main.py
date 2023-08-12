@@ -15,6 +15,9 @@ import os
 import datetime
 import colors
 
+# classification
+from classifier import Classifier
+
 # dir change
 try:
     os.chdir("./Server/")
@@ -22,8 +25,17 @@ except:
     pass
 
 # logger
+loglevels: dict[str:int] = {
+    "DEBUG": 0,
+    "MESSAGE": 9,
+    "WARN": 19,
+    "ERROR": 29,
+    "NONE": 30
+}
+
+min_log_level:int = 0
 def log(msg, level="msg"):
-    msg = "["+str(datetime.datetime.now())+"] ["+("INFO" if level == "msg" else "ERROR" if level == "err" else "warn" if level == "warn" else "WORK INFO" if level == "wmsg" else "INFO")+"] "+msg
+    msg:str = "["+str(datetime.datetime.now())+"] ["+("INFO" if level == "msg" else "ERROR" if level == "err" else "WARN" if level == "warn" else "DEBUG" if level == "wmsg" else "INFO")+"] "+msg
 
     if level=="msg":
         msg = colors.color(msg, "rgb(0, 250, 20)")
@@ -34,21 +46,28 @@ def log(msg, level="msg"):
     elif level=="wmsg":
         msg = colors.color(msg, "rgb(0, 0, 255)")
 
-    print(msg)
+    if min_log_level > 0:
+        if level!="wmsg":
+            if min_log_level < 10 and level == "msg":
+              print(msg)
+            elif min_log_level < 20 and level == "warn":
+                print(msg)
+            elif min_log_level < 30 and level == "err":
+                print(msg)  
+    else:
+        print(msg)
 
-
-# NOTE log testing
+# NOTE logger testing
 # log("Message", "msg")
 # log("Error", "err")
 # log("Warn", "warn")
-# log("Work message", "wmsg")
+# log("Debug", "wmsg")
 
 # database create
 log("Loading database")
 DATABASE = sqlite.connect(r"./database/main.bd")
 
-
-# creating table users
+# Creating table "users"
 CURSOR = DATABASE.cursor()
 CURSOR.execute("""CREATE TABLE IF NOT EXISTS users(
    userid INTEGER PRIMARY KEY,
@@ -61,7 +80,7 @@ CURSOR.execute("""CREATE TABLE IF NOT EXISTS users(
 DATABASE.commit()
 
 
-# create server
+# Create server
 log("Loading server")
 SERVER = sock.create_server(("", 2020), family=sock.AF_INET)
 SERVER.listen()
@@ -72,8 +91,16 @@ isRunning = True
 REQUEST TYPES
 
 0 - LOGIN USER
+DATA: REQTYPE(4):JSONLEN(4):JSON
+
 1 - CREATE USER
+DATA: REQTYPE(4):JSONLEN(4):JSON
+
 2 - LOGIN WITH JWT
+DATA: REQTYPE(4):JWTLEN(4):JWT
+
+3 - PROCESS DATA
+DATA: REQTYPE(4):JSONLEN(4):JSON
 """
 
 # request handler
@@ -169,9 +196,30 @@ def handle(s, ip):
                     # NOTE FORMAT: CODE(4):JSONLEN(4):JSON
             except:
                 s.send(struct.pack(">I", 0))
+        elif req_type == 3:
+            jl = s.recv(4)
+            jl = struct.unpack(">I", jl)
+
+            j = s.recv(jl)
+            j = j.decode("utf-8")
+
+            js = json.loads(j)
+
+            CURSOR.execute(f"SELECT * FROM users WHERE email={js['username']}")
+            if len(CURSOR.fetchall()) > 0:
+                data = json.dumps({"pleasure": Classifier().pleasure_process_data(js["acts"], js["days"], js["humans"], js["cost"]), 
+                                   "cost": Classifier().cost_process_data(js["acts"], js["days"], js["humans"], js["cost"])})
+                log(data, "wmsg")
+                data = data.encode()
+
+                dl = len(data)
+
+                s.send(struct.pack(">I", 1)+struct.pack(">I", dl)+data)
+            else:
+                s.send(struct.pack(">I", 0))
         else:
             s.send(struct.pack(">I", 0))
-        # NOTE ERROR CODE IS 0, SUCCESS IS 1
+        # ERROR CODE IS 0, SUCCESS IS 1
     except Exception as e:
         log("Error in request handle: "+str(e), "err")
 
