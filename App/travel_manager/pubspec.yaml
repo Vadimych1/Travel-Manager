@@ -1,0 +1,28 @@
+name: travel_manager
+description: Your travel manager.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.1.0-63.1.beta <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  tcp_socket_connection: ^0.3.1
+  crypto: ^3.0.3
+  translit: ^2.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/backgrounds/greetingpage_mountains.png
+    - assets/images/backgrounds/greetingpage_sun.png
+    - assets/images/backgrounds/login_back.png
+    - assets/images/backgrounds/main_background.png

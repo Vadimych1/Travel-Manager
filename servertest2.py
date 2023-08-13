@@ -26,10 +26,10 @@ s.close()
 s = socket.create_connection(("127.0.0.1", 2020))
 
 data = {"username": login, 
-"acts": 1,
-"days": 3,
-"humans": 3,
-"cost": 32500,
+"acts": int(input("Активности > ")),
+"days": int(input("Дни > ")),
+"humans": int(input("Люди > ")),
+"cost": int(input("Стоимость > ")),
 }
 data = json.dumps(data).encode()
 

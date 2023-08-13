@@ -10,7 +10,15 @@ loglevels: dict[str:int] = {
 
 min_log_level:int = 0
 def Log(msg, level="msg"):
-    msg:str = "["+str(datetime.datetime.now())+"] ["+("INFO" if level == "msg" else "ERROR" if level == "err" else "WARN" if level == "warn" else "DEBUG" if level == "wmsg" else "INFO")+"] "+msg
+    """
+    Levels:
+    msg - INFO
+    wmsg - DEBUG
+    warn - WARN
+    err - ERROR
+    cerr - CRITICAL ERROR
+    """
+    msg:str = "["+str(datetime.datetime.now())+"] ["+("INFO" if level == "msg" else "ERROR" if level == "err" else "WARN" if level == "warn" else "DEBUG" if level == "wmsg" else "CRITICAL ERROR" if level == "cerr" else "INFO")+"] "+msg
 
     if level=="msg":
         msg = colors.color(msg, "rgb(0, 250, 20)")
@@ -19,6 +27,8 @@ def Log(msg, level="msg"):
     elif level=="warn":
         msg = colors.color(msg, "rgb(250, 250, 10)")
     elif level=="wmsg":
+        msg = colors.color(msg, "rgb(0, 10, 240)")
+    elif level=="cerr":
         msg = colors.color(msg, "rgb(0, 0, 255)")
 
     if min_log_level > 0:

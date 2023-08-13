@@ -89,7 +89,7 @@ def handle(s, ip):
         req_type = s.recv(4)
         req_type = struct.unpack(">I", req_type)[0]
         
-        Log(f"Reqest type: {req_type}")
+        Log(f"Reqest type: {req_type}", "wmsg")
 
         if req_type == 0:
             data_len = s.recv(4)
@@ -99,14 +99,14 @@ def handle(s, ip):
             data = json.loads(data.decode("utf-8"))
 
             Log("Executing", "wmsg")
-            CURSOR.execute(f'SELECT * FROM users WHERE email="{data["email"]}"')
+            CURSOR.execute(f'SELECT * FROM users WHERE email="{data["email"].lower()}"')
             Log("Fetching", "wmsg")
             uid, email, name, password, subscribedto, jwtcode = CURSOR.fetchall()[0]
             Log("Checking", "wmsg")
             if data["password"] == password:
                 Log("User Logged in", "wmsg")
                 
-                answ = json.dumps(jwt.encode({"username":email, "password":password}, jwtcode))
+                answ = jwt.encode({"username":email.lower()}, jwtcode)
                 answ = answ.encode()
 
                 l = len(answ)
@@ -116,22 +116,27 @@ def handle(s, ip):
                 lj = len(j)
 
                 Log("Successful log in by password")
-                s.send(struct.pack(">I", 1)+struct.pack(">I", l)+answ+struct.pack(">I", lj)+j)
+                s.send("ok|".encode()+answ+"|".encode()+j)
             else:
                 Log("User tried to Log in. Uncorrect password", "warn")
-                s.send(struct.pack(">I", 0))
+                s.send("uncorrect password")
         elif req_type == 1:
             data_len = s.recv(4)
             data_len = struct.unpack(">I", data_len)[0]
 
-            Log("Received data length", "wmsg")
+            Log("Received data length "+str(data_len), "wmsg")
 
-            data = s.recv(data_len)
-            data = json.loads(data.decode("utf-8"))
+            data = s.recv(data_len)[1::].decode("utf-8")
+            Log(data, "wmsg")
+
+            try:
+                data = json.loads(data)
+            except:
+                data = json.loads("{"+data)
 
             Log("Checking is user exists", "wmsg")
 
-            CURSOR.execute(f'SELECT * FROM users WHERE email="{data["email"]}"')
+            CURSOR.execute(f'SELECT * FROM users WHERE email="{data["email"].lower()}"')
             users = CURSOR.fetchall()
 
             Log(f"Users: {users}", "wmsg")
@@ -139,23 +144,24 @@ def handle(s, ip):
             if len(users) == 0:
                 key = random_key(16)
 
-                jwt_s = jwt.encode({"username":data["email"]}, key, algorithm="HS256")
+                jwt_s = jwt.encode({"username":data["email"].lower()}, key, algorithm="HS256")
                 jwt_s = str(jwt_s).encode()
 
-                user = (None, data["email"], data["name"], data["password"], "notsub", key)
+                user = (None, data["email"].lower(), data["name"], data["password"], "notsub", key)
                 CURSOR.execute("INSERT INTO users VALUES(?, ?, ?, ?, ?, ?);", user)
                 DATABASE.commit()
 
                 l = len(jwt_s)
+                
+                j = json.dumps({"name": data["name"], "subto": "notsub"}).encode()
 
-                Log(f"User {data['email']} created", "msg")
+                Log(f"User {data['email'].lower()} created", "msg")
 
-                s.send(struct.pack(">I", 1)+struct.pack(">I", l)+jwt_s)
-                # NOTE FORMAT: CODE(4):JWTLEN(4):JWT
+                s.send("ok|".encode()+jwt_s+"|".encode()+j)
             else:
-                Log(f"User {data['email']} already exists", "warn")
+                Log(f"User {data['email'].lower()} already exists", "warn")
                 d = "User already exists.".encode()
-                s.send(struct.pack(">I", 0)+struct.pack(">I", len(d))+d)
+                s.send(d)
         elif req_type == 2:
             Log("Receiving data length", "wmsg")
             data_len = s.recv(4)
@@ -175,8 +181,8 @@ def handle(s, ip):
                 uid, email, name, password, subscribedto, jwtcode = CURSOR.fetchall()[0]
             except:
                 Log("User is not exists")
-                data = str(e).encode()
-                s.send(struct.pack(">I", 0)+struct.pack(">I", len(data))+data)
+                data = "User is not exists".encode()
+                s.send(data)
 
             try:
                 dec = jwt.decode(jwt_s, jwtcode, algorithms=["HS256"])
@@ -186,7 +192,7 @@ def handle(s, ip):
 
                     l = len(j)
 
-                    s.send(struct.pack(">I", 1)+struct.pack(">I", l)+j)
+                    s.send(j)
                 else:
                     raise ValueError("JWT username is not matching")
 
@@ -194,7 +200,7 @@ def handle(s, ip):
             except Exception as e:
                 Log("Error while logging in by JWT: "+str(e), "err")
                 data = str(e).encode()
-                s.send(struct.pack(">I", 0)+struct.pack(">I", len(data))+data)
+                s.send(data)
         elif req_type == 3:
             jl = s.recv(4)
             jl = struct.unpack(">I", jl)[0]
@@ -204,22 +210,21 @@ def handle(s, ip):
 
             js = json.loads(j)
 
-            CURSOR.execute(f'SELECT * FROM users WHERE email="{js["username"]}"')
+            CURSOR.execute(f'SELECT * FROM users WHERE email="{js["username"].lower()}"')
             if len(CURSOR.fetchall()) > 0:
                 data = json.dumps({"pleasure": Classifier().pleasure_process_data(js["acts"], js["days"], js["humans"], js["cost"]), 
                                    "cost": Classifier().cost_process_data(js["acts"], js["days"], js["humans"], js["cost"])})
                 Log(data, "wmsg")
                 data = data.encode()
 
-                dl = len(data)
-
-                s.send(struct.pack(">I", 1)+struct.pack(">I", dl)+data)
+                s.send(data)
             else:
-                s.send(struct.pack(">I", 0))
+                s.send("User not exists")
         else:
-            s.send(struct.pack(">I", 0))
+            s.send("403 Not implemented")
     except Exception as e:
-        Log("Error in request handle: "+str(e), "err")
+        s.send("not".encode())
+        Log("Error in request handle. "+repr(e), "err")
 
 # mainloop
 Log("Running server")
