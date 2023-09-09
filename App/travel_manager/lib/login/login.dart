@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import '../socketclient.dart';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
 import '../mainpages/mainpage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({super.key});
@@ -206,6 +207,20 @@ class LoginPageState extends State<LoginPage> {
 
                           if (data[0] == "ok") {
                             var json_ = jsonDecode(data[2]);
+
+                            const storage = FlutterSecureStorage();
+
+                            // write jwt
+                            storage.write(
+                              key: "jwt",
+                              value: data[1],
+                            );
+
+                            // write username
+                            storage.write(
+                              key: "username",
+                              value: _email.text.toLowerCase(),
+                            );
 
                             Navigator.of(context).push(
                               MaterialPageRoute(

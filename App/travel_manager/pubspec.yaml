@@ -12,6 +12,7 @@ dependencies:
   tcp_socket_connection: ^0.3.1
   crypto: ^3.0.3
   translit: ^2.0.1
+  flutter_secure_storage: ^8.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:translit/translit.dart';
+import '../create_plan/town_select.dart';
 
 class MainPage extends StatefulWidget {
   MainPage({super.key, required this.subto, required this.name});
@@ -40,7 +41,7 @@ class MainPageState extends State<MainPage> {
               gradient: LinearGradient(
                 colors: [
                   Color.fromRGBO(156, 173, 231, 1),
-                  Color.fromRGBO(156, 173, 231, 1),
+                  Color.fromRGBO(156, 173, 231, 0.9),
                   Color.fromRGBO(156, 173, 231, 0),
                   Color.fromRGBO(113, 115, 155, 0),
                 ],
@@ -114,7 +115,13 @@ class MainPageState extends State<MainPage> {
                       const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const CreatePlan_TownSelect(),
+                      ),
+                    );
+                  },
                   child: const Text(
                     "Создать план отдыха",
                     style: TextStyle(

@@ -6,6 +6,7 @@ import '../socketclient.dart';
 import 'package:tcp_socket_connection/tcp_socket_connection.dart';
 import '../mainpages/mainpage.dart';
 import 'package:translit/translit.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class RegisterPage extends StatefulWidget {
   RegisterPage({super.key});
@@ -19,17 +20,15 @@ class RegisterPageState extends State<RegisterPage> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
-  // bool checkEmailAndPassword() {
-  //   bool email = RegExp(
-  //     r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
-  //   ).hasMatch(
-  //     _email.text,
-  //   );
+  bool checkEmail() {
+    bool email = RegExp(
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+    ).hasMatch(
+      _email.text,
+    );
 
-  //   bool password = _password.text.length > 7;
-
-  //   return email && password;
-  // }
+    return email;
+  }
 
   var responce = "";
 
@@ -207,10 +206,14 @@ class RegisterPageState extends State<RegisterPage> {
                     if (_password.text.trim() == _password.text &&
                         _email.text.isNotEmpty &&
                         _password.text.isNotEmpty &&
-                        _name.text.isNotEmpty) {
+                        _name.text.isNotEmpty &&
+                        checkEmail() &&
+                        _password.text.length > 7) {
                       // Create socket connection
-                      TcpSocketConnection s =
-                          createConnection("127.0.0.1", 2020);
+                      TcpSocketConnection s = createConnection(
+                        "127.0.0.1",
+                        2020,
+                      );
 
                       // Data to bytes
                       var codeBytes = ByteData(8);
@@ -247,6 +250,20 @@ class RegisterPageState extends State<RegisterPage> {
 
                           if (data[0] == "ok") {
                             var json_ = jsonDecode(data[2]);
+
+                            const storage = FlutterSecureStorage();
+
+                            // write jwt
+                            storage.write(
+                              key: "jwt",
+                              value: data[1],
+                            );
+
+                            // write username
+                            storage.write(
+                              key: "username",
+                              value: _email.text.toLowerCase(),
+                            );
 
                             Navigator.of(context).push(
                               MaterialPageRoute(

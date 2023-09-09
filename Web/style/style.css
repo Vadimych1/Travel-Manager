@@ -1,0 +1,37 @@
+/* ! Main CSS */
+* {
+    font-family: sans-serif;
+    letter-spacing: -0.33px;
+    color: white;
+}
+
+body {
+    background: linear-gradient(#002021 0%, #001111 200px, #000511 100%);
+}
+
+header {
+    transition: 0.3s;
+
+    padding: 20px 100px;
+
+    border: #98ce0066 dashed 2px;
+    border-radius: 10px;
+
+    text-align: center;
+    width: auto;
+}
+
+header h1 {
+    letter-spacing: 10px;
+    font-size: 48px;
+
+    color: #6ccff6;
+
+    margin-top: 10px;
+    margin-bottom: 2px;
+}
+
+.block {
+    border: #6ccff6aa solid 2px;
+    border-radius: 10px;
+}
