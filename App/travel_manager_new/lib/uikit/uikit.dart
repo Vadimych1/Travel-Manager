@@ -198,7 +198,7 @@ class PreferencesItemState extends State<PreferencesItem> {
 }
 
 class Preferences extends StatefulWidget {
-  const Preferences({required Key key, required this.bridge}) : super(key: key);
+  const Preferences({super.key, required this.bridge});
 
   final MapBridge bridge;
 

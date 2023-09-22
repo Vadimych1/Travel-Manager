@@ -5,14 +5,16 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'
     as secure_storage;
 import 'package:translit/translit.dart' as translit;
+import 'register_2.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class RegisterPage1 extends StatefulWidget {
+  const RegisterPage1({super.key});
 
-  State<RegisterPage> createState() => RegisterPageState();
+  @override
+  State<RegisterPage1> createState() => RegisterPage2State();
 }
 
-class RegisterPageState extends State<RegisterPage> {
+class RegisterPage2State extends State<RegisterPage1> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -192,7 +194,7 @@ class RegisterPageState extends State<RegisterPage> {
                             } else {
                               secure_storage.FlutterSecureStorage
                                   secureStorage =
-                                  secure_storage.FlutterSecureStorage();
+                                  const secure_storage.FlutterSecureStorage();
 
                               List values = responce.split("||");
                               secureStorage.write(
@@ -202,6 +204,12 @@ class RegisterPageState extends State<RegisterPage> {
                               secureStorage.write(
                                 key: "json_data",
                                 value: values[1],
+                              );
+
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterPage2(),
+                                ),
                               );
                             }
                           } else {
@@ -221,6 +229,18 @@ class RegisterPageState extends State<RegisterPage> {
               ),
             ],
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const RegisterPage2(),
+                ),
+              );
+            },
+            child: const Text(
+              "Debug",
+            ),
+          )
         ],
       ),
     );

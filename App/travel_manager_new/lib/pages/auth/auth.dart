@@ -16,7 +16,7 @@ class AuthPageState extends State<AuthPage> {
   @override
   void initState() {
     super.initState();
-    FlutterSecureStorage storage = FlutterSecureStorage();
+    FlutterSecureStorage storage = const FlutterSecureStorage();
 
     storage.read(key: "jwt").then(
       (jwt) {
@@ -34,9 +34,7 @@ class AuthPageState extends State<AuthPage> {
               )
                   .then(
                 (value) {
-                  if (value.statusCode == 200) {
-                    
-                  }
+                  if (value.statusCode == 200) {}
                 },
               );
             }
@@ -89,7 +87,7 @@ class AuthPageState extends State<AuthPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const RegisterPage(),
+                    builder: (context) => const RegisterPage1(),
                   ),
                 );
               },
