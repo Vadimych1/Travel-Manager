@@ -1,0 +1,88 @@
+{
+    meta {
+        api_verison str || версия api
+        code int || код статуса http
+        issue_date str || время запроса
+    }
+    result {
+        items [
+            {
+                address {
+                    building_id str || id здания
+                    building_name str || название здания
+                    components [
+                        {
+                            number str || номер улицы
+                            street str || улица
+                            street_id str || id улицы
+                            type str || тип
+                        }
+                    ]
+                    postcode str || почтовый индекс
+                }
+                address_comment str || комментарий к адресу
+                address_name str || адрес
+                ads {
+                    article str || описание
+                    article_warning str || предупреждение к описанию
+                    text str || описание 2
+                    warning str || предупреждение к описанию 2
+                }
+                id str || id компании
+                name str || название компании
+                point {
+                    lat float || геопозиция
+                    lon float || геопозиция
+                }
+                schedule {
+                    Fri {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    Mon {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    Sat {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    Sun {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    Thu {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    Tue {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    Wed {
+                        working_hours [
+                            from str || 
+                            to str || 
+                        ]
+                    }
+                    comment str || комментарий к графику работы
+                    is_24x7 bool || работает 24/7?
+                }
+                type str || тип
+            }
+        ]
+        total int || всего результатов
+    }
+}

@@ -19,10 +19,10 @@ import colors
 import requests
 
 # classification
-from classifier import Classifier
+from services.classifier import Classifier
 
 # logger
-from logger import Log
+from services.logger import Log
 
 # dir change
 try:
@@ -30,7 +30,7 @@ try:
 except Exception as e:
     Log("Error while changing directory: " + str(e), "wmsg")
 
-# VK Service Key
+# VK Service Key (для выдачи подсказок)
 VK_SERVICE_KEY = ""
 with open("./service.key", "r") as f:
     VK_SERVICE_KEY = f.readline()
@@ -56,8 +56,18 @@ CURSOR.execute("""CREATE TABLE IF NOT EXISTS users(
 
 # Creating table "user_preferences"
 CURSOR.execute("""CREATE TABLE IF NOT EXISTS user_preferences(
-   userid INTEGER PRIMARY KEY,
+   pref_id INTEGER PRIMARY KEY,
+   username TEXT,
    preferences TEXT);
+""")
+
+# Creating table "places_reviews"
+CURSOR.execute("""CREATE TABLE IF NOT EXISTS reviews(
+    review_id INTEGER PRIMARY KEY,
+    username TEXT,
+    place_name TEXT,
+    review INTEGER
+)
 """)
 
 DATABASE.commit()
@@ -105,6 +115,7 @@ class Handler(httpserver.BaseHTTPRequestHandler):
         print(self.path)
         try:
             path = self.path
+            path.replace("%20", "@")
             if path == "/favicon.ico":
                 self.list_directory("/")
                 return

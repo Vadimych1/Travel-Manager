@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/auth/auth.dart';
+import 'pages/auth/login.dart';
 
 void main() {
   runApp(const MainApp());
@@ -18,7 +18,7 @@ class _MainAppState extends State<MainApp> {
     return const MaterialApp(
       home: Scaffold(
         body: Center(
-          child: AuthPage(),
+          child: LoginPage(),
         ),
       ),
     );

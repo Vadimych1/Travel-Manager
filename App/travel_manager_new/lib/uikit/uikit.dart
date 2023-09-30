@@ -1,4 +1,29 @@
 import 'package:flutter/material.dart';
+// import "package:flutter_svg/flutter_svg.dart";
+
+// ! COLORS
+Map myColors = {
+  "green1": Color.fromRGBO(
+    15,
+    156,
+    109,
+    1,
+  ),
+  "blue1": Color.fromRGBO(
+    13,
+    143,
+    171,
+    1,
+  ),
+  "primaryText": Colors.white,
+  "secondaryText": Color.fromRGBO(190, 190, 190, 1),
+  "gray": Color.fromRGBO(
+    148,
+    148,
+    148,
+    1,
+  ),
+};
 
 // ! Black button
 class BlackButton extends StatelessWidget {
@@ -6,20 +31,78 @@ class BlackButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.type = "mini",
+    this.color = const Color.fromRGBO(
+      15,
+      156,
+      109,
+      1,
+    ),
   });
 
   final Function() onPressed;
   final String text;
-  final String type;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 62,
-      width: type == "mini" ? 142 : 227,
+      width: 227,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: const BorderRadius.all(
+          Radius.circular(
+            10,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset.fromDirection(3.14 / 2, 2),
+            blurRadius: 3,
+          ),
+        ],
+      ),
+      child: TextButton(
+        style: ButtonStyle(
+          splashFactory: NoSplash.splashFactory,
+          backgroundColor: MaterialStateProperty.all<Color>(
+            Colors.transparent,
+          ),
+        ),
+        onPressed: onPressed,
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ! White button
+class WhiteButton extends StatelessWidget {
+  const WhiteButton({
+    super.key,
+    required this.text,
+    required this.onPressed,
+  });
+
+  final Function() onPressed;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 62,
+      width: 227,
       decoration: const BoxDecoration(
-        color: Colors.black,
+        color: Colors.transparent,
         borderRadius: BorderRadius.all(
           Radius.circular(
             10,
@@ -46,57 +129,6 @@ class BlackButton extends StatelessWidget {
   }
 }
 
-// ! White button
-class WhiteButton extends StatelessWidget {
-  const WhiteButton({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    this.type = "mini",
-  });
-
-  final Function() onPressed;
-  final String text;
-  final String type;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 62,
-      width: type == "mini" ? 181 : 227,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(
-          Radius.circular(
-            10,
-          ),
-        ),
-        border: Border.fromBorderSide(
-          BorderSide(
-            color: Colors.black,
-          ),
-        ),
-      ),
-      child: TextButton(
-        style: ButtonStyle(
-          splashFactory: NoSplash.splashFactory,
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.transparent),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-            letterSpacing: -0.2,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ! Input
 class Input extends StatelessWidget {
   const Input({
@@ -104,6 +136,7 @@ class Input extends StatelessWidget {
     required this.placeholder,
     required this.onChanged,
     required this.controller,
+    required this.icon,
     this.inputType = TextInputType.text,
   });
 
@@ -111,6 +144,7 @@ class Input extends StatelessWidget {
   final Function(String) onChanged;
   final TextEditingController controller;
   final TextInputType inputType;
+  final Widget icon;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +152,16 @@ class Input extends StatelessWidget {
       width: 319,
       height: 53,
       decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Colors.grey,
+            Color(0xFFf7f5ec),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          stops: [0.0, 0.2],
+          tileMode: TileMode.clamp,
+        ),
         border: Border.all(
           color: const Color.fromARGB(
             255,
@@ -126,21 +170,32 @@ class Input extends StatelessWidget {
             246,
           ),
         ),
-        color: const Color.fromARGB(
-          255,
-          246,
-          246,
-          246,
-        ),
+        // color: const Color.fromARGB(
+        //   255,
+        //   246,
+        //   246,
+        //   246,
+        // ),
+        // color: Colors.black,
         borderRadius: BorderRadius.circular(
           10,
         ),
       ),
       child: TextField(
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 20,
+          color: myColors["gray"],
+        ),
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(
           hintText: placeholder,
+          hintStyle: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 20,
+            color: myColors["gray"],
+          ),
           filled: true,
           focusColor: Colors.transparent,
           hoverColor: Colors.transparent,
@@ -149,6 +204,11 @@ class Input extends StatelessWidget {
           enabledBorder: InputBorder.none,
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
+          prefixIcon: Container(
+              margin: const EdgeInsets.only(
+                top: 5,
+              ),
+              child: icon),
         ),
       ),
     );
@@ -178,8 +238,15 @@ class PreferencesItemState extends State<PreferencesItem> {
     return Container(
       height: 30,
       decoration: BoxDecoration(
-        color: widget.activated ? Colors.black : Colors.white,
+        color: widget.activated ? myColors["blue1"] : Colors.white,
         borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey,
+            offset: Offset.fromDirection(3.14 / 2, 2),
+            blurRadius: 3,
+          ),
+        ],
       ),
       child: TextButton(
         style: const ButtonStyle(
@@ -189,7 +256,7 @@ class PreferencesItemState extends State<PreferencesItem> {
         child: Text(
           widget.text,
           style: TextStyle(
-            color: !widget.activated ? Colors.black : Colors.white,
+            color: !widget.activated ? myColors["blue1"] : Colors.white,
           ),
         ),
       ),

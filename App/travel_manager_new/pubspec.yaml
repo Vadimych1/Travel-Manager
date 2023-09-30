@@ -22,4 +22,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/arrow_back.svg
+    - assets/images/svg/arrow_back.svg
+    - assets/images/png/loginbg.png
+    - assets/images/svg/emailicon.svg
+    - assets/images/svg/passwordicon.svg
+    - assets/images/png/registerbg1.png
+    - assets/images/png/registerbg2.png
+    - assets/images/svg/usericon.svg
