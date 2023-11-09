@@ -20,14 +20,12 @@ class _RegisterStep1State extends State<RegisterStep1> {
       body: Stack(
         children: [
           // BG Image
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: Positioned.fill(
-              child: Image.asset(
-                "assets/images/png/registerbg1.png",
-                fit: BoxFit.cover,
-              ),
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/png/registerbg1.png",
+              fit: BoxFit.fill,
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
             ),
           ),
 

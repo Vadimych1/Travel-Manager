@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:travel_manager_new/pages/auth/register/step2.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 import './register/step1.dart';
+import '../main/main_home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage();
@@ -18,12 +20,12 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         children: [
           // BG Image
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: Positioned.fill(
-              child: Image.asset("assets/images/png/loginbg.png",
-                  fit: BoxFit.cover),
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/png/loginbg.png",
+              fit: BoxFit.fill,
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
             ),
           ),
 
@@ -104,7 +106,14 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     BlackButton(
                       text: "Войти",
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MainHome(),
+                          ),
+                        );
+                      },
                     ),
                     WhiteButton(
                       text: "Зарегестрироваться",

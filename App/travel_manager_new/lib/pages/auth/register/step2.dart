@@ -3,6 +3,8 @@ import 'package:travel_manager_new/pages/auth/register/step1.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../../main/main_home.dart';
+
 class RegisterStep2 extends StatefulWidget {
   const RegisterStep2();
 
@@ -17,14 +19,13 @@ class _RegisterStep2State extends State<RegisterStep2> {
       body: Stack(
         children: [
           // BG Image
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: Positioned.fill(
-              child: Image.asset(
-                "assets/images/png/registerbg2.png",
-                fit: BoxFit.cover,
-              ),
+
+          Positioned.fill(
+            child: Image.asset(
+              "assets/images/png/registerbg2.png",
+              fit: BoxFit.fill,
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
             ),
           ),
 
@@ -140,7 +141,7 @@ class _RegisterStep2State extends State<RegisterStep2> {
               onPressed: () {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (context) => const RegisterStep1(),
+                    builder: (context) => const MainHome(),
                   ),
                 );
               },

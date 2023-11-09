@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'pages/auth/login.dart';
 
 void main() {
   runApp(const MainApp());
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
 }
 
 class MainApp extends StatefulWidget {
@@ -15,10 +19,15 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: LoginPage(),
+    return const AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
+      child: MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: LoginPage(),
+          ),
         ),
       ),
     );
