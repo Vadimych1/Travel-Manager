@@ -3,6 +3,8 @@ import 'package:travel_manager_new/pages/auth/register/step2.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 import "../login.dart";
+import "package:http/http.dart";
+import 'dart:convert';
 
 class RegisterStep1 extends StatefulWidget {
   const RegisterStep1();
@@ -124,12 +126,75 @@ class _RegisterStep1State extends State<RegisterStep1> {
                 ),
                 child: BlackButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterStep2(),
-                      ),
-                    );
+                    if (!isEmailValid(_email.text)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Неверный e-mail адрес.",
+                          ),
+                        ),
+                      );
+                    } else if (_name.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Введите свое имя.",
+                          ),
+                        ),
+                      );
+                    } else if (_password.text.trim().length < 8 ||
+                        _password.text.trim().length > 30) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Длинна пароля должна составлять от 8 до 30 символов.",
+                          ),
+                        ),
+                      );
+                    } else {
+                      get(
+                        Uri.https(
+                          "x1f9tspp-3030.euw.devtunnels.ms",
+                          "/register",
+                          {
+                            "username": _email.text.trim(),
+                            "password": _password.text.trim(),
+                            "name": _name.text.trim(),
+                          },
+                        ),
+                      ).then(
+                        (value) {
+                          var j = jsonDecode(value.body);
+
+                          if (j["status"] == "success") {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegisterStep2(),
+                              ),
+                            );
+                          } else {
+                            switch (j["code"]) {
+                              case "user_exists":
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Пользователь с такой почтой уже существует. Попробуйте войти",
+                                    ),
+                                  ),
+                                );
+                              default:
+                                print(j["code"]);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Произошла ошибка при входе"),
+                                  ),
+                                );
+                            }
+                          }
+                        },
+                      );
+                    }
                   },
                   text: "Далее",
                   color: myColors["blue1"],

@@ -1,7 +1,7 @@
 name: travel_manager_new
-description: A new Flutter project.
+description: Manage your travels
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0-alpha
 
 environment:
   sdk: '>=3.1.0-262.3.beta <4.0.0'

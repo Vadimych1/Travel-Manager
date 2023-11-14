@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:travel_manager_new/pages/auth/register/step1.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -120,7 +119,13 @@ class _RegisterStep2State extends State<RegisterStep2> {
                 margin: EdgeInsets.only(bottom: 60),
                 child: BlackButton(
                   text: "Завершить",
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const MainHome(),
+                      ),
+                    );
+                  },
                   color: myColors["blue1"],
                 ),
               ),

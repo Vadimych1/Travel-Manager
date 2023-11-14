@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:travel_manager_new/pages/auth/register/step2.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 import './register/step1.dart';
 import '../main/main_home.dart';
+import "package:http/http.dart";
 
 class LoginPage extends StatefulWidget {
   const LoginPage();
@@ -107,11 +109,51 @@ class _LoginPageState extends State<LoginPage> {
                     BlackButton(
                       text: "Войти",
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MainHome(),
+                        get(
+                          Uri.https(
+                            "x1f9tspp-3030.euw.devtunnels.ms",
+                            "/login",
+                            {
+                              "username": _email.text,
+                              "password": _password.text
+                            },
                           ),
+                        ).then(
+                          (value) {
+                            var j = jsonDecode(value.body);
+
+                            if (j["status"] == "success") {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MainHome(),
+                                ),
+                              );
+                            } else {
+                              switch (j["code"]) {
+                                case "user_not_exists":
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Пользователь не найден"),
+                                    ),
+                                  );
+                                case "invalid_password":
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Неверный пароль"),
+                                    ),
+                                  );
+                                default:
+                                  print(j["code"]);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text("Произошла ошибка при входе"),
+                                    ),
+                                  );
+                              }
+                            }
+                          },
                         );
                       },
                     ),

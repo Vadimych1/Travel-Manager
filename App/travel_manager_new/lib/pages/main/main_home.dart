@@ -57,14 +57,13 @@ class _MainHomeState extends State<MainHome> {
                     fit: BoxFit.fill,
                     width: MediaQuery.of(context).size.width,
                   ),
-                  // Container(
-                  //   color: Color(0x080000000),
-                  //   width: MediaQuery.of(context).size.width,
-                  //   height: 237 /
-                  //       393 *
-                  //       MediaQuery.of(context).size.width, // 393 x 237
-                  //   child:
-                  // ),
+                  Container(
+                    color: const Color(0x08000000),
+                    width: MediaQuery.of(context).size.width,
+                    height: 237 /
+                        393 *
+                        MediaQuery.of(context).size.width, // 393 x 237
+                  ),
                   Positioned(
                     top: 237 / 393 * MediaQuery.of(context).size.width - 110,
                     left: 20,
@@ -98,7 +97,7 @@ class _MainHomeState extends State<MainHome> {
                   //   right: 20,
                   // ),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFFFFFF),
+                    color: Color(0xFF202020),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -114,7 +113,7 @@ class _MainHomeState extends State<MainHome> {
                           child: const Text(
                             "Ваши поездки",
                             style: TextStyle(
-                              color: Color(0xFF000000),
+                              color: Color(0xFFFFFFFF),
                               fontWeight: FontWeight.w900,
                               fontSize: 24,
                               fontFamily: "Pro",
@@ -151,7 +150,7 @@ class _MainHomeState extends State<MainHome> {
                           child: const Text(
                             "Информация",
                             style: TextStyle(
-                              color: Color(0xFF000000),
+                              color: Color(0xFFFFFFFF),
                               fontWeight: FontWeight.w900,
                               fontSize: 24,
                               fontFamily: "Pro",
