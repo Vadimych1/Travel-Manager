@@ -1,0 +1,42 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelManager - database/travels</title>
+</head>
+<body style="font-family: sans-serif;">
+    <h1>TravelManager - database/travels</h1>
+    <form method="post">
+        <input type="submit" value="back">
+        <input type="hidden" name="pwd" value="admin">
+        <input type="hidden" name="action" value="login">
+        <input type="hidden" name="page" value="main/main">
+    </form>
+    <hr>
+    <form method="get" action="create_travel">
+        <h2>Method <a href="/create_travel">create travel</a></h2>
+        <input type="email" name="username" placeholder="email" required>
+        <input type="password" name="password" placeholder="password" required>
+
+        <input type="text" name="people_count" placeholder="children;adults">
+        <input type="text" name="travel_name" placeholder="travel name">
+        <input type="date" name="from_date" placeholder="from date">
+        <input type="date" name="to_date" placeholder="to date">
+        <input type="text" name="town" placeholder="town">
+        <input type="text" name="budget" placeholder="budget">
+        <input type="text" name="activities" placeholder="activities">
+        <input type="text" name="expenses" placeholder="expenses">
+        <input type="text" name="meta" placeholder="meta">
+        <input type="text" name="live_place" placeholder="live place">
+        <input type="submit" value="send">
+    </form>
+
+    <hr>
+    <form method="get" action="get_all_travels">
+        <h2>Method <a href="/get_all_travels">get all travels</a></h2>
+        <input type="email" name="username" placeholder="email" required>
+        <input type="password" name="password" placeholder="password" required>
+        <input type="submit" value="send">
+    </form>
+</body>
+</html>

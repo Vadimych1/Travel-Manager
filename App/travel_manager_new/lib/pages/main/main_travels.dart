@@ -4,6 +4,9 @@ import 'package:travel_manager_new/uikit/uikit.dart';
 import 'main_home.dart';
 import '../add_travel/main_info.dart';
 import 'package:flutter_svg/svg.dart';
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart';
 
 class MainTravels extends StatefulWidget {
   const MainTravels({super.key});
@@ -21,6 +24,54 @@ class _MainTravelsState extends State<MainTravels> {
   @override
   void initState() {
     super.initState();
+    var secureStorage = const FlutterSecureStorage();
+
+    secureStorage.read(key: "username").then(
+          (usr) => {
+            secureStorage.read(key: "password").then(
+                  (pwd) => {
+                    get(
+                      Uri.https(
+                        "x1f9tspp-80.euw.devtunnels.ms",
+                        "get_all_travels",
+                        {"username": usr, "password": pwd},
+                      ),
+                    ).then(
+                      (value) {
+                        var undec = value.body;
+                        print(undec);
+
+                        var j = jsonDecode(
+                          Uri.decodeComponent(undec)
+                              .replaceAll("+", " ")
+                              .replaceAll('"activities":"', '"activities":')
+                              .replaceAll('}]"', "}]"),
+                        );
+                        for (var elem in j["content"]) {
+                          print(elem);
+                          setState(
+                            () {
+                              travels.add(
+                                TravelBlock(
+                                  id: int.parse(elem["id"]),
+                                  travelName: elem["plan_name"],
+                                  town: elem["town"],
+                                  fromDate: elem["from_date"],
+                                  toDate: elem["to_date"],
+                                  moneys: elem["budget"],
+                                  activities: elem["activities"],
+                                  full: true,
+                                ),
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  },
+                )
+          },
+        );
 
     String out = "";
     String countstring = count.toString();
@@ -85,10 +136,9 @@ class _MainTravelsState extends State<MainTravels> {
                     top: 237 / 393 * MediaQuery.of(context).size.width - 20,
                     left: 0,
                   ),
-                  // padding: EdgeInsets.only(
-                  //   left: 20,
-                  //   right: 20,
-                  // ),
+                  padding: const EdgeInsets.only(
+                    top: 20,
+                  ),
                   decoration: const BoxDecoration(
                     color: Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.only(
@@ -113,7 +163,7 @@ class _MainTravelsState extends State<MainTravels> {
                               top: travels.isNotEmpty ? 10 : 70),
                           child: Text(
                             travels.isNotEmpty
-                                ? 'чтобы создать новый план, нажмите на кнопку ниже'
+                                ? 'для редактирования нажмите\nна карточку плана'
                                 : "Пока что тут пусто.\nНажмите на кнопку ниже,\nчтобы добавить новый план",
                             style: const TextStyle(
                               color: Color(0xFF757575),

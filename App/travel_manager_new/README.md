@@ -1,3 +1,3 @@
-# travel_manager_new
+# Travel Manager
 
-A new Flutter project.
+An school project for creating travel plans. By Vadimych1

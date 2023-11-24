@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:travel_manager_new/pages/auth/register/step2.dart';
+import 'package:travel_manager_new/pages/main/main_home.dart';
+// import 'package:travel_manager_new/pages/auth/register/step2.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
-import "../login.dart";
+import 'login.dart';
 import "package:http/http.dart";
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class RegisterStep1 extends StatefulWidget {
-  const RegisterStep1();
+  const RegisterStep1({super.key});
 
+  @override
   State<RegisterStep1> createState() => _RegisterStep1State();
 }
 
 class _RegisterStep1State extends State<RegisterStep1> {
-  TextEditingController _name = TextEditingController();
-  TextEditingController _email = TextEditingController();
-  TextEditingController _password = TextEditingController();
+  final TextEditingController _name = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _password = TextEditingController();
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,7 +76,7 @@ class _RegisterStep1State extends State<RegisterStep1> {
                 margin: const EdgeInsets.only(
                   top: 43,
                 ),
-                height: 210,
+                height: 170,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -81,34 +84,16 @@ class _RegisterStep1State extends State<RegisterStep1> {
                       placeholder: "имя",
                       onChanged: (s) {},
                       controller: _name,
-                      icon: SvgPicture.asset(
-                        "assets/images/svg/usericon.svg",
-                        width: 19,
-                        height: 19,
-                        fit: BoxFit.scaleDown,
-                      ),
                     ),
                     Input(
                       placeholder: "e-mail",
                       onChanged: (s) {},
                       controller: _email,
-                      icon: SvgPicture.asset(
-                        "assets/images/svg/emailicon.svg",
-                        width: 19,
-                        height: 19,
-                        fit: BoxFit.scaleDown,
-                      ),
                     ),
                     Input(
                       placeholder: "пароль",
                       onChanged: (s) {},
                       controller: _password,
-                      icon: SvgPicture.asset(
-                        "assets/images/svg/passwordicon.svg",
-                        width: 19,
-                        height: 19,
-                        fit: BoxFit.scaleDown,
-                      ),
                     ),
                   ],
                 ),
@@ -119,10 +104,10 @@ class _RegisterStep1State extends State<RegisterStep1> {
                 child: Container(),
               ),
 
-              // Next step
+              // Register
               Container(
                 margin: const EdgeInsets.only(
-                  bottom: 60,
+                  bottom: 40,
                 ),
                 child: BlackButton(
                   onPressed: () {
@@ -152,9 +137,10 @@ class _RegisterStep1State extends State<RegisterStep1> {
                         ),
                       );
                     } else {
+                      print("Getting");
                       get(
                         Uri.https(
-                          "x1f9tspp-3030.euw.devtunnels.ms",
+                          "x1f9tspp-80.euw.devtunnels.ms",
                           "/register",
                           {
                             "username": _email.text.trim(),
@@ -164,13 +150,32 @@ class _RegisterStep1State extends State<RegisterStep1> {
                         ),
                       ).then(
                         (value) {
-                          var j = jsonDecode(value.body);
+                          print(value.body);
+                          var j = {};
+                          try {
+                            j = jsonDecode(value.body);
+                          } catch (e) {
+                            print("Error");
+                            return;
+                          }
 
                           if (j["status"] == "success") {
+                            FlutterSecureStorage storage =
+                                const FlutterSecureStorage();
+
+                            storage.write(
+                              key: "username",
+                              value: _email.text.trim(),
+                            );
+                            storage.write(
+                              key: "password",
+                              value: _password.text.trim(),
+                            );
+
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RegisterStep2(),
+                                builder: (context) => const MainHome(),
                               ),
                             );
                           } else {
@@ -196,8 +201,8 @@ class _RegisterStep1State extends State<RegisterStep1> {
                       );
                     }
                   },
-                  text: "Далее",
-                  color: myColors["blue1"],
+                  text: "Зарагестрироваться",
+                  // color: myColors["blue1"],
                 ),
               )
             ],

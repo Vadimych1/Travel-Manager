@@ -12,4 +12,5 @@ require (
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )

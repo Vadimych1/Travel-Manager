@@ -1,0 +1,32 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelManager - control panel</title>
+</head>
+<body style="font-family: sans-serif;">
+    <h1>TravelManager - control panel</h1>
+    <form method="post">
+        <input type="submit" value="back">
+        <input type="hidden" name="pwd" value="admin">
+        <input type="hidden" name="action" value="login">
+        <input type="hidden" name="page" value="main/main">
+    </form>
+    <hr>
+
+    <pre><p class="log">
+%log
+    </p></pre>
+</body>
+<style>
+    .log {
+        width: 90%;
+        height: auto;
+        padding: 20px;
+        background-color: #303030;
+        border: black solid 2px;
+        border-radius: 10px;
+        color: #fff
+    }
+</style>
+</html>

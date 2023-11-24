@@ -1,0 +1,84 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelManager - docs</title>
+</head>
+<body style="font-family: sans-serif">
+    <form method="post">
+        <input type="submit" value="back">
+        <input type="hidden" name="pwd" value="admin">
+        <input type="hidden" name="action" value="login">
+        <input type="hidden" name="page" value="main/main">
+    </form>
+    
+    <h1 id="travel-manager-server-documentation">Travel Manager Server documentation</h1>
+    <p>This is the documentation for the Travel Manager Server.</p>
+    <hr>
+    <h2>Contents</h2>
+    <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#usage">Usage</a></li>
+        <li><a href="#server-interface">Server interface</a></li>
+    </ul>
+    <hr>
+    <h2 id="about">About</h2>
+    <a name="about"></a>
+    <p>It`s an HTTP API server for mobile app Travel Manager. For start run:</p>
+    <pre><code class="lang-bash">go <span class="hljs-keyword">run</span><span class="bash"> .</span></code></pre>
+    <p>or</p>
+    <pre><code class="lang-bash">./<span class="hljs-literal">start</span>.bat</code></pre>
+    <p>Server will start at port %port. You also can change it in <code>config.yml</code>.</p>
+
+    <hr>
+    <a name="usage"></a>
+    <h2 id="usage">Usage</h2>
+    <p>An API includes the following:</p>
+    <ol>
+    <li>Travel plans:</li>
+    <li>Get all travel plans <a href="http://localhost:%port/get_all_travels">localhost:%port/get_all_travels</a></li>
+    <li>Get travel plan <a href="http://localhost:%port/get_travel">localhost:%port/get_travel</a> <em>(not competely implemented)</em></li>
+    <li>Create travel plan <a href="http://localhost:%port/create_travel">localhost:%port/create_travel</a></li>
+    <li>Update travel plan <a href="http://localhost:%port/update_travel">localhost:%port/update_travel</a> <em>(not competely implemented)</em></li>
+    <li>Delete travel plan <a href="http://localhost:%port/delete_travel">localhost:%port/delete_travel</a> <em>(not competely implemented)</em></li>
+    <li>Users:</li>
+    <li>Register <a href="http://localhost:%port/register">localhost:%port/register</a></li>
+    <li>Login <a href="http://localhost:%port/login">localhost:%port/login</a></li>
+    <li>Update user <a href="http://localhost:%port/update_user">localhost:%port/update_user</a> <em>(not competely implemented)</em></li>
+    <li>Delete user <a href="http://localhost:%port/delete_user">localhost:%port/delete_user</a> <em>(not competely implemented)</em></li>
+    </ol>
+
+    <hr>
+    <a name="server-interface"></a>
+    <h2 id="server-interface">Server interface</h2>
+    <p>The server have the interface for admins which on the <a href="http://localhost:%port/admins">localhost:%port/admins</a> (or on the port which you can change in <code>config.yml</code>). It has the following functions:</p>
+    <ol>
+    <li>Database info:</li>
+    <li>Users</li>
+    <li>Travel plans</li>
+    <li>SQL requests into DB</li>
+    <li>Server info:</li>
+    <li>Server version</li>
+    <li>Server uptime</li>
+    <li>Debug info</li>
+    </ol>
+    
+    <hr>
+</body>
+<style>
+    body {
+        color: white;
+        background-color: #101010;
+    }
+    code {
+        background-color: #303030;
+        color: white;
+        padding: 3px;
+        border-radius: 3px;
+    }
+
+    a {
+        color:cornflowerblue
+    }
+</style>
+</html>

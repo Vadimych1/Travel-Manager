@@ -113,23 +113,12 @@ class _CreateTravelChooseTownState extends State<CreateTravelChooseTown> {
                     // townhint.
                   },
                   controller: townc,
-                  icon: SvgPicture.asset(
-                    "assets/images/svg/location.svg",
-                    width: 19,
-                    height: 19,
-                    color: myColors["gray"],
-                    fit: BoxFit.scaleDown,
-                  ),
                 ),
               ),
 
               Container(
                 child: townhint,
               ),
-
-              // Expanded(
-              //   child: Container(),
-              // ),
 
               Container(
                 margin: const EdgeInsets.only(bottom: 40, top: 10),
@@ -138,7 +127,7 @@ class _CreateTravelChooseTownState extends State<CreateTravelChooseTown> {
                   onPressed: () {
                     var params = widget.params;
                     params["town"] = townhint.curtown;
-                    print(widget.params);
+                    // print(widget.params);
                     Navigator.of(context).push(
                       PageRouteBuilder(
                         pageBuilder: (context, _, __) => CreateTravelBudget(

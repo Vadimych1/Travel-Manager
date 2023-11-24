@@ -1,0 +1,65 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelManager - admin panel</title>
+</head>
+<body style="font-family: sans-serif">
+    <header>
+        <h1>TravelManager - admin panel</h1>
+        <table>
+            <tbody>
+                <tr>
+                    <td><h3>Database</h2></td>
+                    <td>
+                        <form method="post">
+                            <input type="submit" value="database/users">
+                            <input type="hidden" name="page" value="db/db.users">
+                            <input type="hidden" name="action" value="login">
+                            <input type="hidden" name="pwd" value="%password">
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post">
+                            <input type="submit" value="database/travels">
+                            <input type="hidden" name="page" value="db/db.travels">
+                            <input type="hidden" name="action" value="login">
+                            <input type="hidden" name="pwd" value="%password">
+                        </form>
+                    </td>
+                    <td>
+                        <form method="post">
+                            <input type="submit" value="database/info">
+                            <input type="hidden" name="page" value="db/db.info">
+                            <input type="hidden" name="action" value="login">
+                            <input type="hidden" name="pwd" value="%password">
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td><h3>Docs</h2></td>
+                    <td>
+                        <form method="post">
+                            <input type="submit" value="docs">
+                            <input type="hidden" name="page" value="docs/docs">
+                            <input type="hidden" name="action" value="login">
+                            <input type="hidden" name="pwd" value="%password">
+                        </form>
+                    </td>
+                </tr>
+                <tr>
+                    <td><h3>Server</h3></td>
+                    <td>
+                        <form method="post">
+                            <input type="submit" value="control panel">
+                            <input type="hidden" name="page" value="server/control_panel">
+                            <input type="hidden" name="action" value="login">
+                            <input type="hidden" name="pwd" value="%password">
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </header>
+</body>
+</html>

@@ -16,6 +16,7 @@ dependencies:
   intl: ^0.18.1
   flutter_svg: ^2.0.7
   # translit: ^1.0.0
+  # flutter_secure_storage: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -46,29 +47,30 @@ flutter:
   fonts:
     - family: Pro
       fonts:
-        - asset: fonts/gotham_pro/black.ttf
-          weight: 900
-        - asset: fonts/gotham_pro/blackitalic.ttf
-          weight: 900
-          style: italic
-        - asset: fonts/gotham_pro/bold.ttf
-          weight: 700
-        - asset: fonts/gotham_pro/bolditalic.ttf
-          weight: 700
-          style: italic
-        - asset: fonts/gotham_pro/italic.ttf
-          weight: 300
-          style: italic
-        - asset: fonts/gotham_pro/light.ttf
-          weight: 200
-        - asset: fonts/gotham_pro/lightitalic.ttf
-          weight: 200
-          style: italic
-        - asset: fonts/gotham_pro/medium.ttf
-          weight: 400
-        - asset: fonts/gotham_pro/mediumitalic.ttf
-          weight: 400
-          style: italic
+        # - asset: fonts/gotham_pro/black.ttf
+        #   weight: 900
+        # - asset: fonts/gotham_pro/blackitalic.ttf
+        #   weight: 900
+        #   style: italic
+        # - asset: fonts/gotham_pro/bold.ttf
+        #   weight: 700
+        # - asset: fonts/gotham_pro/bolditalic.ttf
+        #   weight: 700
+        #   style: italic
+        # - asset: fonts/gotham_pro/italic.ttf
+        #   weight: 300
+        #   style: italic
+        # - asset: fonts/gotham_pro/light.ttf
+        #   weight: 200
+        # - asset: fonts/gotham_pro/lightitalic.ttf
+        #   weight: 200
+        #   style: italic
+        # - asset: fonts/gotham_pro/medium.ttf
+        #   weight: 400
+        # - asset: fonts/gotham_pro/mediumitalic.ttf
+        #   weight: 400
+        #   style: italic
+        - asset: fonts/gotham_pro/gothampro.ttf
           
 flutter_icons:
   android: "launcher_icon"

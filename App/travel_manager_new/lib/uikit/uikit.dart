@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import "../pages/view_travel/view.dart";
 import 'package:http/http.dart';
 import 'package:translit/translit.dart';
 import 'package:flutter/material.dart';
@@ -66,13 +66,6 @@ class BlackButton extends StatelessWidget {
             10,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black,
-            offset: Offset.fromDirection(3.14 / 2, 2),
-            blurRadius: 3,
-          ),
-        ],
       ),
       child: TextButton(
         style: ButtonStyle(
@@ -90,7 +83,7 @@ class BlackButton extends StatelessWidget {
           style: const TextStyle(
             fontFamily: "Pro",
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.w300,
             letterSpacing: -0.2,
           ),
@@ -135,7 +128,7 @@ class WhiteButton extends StatelessWidget {
           text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 16,
             fontFamily: "Pro",
             fontWeight: FontWeight.w300,
             letterSpacing: -0.2,
@@ -153,7 +146,7 @@ class Input extends StatelessWidget {
     required this.placeholder,
     required this.onChanged,
     required this.controller,
-    required this.icon,
+    // required this.icon,
     this.inputFormatters = const [],
     this.inputType = TextInputType.text,
     this.borderRadius = const BorderRadius.all(
@@ -165,43 +158,24 @@ class Input extends StatelessWidget {
   final Function(String) onChanged;
   final TextEditingController controller;
   final TextInputType inputType;
-  final Widget icon;
   final List<TextInputFormatter> inputFormatters;
   final BorderRadius borderRadius;
 
   @override
   Widget build(BuildContext context) {
-    // print(inputFormatters);
-
     return Container(
-      width: 320,
-      height: 53,
+      width: 307,
+      height: 48,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Colors.grey,
-            Color(0xFFf7f5ec),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: [0.0, 0.2],
-          tileMode: TileMode.clamp,
-        ),
-        border: Border.all(
-          color: const Color.fromARGB(
-            255,
-            246,
-            246,
-            246,
-          ),
-        ),
+        color: const Color(0xFFFFFFFF),
+        border: Border.all(color: const Color(0xFF000000)),
         borderRadius: borderRadius,
       ),
       child: TextField(
         style: TextStyle(
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w300,
           fontSize: 16,
-          fontFamily: "Pro",
+          // fontFamily: "Pro",
           color: myColors["gray"],
         ),
         controller: controller,
@@ -209,10 +183,10 @@ class Input extends StatelessWidget {
         decoration: InputDecoration(
           hintText: placeholder,
           hintStyle: TextStyle(
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
             fontSize: 16,
             color: myColors["gray"],
-            fontFamily: "Pro",
+            // fontFamily: "Pro",
           ),
           filled: true,
           focusColor: Colors.transparent,
@@ -222,18 +196,13 @@ class Input extends StatelessWidget {
           enabledBorder: InputBorder.none,
           border: InputBorder.none,
           focusedBorder: InputBorder.none,
-          prefixIcon: Container(
-              margin: const EdgeInsets.only(
-                top: 5,
-              ),
-              child: icon),
         ),
       ),
     );
   }
 }
 
-// ! Prefereces
+// ! Prefereces (deprecated)
 class PreferencesItem extends StatefulWidget {
   const PreferencesItem({
     super.key,
@@ -511,9 +480,14 @@ class DateBridge {
   bool changed;
 }
 
-class ListBridge {
+class ListBridge<T> {
   ListBridge({required this.value});
-  List<Widget> value;
+  List<T> value;
+}
+
+class Bridge<T> {
+  Bridge({required this.value});
+  T value;
 }
 
 // ! Activity blocks
@@ -521,9 +495,21 @@ class Activities extends StatefulWidget {
   const Activities({
     super.key,
     required this.town,
+    required this.bridge,
   });
 
   final String town;
+  final ListBridge<SelectedActivity> bridge;
+
+  List<Map<String, dynamic>> toJson() {
+    var toReturn = <Map<String, dynamic>>[];
+
+    for (var item in bridge.value) {
+      toReturn.add(item.toJson());
+    }
+
+    return toReturn;
+  }
 
   @override
   State<Activities> createState() => _ActivitiesState();
@@ -532,13 +518,12 @@ class Activities extends StatefulWidget {
 class _ActivitiesState extends State<Activities> {
   final TextEditingController _controller = TextEditingController();
   List<Widget> searchResults = [];
-  ListBridge bridge = ListBridge(value: []);
 
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(
-        maxWidth: 350,
+        maxWidth: 320,
         minWidth: 100,
       ),
       child: Column(
@@ -555,7 +540,7 @@ class _ActivitiesState extends State<Activities> {
                     '3.0/items',
                     {
                       'key': gisapiKey,
-                      'q': s + " в " + widget.town,
+                      'q': "$s в ${widget.town}",
                       "fields": "items.address,items.schedule",
                       "locale": "ru_RU",
                       // "type":
@@ -571,34 +556,38 @@ class _ActivitiesState extends State<Activities> {
 
                         searchResults = [];
                         for (var item in responce["result"]["items"]) {
-                          searchResults.add(
-                            Container(
-                              child: TextButton(
-                                child: Text(
-                                  item["name"],
-                                  style: const TextStyle(
-                                    fontFamily: "Pro",
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  print(item);
-                                  bridge.value.add(
-                                    SelectedActivity(
-                                      name: item["name"],
-                                      address: item["address_name"] == null
-                                          ? "нет адреса"
-                                          : item["address_name"],
-                                      schedule: item["schedule"],
-                                      bridge: bridge,
-                                      parent: this,
+                          if (item["type"] != "adm_div" &&
+                              item["type"] != "station" &&
+                              item["type"] != "street") {
+                            searchResults.add(
+                              Container(
+                                child: TextButton(
+                                  child: Text(
+                                    item["name"],
+                                    style: const TextStyle(
+                                      fontFamily: "Pro",
+                                      fontSize: 12,
                                     ),
-                                  );
-                                  setState(() {});
-                                },
+                                  ),
+                                  onPressed: () {
+                                    print(item);
+                                    setState(() {
+                                      widget.bridge.value.add(
+                                        SelectedActivity(
+                                          name: item["name"],
+                                          address: item["address_name"] ??
+                                              "нет адреса",
+                                          schedule: item["schedule"] ?? {},
+                                          bridge: widget.bridge,
+                                          parent: this,
+                                        ),
+                                      );
+                                    });
+                                  },
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          }
                           setState(() {});
                         }
                       } catch (e) {
@@ -614,7 +603,7 @@ class _ActivitiesState extends State<Activities> {
                 setState(() {});
               }
             },
-            icon: const SizedBox(height: 1),
+            // icon: const SizedBox(height: 1),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(10),
               topRight: Radius.circular(10),
@@ -622,41 +611,57 @@ class _ActivitiesState extends State<Activities> {
           ),
 
           // Search results
-          Container(
-            width: 320,
-            height: 200,
-            padding: const EdgeInsets.symmetric(
-              vertical: 10,
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: 306,
+              maxWidth: 307,
+              minHeight: 120,
+              maxHeight: 200,
             ),
-            decoration: const BoxDecoration(
-              color: Color(0xFFf7f5ec),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(10),
-                bottomRight: Radius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
               ),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                children: searchResults,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(10),
+                  bottomRight: Radius.circular(10),
+                ),
+                border: Border.all(color: const Color(0xFF000000)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: searchResults,
+                ),
               ),
             ),
           ),
 
           // Selected
-          Container(
-            width: 320,
-            height: 200,
-            margin: const EdgeInsets.only(top: 5),
-            padding: const EdgeInsets.symmetric(
-              vertical: 10,
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: 306,
+              maxWidth: 307,
+              minHeight: 120,
+              maxHeight: 200,
             ),
-            decoration: BoxDecoration(
-              color: const Color(0xFFf7f5ec),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                children: bridge.value,
+            child: Container(
+              // width: 307,
+              // height: 200,
+              margin: const EdgeInsets.only(top: 5),
+              padding: const EdgeInsets.symmetric(
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF),
+                border: Border.all(color: const Color(0xFF000000)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: widget.bridge.value,
+                ),
               ),
             ),
           ),
@@ -682,6 +687,14 @@ class SelectedActivity extends StatefulWidget {
   final ListBridge bridge;
   final State parent;
 
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+      "address": address,
+      "schedule": schedule,
+    };
+  }
+
   @override
   State<SelectedActivity> createState() => _SelectedActivityState();
 }
@@ -699,25 +712,29 @@ class _SelectedActivityState extends State<SelectedActivity> {
               title: const Text("Подробности"),
               content: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Адрес: ${widget.address}"),
-                  const Text("Время работы: ",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(
-                      "Понедельник - с ${widget.schedule["Mon"]["working_hours"][0]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
-                  Text(
-                      "Вторник - с ${widget.schedule["Tue"]["working_hours"][0]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
-                  Text(
-                      "Среда - с ${widget.schedule["Wed"]["working_hours"][0]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
-                  Text(
-                      "Четверг - с ${widget.schedule["Thu"]["working_hours"][0]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
-                  Text(
-                      "Пятница - с ${widget.schedule["Fri"]["working_hours"][0]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
-                  Text(
-                      "Суббота - с ${widget.schedule["Sat"]["working_hours"][0]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
-                  Text(
-                      "Воскресенье - с ${widget.schedule["Sun"]["working_hours"][0]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
-                ],
+                children: widget.schedule != {}
+                    ? [
+                        Text("Адрес: ${widget.address}"),
+                        const Text("Время работы: ",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                            "Понедельник - с ${widget.schedule["Mon"]["working_hours"][0]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
+                        Text(
+                            "Вторник - с ${widget.schedule["Tue"]["working_hours"][0]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
+                        Text(
+                            "Среда - с ${widget.schedule["Wed"]["working_hours"][0]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
+                        Text(
+                            "Четверг - с ${widget.schedule["Thu"]["working_hours"][0]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
+                        Text(
+                            "Пятница - с ${widget.schedule["Fri"]["working_hours"][0]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
+                        Text(
+                            "Суббота - с ${widget.schedule["Sat"]["working_hours"][0]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
+                        Text(
+                            "Воскресенье - с ${widget.schedule["Sun"]["working_hours"][0]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
+                      ]
+                    : [
+                        Text("Адрес: ${widget.address}"),
+                      ],
               ),
               actions: [
                 TextButton(
@@ -746,31 +763,39 @@ class _SelectedActivityState extends State<SelectedActivity> {
 
 // ! TRAVEL BLOCKS
 
-class TravelBlock extends StatelessWidget {
+class TravelBlock extends StatefulWidget {
   const TravelBlock({
     super.key,
+    required this.id,
     required this.travelName,
     required this.town,
-    required this.date,
+    required this.fromDate,
+    required this.toDate,
     required this.moneys,
-    required this.score,
     required this.full,
+    required this.activities,
   });
 
+  final int id;
   final String travelName;
   final String town;
-  final String date;
+  final String fromDate;
+  final String toDate;
   final String moneys;
-  final String score;
-
+  final List activities;
   final bool full;
 
   @override
+  State<TravelBlock> createState() => _TravelBlockState();
+}
+
+class _TravelBlockState extends State<TravelBlock> {
+  @override
   Widget build(BuildContext context) {
-    return !full
+    return !widget.full
         ? Container(
-            width: 361,
-            height: 67,
+            width: 307,
+            height: 75,
             decoration: BoxDecoration(
               color: const Color.fromRGBO(233, 233, 233, 1),
               borderRadius: BorderRadius.circular(20),
@@ -779,7 +804,7 @@ class TravelBlock extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Text(
-                  travelName,
+                  widget.travelName,
                   style: const TextStyle(
                     fontFamily: "Pro",
                     color: Color.fromRGBO(
@@ -788,13 +813,13 @@ class TravelBlock extends StatelessWidget {
                       61,
                       1,
                     ),
-                    fontSize: 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.2,
                   ),
                 ),
                 Text(
-                  "$town, $date",
+                  "${widget.town}\n${widget.fromDate}-${widget.toDate}",
                   style: const TextStyle(
                     fontFamily: "Pro",
                     color: Color.fromRGBO(
@@ -803,92 +828,112 @@ class TravelBlock extends StatelessWidget {
                       112,
                       1,
                     ),
-                    fontSize: 20,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           )
         : Container(
-            width: 361,
+            width: 307,
             height: 134,
             padding: const EdgeInsets.symmetric(
               horizontal: 19,
+              vertical: 15,
             ),
             decoration: BoxDecoration(
               color: const Color.fromRGBO(233, 233, 233, 1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Stack(
               children: [
-                Text(
-                  travelName,
-                  style: const TextStyle(
-                    fontFamily: "Pro",
-                    color: Color.fromRGBO(
-                      61,
-                      61,
-                      61,
-                      1,
-                    ),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                Row(
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Text(
-                      "$town, $date",
+                      widget.travelName,
                       style: const TextStyle(
                         fontFamily: "Pro",
                         color: Color.fromRGBO(
-                          112,
-                          112,
-                          112,
+                          61,
+                          61,
+                          61,
                           1,
                         ),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.2,
                       ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          "${widget.town}, ${widget.fromDate} - ${widget.toDate}",
+                          style: const TextStyle(
+                            fontFamily: "Pro",
+                            color: Color.fromRGBO(
+                              112,
+                              112,
+                              112,
+                              1,
+                            ),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          "Бюджет: ${widget.moneys}₽",
+                          style: const TextStyle(
+                            // fontFamily: "Pro",
+                            color: Color.fromRGBO(
+                              112,
+                              112,
+                              112,
+                              1,
+                            ),
+                            fontSize: 14,
+                            // fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          "Активностей: ${widget.activities.length}",
+                          style: const TextStyle(
+                            // fontFamily: "Pro",
+                            color: Color.fromRGBO(
+                              112,
+                              112,
+                              112,
+                              1,
+                            ),
+                            fontSize: 14,
+                            // fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    Text(
-                      moneys,
-                      style: const TextStyle(
-                        fontFamily: "Pro",
-                        color: Color.fromRGBO(
-                          112,
-                          112,
-                          112,
-                          1,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => ViewTravel(
+                          travelId: widget.id,
                         ),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
-                ),
-                Text(
-                  "$score баллов",
-                  style: const TextStyle(
-                    fontFamily: "Pro",
-                    color: Color.fromRGBO(
-                      61,
-                      61,
-                      61,
-                      1,
-                    ),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
-                  ),
-                ),
+                    );
+                  },
+                )
               ],
             ),
           );
@@ -924,26 +969,13 @@ class _DatePickerState extends State<DatePicker> {
     return Stack(
       children: [
         Container(
-          width: 319,
+          width: 307,
+          height: 48,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Colors.grey,
-                Color(0xFFf7f5ec),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0.0, 0.2],
-              tileMode: TileMode.clamp,
-            ),
             border: Border.all(
-              color: const Color.fromARGB(
-                255,
-                246,
-                246,
-                246,
-              ),
+              color: const Color(0xFF000000),
             ),
+            color: const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(
               10,
             ),
@@ -1078,7 +1110,11 @@ class TownHints extends StatefulWidget {
                     .replaceAll(r"бласт", "бласть")
                     .replaceAll(r"аы", "ай")
                     .replaceAll(r"кы", "кий")
-                    .replaceAll(r"лск", "льск");
+                    .replaceAll(r"лск", "льск")
+                    .replaceAll(r"ны", "ний")
+                    .replaceAll(r"еы", "ей")
+                    .replaceAll(r"сх", "ш");
+                town = town[0].toUpperCase() + town.substring(1);
 
                 reg = reg
                     .replaceAll(r"кх", "х")
@@ -1086,8 +1122,9 @@ class TownHints extends StatefulWidget {
                     .replaceAll(r"бласт", "бласть")
                     .replaceAll(r"аы", "ай")
                     .replaceAll(r"лск", "льск")
-                    .replaceAll(r"кы", "кий");
-
+                    .replaceAll(r"кы", "кий")
+                    .replaceAll(r"сх", "ш");
+                reg = reg[0].toUpperCase() + reg.substring(1);
                 mystate.setState(
                   () {
                     towns.add(
@@ -1121,9 +1158,7 @@ class TownHints extends StatefulWidget {
                             ],
                           ),
                           onPressed: () {
-                            print("Pressed. $reg $town");
-                            curtown = "$reg $town";
-
+                            curtown = "$reg, $town";
                             controller.text = "$town, $reg";
                           },
                         ),
@@ -1168,6 +1203,7 @@ class TownHintsState extends State<TownHints> {
   }
 }
 
+// ! Info on main screen
 class InfoBlock extends StatelessWidget {
   const InfoBlock({
     super.key,
@@ -1191,8 +1227,10 @@ class InfoBlock extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(offset: Offset(3, 0), blurRadius: 6, color: Colors.grey),
-          BoxShadow(offset: Offset(0, -3), blurRadius: 6, color: Colors.grey),
+          BoxShadow(
+              offset: Offset(3, 0), blurRadius: 6, color: Color(0xFF232323)),
+          BoxShadow(
+              offset: Offset(0, -3), blurRadius: 6, color: Color(0xFF232323)),
         ],
       ),
       child: Column(
@@ -1288,7 +1326,12 @@ class _InfoState extends State<Info> {
               color: Color(
                 0xFFC6A15B,
               ),
-            )
+            ),
+
+            // Margin
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 320) / 2,
+            ),
           ],
         ),
       ),
@@ -1296,6 +1339,145 @@ class _InfoState extends State<Info> {
   }
 }
 
+// ! Page fade
 FadeTransition trans(dynamic _, dynamic a, dynamic __, dynamic c) {
   return FadeTransition(opacity: a, child: c);
+}
+
+// ! Peoples count
+class PeoplesCountInput extends StatefulWidget {
+  const PeoplesCountInput({super.key, required this.bridge});
+
+  final Bridge<Map> bridge;
+
+  @override
+  State<StatefulWidget> createState() => _PeoplesCountInputState();
+}
+
+class _PeoplesCountInputState extends State<PeoplesCountInput> {
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints:
+          const BoxConstraints(maxWidth: 307, maxHeight: 142, minHeight: 47),
+      child: Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            border: Border.all(
+              color: const Color(0xFF000000),
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              const Text(
+                "Количество человек",
+                style: TextStyle(fontFamily: "Pro", fontSize: 14),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    child: const Text(
+                      "-",
+                      style: TextStyle(
+                        fontSize: 22.5,
+                        fontFamily: "Pro",
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(
+                        () {
+                          if (widget.bridge.value["parents"] > 0) {
+                            widget.bridge.value["parents"]--;
+                          }
+                        },
+                      );
+                    },
+                  ),
+                  Text(
+                    "Взрослые: ${widget.bridge.value["parents"]}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: "Pro",
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+                  TextButton(
+                    child: const Text(
+                      "+",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontFamily: "Pro",
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(
+                        () {
+                          widget.bridge.value["parents"]++;
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    child: const Text(
+                      "-",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontFamily: "Pro",
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(
+                        () {
+                          if (widget.bridge.value["children"] > 0) {
+                            widget.bridge.value["children"]--;
+                          }
+                        },
+                      );
+                    },
+                  ),
+                  Text(
+                    "Дети: ${widget.bridge.value["children"]}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: "Pro",
+                      color: Color(0xFF000000),
+                    ),
+                  ),
+                  TextButton(
+                    child: const Text(
+                      "+",
+                      style: TextStyle(
+                        fontSize: 22.5,
+                        fontFamily: "Pro",
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(
+                        () {
+                          widget.bridge.value["children"]++;
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

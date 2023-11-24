@@ -103,7 +103,7 @@ class _CreateTravelBudgetState extends State<CreateTravelBudget> {
               Container(
                 margin: const EdgeInsets.only(top: 40),
                 child: Input(
-                  placeholder: "10 000 ₽",
+                  placeholder: "10 000 \u20BD",
                   onChanged: (s) {
                     try {
                       if (s.isNotEmpty) {
@@ -117,13 +117,13 @@ class _CreateTravelBudgetState extends State<CreateTravelBudget> {
                     }
                   },
                   controller: budgetc,
-                  icon: SvgPicture.asset(
-                    "assets/images/svg/money.svg",
-                    width: 19,
-                    height: 19,
-                    color: myColors["gray"],
-                    fit: BoxFit.scaleDown,
-                  ),
+                  // icon: SvgPicture.asset(
+                  //   "assets/images/svg/money.svg",
+                  //   width: 19,
+                  //   height: 19,
+                  //   color: myColors["gray"],
+                  //   fit: BoxFit.scaleDown,
+                  // ),
                 ),
               ),
 
@@ -167,19 +167,27 @@ class _CreateTravelBudgetState extends State<CreateTravelBudget> {
                 child: BlackButton(
                   text: "Далее",
                   onPressed: () {
-                    var params = widget.params;
-                    params["budget"] = budgetc.text;
+                    if (budgetc.text.trim().isNotEmpty) {
+                      var params = widget.params;
+                      params["budget"] = budgetc.text;
 
-                    Navigator.of(context).push(
-                      PageRouteBuilder(
-                        pageBuilder: (context, _, __) =>
-                            CreateTravelChooseActivities(
-                          params: params,
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          pageBuilder: (context, _, __) =>
+                              CreateTravelChooseActivities(
+                            params: params,
+                          ),
+                          transitionsBuilder: trans,
+                          transitionDuration: const Duration(milliseconds: 200),
                         ),
-                        transitionsBuilder: trans,
-                        transitionDuration: const Duration(milliseconds: 200),
-                      ),
-                    );
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Введите ваш бюджет."),
+                        ),
+                      );
+                    }
                   },
                   color: myColors['blue1'],
                 ),

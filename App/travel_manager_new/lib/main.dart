@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages/auth/login.dart';
+// import "package:flutter_secure_storage/flutter_secure_storage.dart";
 
 void main() {
   runApp(const MainApp());
   SystemChrome.setEnabledSystemUIMode(
     SystemUiMode.immersiveSticky,
   );
+  // var s = const FlutterSecureStorage();
+  // s.deleteAll();
 }
 
 class MainApp extends StatefulWidget {
