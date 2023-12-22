@@ -1,0 +1,21 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление активностей</title>
+</head>
+<body>
+    <form action="../api/activities/insert" method="get">
+        <h1>Добавление активностей</h1>
+        <input type="text" name="name" required placeholder="Название активности (например, отель Мандрагора)">
+        <input type="text" name="town" required placeholder="Город">
+        <input type="text" name="description" required placeholder="Описание">
+        <input type="text" name="adress" required placeholder="Адрес">
+        <input type="hidden" name="lan" value="0">
+        <input type="hidden" name="lot" value="0">
+        <input type="hidden" name="images" value="0">
+        <input type="hidden" name="schedule" value="0">
+        <input type="submit" value="Добавить">
+    </form>
+</body>
+</html>

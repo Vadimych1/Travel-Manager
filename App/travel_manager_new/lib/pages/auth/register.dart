@@ -20,6 +20,7 @@ class _RegisterStep1State extends State<RegisterStep1> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -137,11 +138,10 @@ class _RegisterStep1State extends State<RegisterStep1> {
                         ),
                       );
                     } else {
-                      print("Getting");
                       get(
                         Uri.https(
                           "x1f9tspp-80.euw.devtunnels.ms",
-                          "/register",
+                          "/api/v1/register",
                           {
                             "username": _email.text.trim(),
                             "password": _password.text.trim(),
@@ -150,12 +150,10 @@ class _RegisterStep1State extends State<RegisterStep1> {
                         ),
                       ).then(
                         (value) {
-                          print(value.body);
                           var j = {};
                           try {
                             j = jsonDecode(value.body);
                           } catch (e) {
-                            print("Error");
                             return;
                           }
 
@@ -189,7 +187,6 @@ class _RegisterStep1State extends State<RegisterStep1> {
                                   ),
                                 );
                               default:
-                                print(j["code"]);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text("Произошла ошибка при входе"),
@@ -202,7 +199,6 @@ class _RegisterStep1State extends State<RegisterStep1> {
                     }
                   },
                   text: "Зарагестрироваться",
-                  // color: myColors["blue1"],
                 ),
               )
             ],

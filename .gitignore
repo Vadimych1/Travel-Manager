@@ -4,4 +4,5 @@ database
 servertest.py
 servertest2.py
 *.key
+*.log
 servertest.html

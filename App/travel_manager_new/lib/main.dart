@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages/auth/login.dart';
+import 'package:timezone/data/latest.dart' as tz;
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import "package:flutter/cupertino.dart";
 // import "package:flutter_secure_storage/flutter_secure_storage.dart";
 
 void main() {
   runApp(const MainApp());
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.immersiveSticky,
-  );
+  // SystemChrome.setEnabledSystemUIMode(
+  //   SystemUiMode.immersiveSticky,
+  // );
+  tz.initializeTimeZones();
+
   // var s = const FlutterSecureStorage();
   // s.deleteAll();
 }
@@ -24,8 +29,8 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return const AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-      ),
+          // statusBarColor: Colors.transparent,
+          ),
       child: MaterialApp(
         home: Scaffold(
           body: Center(
