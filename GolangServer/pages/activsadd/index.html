@@ -3,19 +3,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавление активностей</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            color: white;
+            background-color: #101010;
+            text-align: center;
+        }
+        input {
+            width: 400px;
+            border-radius: 10;
+            border: 1px solid #303030;
+            background: white;
+        }
+        input::focus {
+            outline: none;
+        }
+
+        form {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
 </head>
 <body>
     <form action="../api/activities/insert" method="get">
         <h1>Добавление активностей</h1>
-        <input type="text" name="name" required placeholder="Название активности (например, отель Мандрагора)">
-        <input type="text" name="town" required placeholder="Город">
-        <input type="text" name="description" required placeholder="Описание">
-        <input type="text" name="adress" required placeholder="Адрес">
-        <input type="hidden" name="lan" value="0">
-        <input type="hidden" name="lot" value="0">
-        <input type="hidden" name="images" value="0">
-        <input type="hidden" name="schedule" value="0">
+        <input type="text" name="name" required placeholder="Название активности (например, отель Мандрагора)"><br><br>
+        <input type="text" name="town" required placeholder="Город"><br><br>
+        <input type="text" name="desc" required placeholder="Описание"><br><br>
+        <input type="text" name="addr" required placeholder="Адрес"><br><br>
         <input type="submit" value="Добавить">
     </form>
 </body>
+<script>
+    let form = document.querySelector('form');
+
+    if (window.location != "/activsadd") {
+        form.action = "";
+    }
+</script>
 </html>

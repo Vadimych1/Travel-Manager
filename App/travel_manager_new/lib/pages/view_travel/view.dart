@@ -55,7 +55,7 @@ class _ViewTravelState extends State<ViewTravel> {
             get(
               Uri.https(
                 "x1f9tspp-80.euw.devtunnels.ms",
-                "get_travel",
+                "api/v1/get_travel",
                 {
                   "username": usr,
                   "password": pwd,
@@ -66,12 +66,13 @@ class _ViewTravelState extends State<ViewTravel> {
               (r) {
                 try {
                   var resp = jsonDecode(
-                    Uri.decodeComponent(r.body)
+                    r.body
                         .replaceAll("+", " ")
                         .replaceAll('"activities":"', '"activities":')
                         .replaceAll('}]"', "}]")
                         .replaceAll("\"{", "{")
-                        .replaceAll("}\"", "}"),
+                        .replaceAll("}\"", "}")
+                        .replaceAll("\\", ""),
                   );
                   if (resp["status"] == "success") {
                     travel = resp["content"];
@@ -454,7 +455,7 @@ class _ViewTravelState extends State<ViewTravel> {
                         get(
                           Uri.https(
                             "x1f9tspp-80.euw.devtunnels.ms",
-                            "edit_travel",
+                            "api/v1/edit_travel",
                             {
                               "username": usr,
                               "password": pwd,
@@ -490,6 +491,7 @@ class _ViewTravelState extends State<ViewTravel> {
                                     ),
                                   ),
                                 );
+                                print(resp);
                               }
                             }
                           },

@@ -142,6 +142,23 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
                     var s = const FlutterSecureStorage();
                     var d = widget.params;
 
+                    print(
+                      {
+                        "username": "0",
+                        "password": "0",
+                        "plan_name": d["travelName"] ?? "0",
+                        "activities": jsonEncode(d["activities"] ?? "[]"),
+                        "from_date": d["startDate"].toString(),
+                        "to_date": d["endDate"].toString(),
+                        "budget": "-",
+                        "live_place": "null",
+                        "expenses": "{}",
+                        "meta": "{}",
+                        "people_count": d["peopleCount"] ?? "0",
+                        "town": d["town"] ?? "0",
+                      },
+                    );
+
                     s.read(key: "username").then(
                       (usr) {
                         s.read(key: "password").then(
@@ -149,20 +166,21 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
                             // print(d);
                             var uri = Uri.https(
                               "x1f9tspp-80.euw.devtunnels.ms",
-                              "create_travel",
+                              "api/v1/create_travel",
                               {
-                                "username": usr,
-                                "password": pwd,
-                                "plan_name": d["travelName"],
-                                "activities": jsonEncode(d["activities"]),
+                                "username": usr ?? "0",
+                                "password": pwd ?? "0",
+                                "plan_name": d["travelName"] ?? "0",
+                                "activities":
+                                    jsonEncode(d["activities"] ?? "[]"),
                                 "from_date": d["startDate"].toString(),
                                 "to_date": d["endDate"].toString(),
-                                "budget": d["budget"],
+                                "budget": "0",
                                 "live_place": "null",
                                 "expenses": "{}",
                                 "meta": "{}",
-                                "people_count": d["peopleCount"],
-                                "town": d["town"],
+                                "people_count": d["peopleCount"] ?? "0",
+                                "town": d["town"] ?? "0",
                               },
                             );
                             get(uri).then(

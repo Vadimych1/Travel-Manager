@@ -240,13 +240,12 @@ func InsertPlan(plan Travel) bool {
 
 	// Define the query to insert a plan into the plans table
 	query := `INSERT INTO plans 
-		(owner, id, plan_name, activities, from_date, to_date, live_place, budget, expenses, meta, town, people_count) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		(owner, plan_name, activities, from_date, to_date, live_place, budget, expenses, meta, town, people_count) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Create a slice of interface values to hold the query arguments
 	args := []interface{}{
 		plan.Owner,
-		plan.Id,
 		plan.Plan_name,
 		plan.Activities,
 		plan.From_date,
@@ -262,9 +261,9 @@ func InsertPlan(plan Travel) bool {
 	// If the plan has an ID, update the query and prepend the ID to the args slice
 	if plan.Id != "" {
 		query = `INSERT INTO plans 
-			(owner, plan_name, activities, from_date, to_date, live_place, budget, expenses, meta, town, people_count) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		args = append([]interface{}{plan.Owner}, args...)
+			(id, owner, plan_name, activities, from_date, to_date, live_place, budget, expenses, meta, town, people_count) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		args = append([]interface{}{plan.Id}, args...)
 	}
 
 	// Execute the query with the arguments and assign the result to the err variable
@@ -297,7 +296,7 @@ func InsertPlace(activity Place) bool {
 
 	// SQL query to insert a new activity into the activities table
 	query := `INSERT INTO activities 
-	(name, town, lan, lot, address, images, schedule, description) 
+	(name, town, lan, lot, adress, images, schedule, description) 
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Arguments for the SQL query

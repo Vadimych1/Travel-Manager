@@ -552,11 +552,19 @@ class _ActivitiesState extends State<Activities> {
                       'username': username,
                       'password': password,
                       'q': s,
-                      'town': widget.town,
+                      'town': widget.town.replaceAll(",", ""),
                     },
                   ),
                 ).then(
                   (resp) {
+                    print(
+                      {
+                        'username': username,
+                        'password': password,
+                        'q': s,
+                        'town': widget.town.replaceAll(",", ""),
+                      },
+                    );
                     if (resp.statusCode == 200) {
                       try {
                         var responce = jsonDecode(resp.body);
@@ -577,12 +585,17 @@ class _ActivitiesState extends State<Activities> {
                                 ),
                                 onPressed: () {
                                   setState(() {
+                                    var schedule = item["schedule"];
+                                    if (schedule is String) {
+                                      schedule = jsonDecode(schedule);
+                                    }
+
                                     widget.bridge.value.add(
                                       SelectedActivity(
                                         name: item["name"],
                                         address:
                                             item["address"] ?? "нет адреса",
-                                        schedule: item["schedule"] ?? {},
+                                        schedule: schedule ?? {},
                                         bridge: widget.bridge,
                                         parent: this,
                                       ),
@@ -720,19 +733,19 @@ class _SelectedActivityState extends State<SelectedActivity> {
                         const Text("Время работы: ",
                             style: TextStyle(fontWeight: FontWeight.w600)),
                         Text(
-                            "Понедельник - с ${widget.schedule["Mon"]["working_hours"][0]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
+                            "Понедельник - с ${widget.schedule["Mon"]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
                         Text(
-                            "Вторник - с ${widget.schedule["Tue"]["working_hours"][0]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
+                            "Вторник - с ${widget.schedule["Tue"]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
                         Text(
-                            "Среда - с ${widget.schedule["Wed"]["working_hours"][0]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
+                            "Среда - с ${widget.schedule["Wed"]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
                         Text(
-                            "Четверг - с ${widget.schedule["Thu"]["working_hours"][0]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
+                            "Четверг - с ${widget.schedule["Thu"]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
                         Text(
-                            "Пятница - с ${widget.schedule["Fri"]["working_hours"][0]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
+                            "Пятница - с ${widget.schedule["Fri"]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
                         Text(
-                            "Суббота - с ${widget.schedule["Sat"]["working_hours"][0]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
+                            "Суббота - с ${widget.schedule["Sat"]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
                         Text(
-                            "Воскресенье - с ${widget.schedule["Sun"]["working_hours"][0]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
+                            "Воскресенье - с ${widget.schedule["Sun"]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
                       ]
                     : [
                         Text("Адрес: ${widget.address}"),

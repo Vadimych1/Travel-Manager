@@ -602,18 +602,26 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 				case "search":
 					search_activities(s, w, params)
 				case "insert":
-					if params["name"] != "" && params["town"] != "" && params["description"] != "" && params["lan"] != "" && params["lot"] != "" && params["address"] != "" && params["images"] != "" && params["schedule"] != "" {
+					name := params["name"]
+					town := strings.ToLower(params["town"])
+					desc := params["desc"]
+					addr := params["addr"]
+
+					if name != "" && town != "" && desc != "" && addr != "" {
 						userdb.InsertPlace(userdb.Place{
-							Name:        params["name"],
-							Town:        params["town"],
-							Description: params["description"],
-							Lan:         params["lan"],
-							Lot:         params["lot"],
-							Address:     params["address"],
-							Images:      params["images"],
-							Schedule:    params["schedule"],
+							Name:        name,
+							Town:        town,
+							Description: desc,
+							Lan:         "0",
+							Lot:         "0",
+							Address:     addr,
+							Images:      "[]",
+							Schedule:    `{"Mon": {"from": "00:00", "to": "24:00"}, "Tue": {"from": "00:00", "to": "24:00"}, "Wed": {"from": "00:00", "to": "24:00"},  "Thu": {"from": "00:00", "to": "24:00"}, "Fri": {"from": "00:00", "to": "24:00"}, "Sat": {"from": "00:00", "to": "24:00"}, "Sun": {"from": "00:00", "to": "24:00"}}`,
 						})
 						default_get(params, w, r, settings, "/activsadd")
+					} else {
+						m, _ := json.Marshal(params)
+						fmt.Fprint(w, "bad request. \n <h1>Попробуйте снова</h1> <p>"+string(m)+"</p>")
 					}
 				}
 			default:
@@ -648,15 +656,21 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var s, _ = url.QueryUnescape(r.URL.Path)
+		var q, _ = url.QueryUnescape(r.URL.RawQuery)
 
 		var params map[string]string
-		if len(r.URL.RawQuery) > 0 {
-			var params_ = strings.Split(r.URL.RawQuery, "&")
+		if len(q) > 0 {
+			var params_ = strings.Split(q, "&")
 			params = map[string]string{}
 
 			for _, v := range params_ {
 				var s = strings.Split(v, "=")
-				params[s[0]] = s[1]
+				if len(s) >= 2 {
+					params[s[0]] = s[1]
+				} else {
+					Log("Error: bad query (" + v + ")")
+				}
+
 			}
 		}
 

@@ -70,12 +70,13 @@ class _MainHomeState extends State<MainHome> {
                         var undec = value.body;
 
                         var j = jsonDecode(
-                          Uri.decodeComponent(undec)
+                          undec
                               .replaceAll("+", " ")
                               .replaceAll('"activities":"', '"activities":')
                               .replaceAll('}]"', "}]")
                               .replaceAll("\"{", "{")
-                              .replaceAll("}\"", "}"),
+                              .replaceAll("}\"", "}")
+                              .replaceAll("\\", ""),
                         );
 
                         travels.add(SizedBox(
