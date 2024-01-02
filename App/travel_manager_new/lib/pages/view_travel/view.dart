@@ -8,6 +8,7 @@ import "package:travel_manager_new/pages/auth/login.dart";
 import "../../uikit/uikit.dart";
 import "package:flutter_svg/flutter_svg.dart";
 import "package:http/http.dart";
+import "./activity_view.dart";
 
 class ViewTravel extends StatefulWidget {
   const ViewTravel({super.key, required this.travelId});
@@ -20,6 +21,7 @@ class ViewTravel extends StatefulWidget {
 
 class _ViewTravelState extends State<ViewTravel> {
   List<Widget> content = [];
+  List<Widget> activities = [];
   bool napominanie = false;
   bool zaDenDo = false;
   final TextEditingController _napominanieTimeController =
@@ -54,7 +56,7 @@ class _ViewTravelState extends State<ViewTravel> {
           (pwd) {
             get(
               Uri.https(
-                "x1f9tspp-80.euw.devtunnels.ms",
+                serveraddr,
                 "api/v1/get_travel",
                 {
                   "username": usr,
@@ -98,11 +100,46 @@ class _ViewTravelState extends State<ViewTravel> {
                       _napominanieTimeController.text = "";
                     }
 
+                    travel["activities"].forEach(
+                      (e) => {
+                        activities.add(
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            width: 290,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF444444),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                            ),
+                            child: TextButton(
+                              child: Text(
+                                e["name"],
+                                style: const TextStyle(
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ActivityView(
+                                      activity: e,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        )
+                      },
+                    );
+
                     content = [
                       // About
                       Container(
                         width: 307,
-                        margin: const EdgeInsets.only(top: 60),
+                        margin: const EdgeInsets.only(top: 20),
                         padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFFFFF),
@@ -251,6 +288,23 @@ class _ViewTravelState extends State<ViewTravel> {
                           ],
                         ),
                       ),
+
+                      // Activities
+                      Container(
+                        width: 307,
+                        height: 210,
+                        margin: const EdgeInsets.only(top: 40),
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFFFF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: activities,
+                          ),
+                        ),
+                      ),
                     ];
                     setState(() {});
                   } else {
@@ -298,10 +352,39 @@ class _ViewTravelState extends State<ViewTravel> {
             ),
           ),
 
+          // Content
+          Container(
+            width: MediaQuery.of(context).size.width,
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.only(top: 50, left: 60),
+                  width: MediaQuery.of(context).size.width,
+                  height: 100,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF101010),
+                  ),
+                  child: const Text(
+                    "Просмотр поездки",
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      fontFamily: "Pro",
+                      color: Color(0xFFFFFFFF),
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+                Column(
+                  children: content,
+                )
+              ],
+            ),
+          ),
+
           // Back button
           Container(
             margin: const EdgeInsets.only(
-              top: 57,
+              top: 40,
               left: 0,
             ),
             child: TextButton(
@@ -314,30 +397,6 @@ class _ViewTravelState extends State<ViewTravel> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-            ),
-          ),
-
-          // Content
-          Container(
-            width: MediaQuery.of(context).size.width,
-            margin: const EdgeInsets.only(
-              top: 30,
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  "Просмотр поездки",
-                  style: TextStyle(
-                    fontFamily: "Pro",
-                    color: Color(0xFFFFFFFF),
-                    fontSize: 20,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                Column(
-                  children: content,
-                )
-              ],
             ),
           ),
 
@@ -454,7 +513,7 @@ class _ViewTravelState extends State<ViewTravel> {
                       (pwd) {
                         get(
                           Uri.https(
-                            "x1f9tspp-80.euw.devtunnels.ms",
+                            serveraddr,
                             "api/v1/edit_travel",
                             {
                               "username": usr,

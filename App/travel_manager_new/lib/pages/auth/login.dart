@@ -28,17 +28,14 @@ class _LoginPageState extends State<LoginPage> {
         if (username != null && username != "") {
           s.read(key: "password").then(
             (password) {
-              print("LOGINING BY PASSWORD AND USERNAME IN LOCAL STORAGE");
               get(
                 Uri.https(
-                  "x1f9tspp-80.euw.devtunnels.ms",
+                  serveraddr,
                   "/api/v1/login",
                   {"username": username, "password": password},
                 ),
               ).then(
                 (value) {
-                  print("OK");
-                  print(value.body);
                   var j = jsonDecode(value.body);
 
                   s.write(key: "name", value: j["name"]);

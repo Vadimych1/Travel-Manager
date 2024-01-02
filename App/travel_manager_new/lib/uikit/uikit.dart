@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/svg.dart';
 
+const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms";
+
 const String vkapiKey =
     "2320e98d2320e98d2320e98d652035789d223202320e98d47da2fa056600b3052f44d4c";
 
@@ -546,7 +548,7 @@ class _ActivitiesState extends State<Activities> {
               if (s.length > 1) {
                 get(
                   Uri.https(
-                    "x1f9tspp-80.euw.devtunnels.ms",
+                    serveraddr,
                     'api/activities/search',
                     {
                       'username': username,

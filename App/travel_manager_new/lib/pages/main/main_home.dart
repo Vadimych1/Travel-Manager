@@ -7,7 +7,6 @@ import 'package:travel_manager_new/pages/add_travel/choose_town.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:translit/translit.dart';
 
 class MainHome extends StatefulWidget {
   const MainHome({super.key});
@@ -61,7 +60,7 @@ class _MainHomeState extends State<MainHome> {
                   (pwd) => {
                     get(
                       Uri.https(
-                        "x1f9tspp-80.euw.devtunnels.ms",
+                        serveraddr,
                         "api/v1/get_all_travels",
                         {"username": usr, "password": pwd},
                       ),

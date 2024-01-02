@@ -140,7 +140,7 @@ class _RegisterStep1State extends State<RegisterStep1> {
                     } else {
                       get(
                         Uri.https(
-                          "x1f9tspp-80.euw.devtunnels.ms",
+                          serveraddr,
                           "/api/v1/register",
                           {
                             "username": _email.text.trim(),
