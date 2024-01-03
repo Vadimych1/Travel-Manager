@@ -690,3 +690,217 @@ Starting HTTP server on 80
 Connected to database
 Server started successfully
 Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error: bad query (password)
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1054 (42S22): Unknown column 'keys' in 'where clause'
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'as relev FROM activities WHERE
+	MATCH`keywords` AGAINST (?)>0 AND town = ? ORDER' at line 2
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'as relev FROM activities WHERE
+	MATCH `keywords` AGAINST (?)>0 AND town = ? ORDE' at line 2
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'OR 
+	MATCH `keywords`
+	AGAINST (?) as relev FROM activities WHERE 
+	MATCH `keywo' at line 3
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'as relev FROM activities WHERE 
+	MATCH `keywords` AGAINST (?)>0 AND town = ? ORD' at line 5
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'OR MATCH `keywords` AGAINST (?)>0 AND town = ? ORDER BY relev DESC LIMIT 15' at line 3
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''name'
+	AGAINST (?) as relev FROM activities WHERE
+	MATCH `name` AGAINST (?)>0 A' at line 1
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ') as relev FROM activities WHERE
+	MATCH `name` AGAINST (+?+)>0 AND town = ? ORDE' at line 2
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ') ORDER BY relev DESC LIMIT 15' at line 3
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error 1191 (HY000): Can't find FULLTEXT index matching the column list
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-03--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels

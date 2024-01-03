@@ -495,16 +495,24 @@ class _ViewTravelState extends State<ViewTravel> {
                   }
                   var time = TZDateTime.from(dtime, local);
 
-                  flutterLocalNotificationsPlugin.zonedSchedule(
-                    0,
-                    'Travel Manager',
-                    'Напоминаем о поездке ${travel["plan_name"]}.',
-                    time,
-                    platformChannelSpecifics,
-                    uiLocalNotificationDateInterpretation:
-                        UILocalNotificationDateInterpretation.absoluteTime,
-                    androidAllowWhileIdle: true,
-                  );
+                  flutterLocalNotificationsPlugin
+                      .zonedSchedule(
+                        1,
+                        'Travel Manager',
+                        'Напоминаем о поездке ${travel["plan_name"]}.',
+                        time,
+                        platformChannelSpecifics,
+                        uiLocalNotificationDateInterpretation:
+                            UILocalNotificationDateInterpretation.absoluteTime,
+                        androidScheduleMode:
+                            AndroidScheduleMode.exactAllowWhileIdle,
+                      )
+                      .onError(
+                        (error, stackTrace) => {
+                          print(error),
+                          print("Trace" + stackTrace.toString()),
+                        },
+                      );
                 }
 
                 s.read(key: "username").then(

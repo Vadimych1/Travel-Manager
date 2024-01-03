@@ -58,6 +58,8 @@ class _MainHomeState extends State<MainHome> {
           (usr) => {
             secureStorage.read(key: "password").then(
                   (pwd) => {
+                    print("usr: $usr"),
+                    print("pwd: $pwd"),
                     get(
                       Uri.https(
                         serveraddr,

@@ -15,7 +15,25 @@
             border-radius: 10;
             border: 1px solid #303030;
             background: white;
+            height: 30px;
+            border-radius: 10px;
+            padding-left: 10px;
         }
+
+        input[type=submit] {
+            background: #303030;
+            color: white;
+            border: none;
+            padding-left: 0;
+        }
+
+        input[type=submit]:hover {
+            background: #505050;
+            color: white;
+            border: none;
+            padding-left: 0;
+        }
+
         input::focus {
             outline: none;
         }
@@ -32,16 +50,37 @@
         <h1>Добавление активностей</h1>
         <input type="text" name="name" required placeholder="Название активности (например, отель Мандрагора)"><br><br>
         <input type="text" name="town" required placeholder="Город"><br><br>
-        <input type="text" name="desc" required placeholder="Описание"><br><br>
         <input type="text" name="addr" required placeholder="Адрес"><br><br>
-        <input type="submit" value="Добавить">
+        <input type="text" name="desc" required placeholder="Описание"><br><br>
+        <input type="text" name="keys" required placeholder="Ключевые слова"><br><br>
+        <input value="Добавить" id="aa" type="button">
     </form>
 </body>
 <script>
     let form = document.querySelector('form');
 
-    if (window.location != "/activsadd") {
+    if (window.location.pathname != "/activsadd/" && window.location.pathname != "/activsadd") {
         form.action = "";
+    }
+
+    var sounds = [
+        "1.mp3",
+        "2.ogg",
+        "3.mp3",
+        "4.mp3",
+        "5.mp3"
+    ]
+
+    document.querySelector("#aa").onclick = () => {
+        console.log("aboba")
+        let audio = new Audio("https://x1f9tspp-80.euw.devtunnels.ms/activsadd/sounds/" + sounds[Math.trunc(Math.random()*sounds.length)]);
+        document.body.append(audio)
+
+        audio.play()
+
+        setTimeout(() => {
+            form.submit()
+        }, 3000)
     }
 </script>
 </html>

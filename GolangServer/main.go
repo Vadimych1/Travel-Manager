@@ -438,6 +438,14 @@ func default_get(params map[string]string, w http.ResponseWriter, r *http.Reques
 			// Log(err.Error())
 			return
 		}
+	} else if strings.HasSuffix(s, ".mp3") || strings.HasSuffix(s, ".ogg") {
+		w.Header().Set("Content-Type", "audio/mpeg")
+		b, err = os.ReadFile("./pages" + s)
+		if err != nil {
+			fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
+			// Log(err.Error())
+			return
+		}
 	} else {
 		b, err = os.ReadFile("./pages" + s + ".html")
 
@@ -516,7 +524,7 @@ func replacePlaceholders(content string, settings map[string]string, log string)
 
 func search_activities(s string, w http.ResponseWriter, params map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if params["q"] != "" && ((params["username"] != "" && params["password"] != "") || params["api_key"] != "") {
+	if (params["username"] != "" && params["password"] != "") || params["api_key"] != "" {
 		// auth
 		if params["api_key"] != "" {
 			// api_key
@@ -569,6 +577,40 @@ func search_activities(s string, w http.ResponseWriter, params map[string]string
 	}
 }
 
+func removeDuplicates(arr []string) []string {
+	resultMap := make(map[string]bool)
+	result := []string{}
+
+	for _, num := range arr {
+		if !resultMap[num] {
+			resultMap[num] = true
+			result = append(result, num)
+		}
+	}
+
+	return result
+}
+
+func prep_keys(in string) string {
+	s := strings.Split(in, " ")
+	ret := ""
+
+	for si := 0; si < len(s); si++ {
+		sp := strings.Split(s[si], "")
+		prev := ""
+
+		for i := 0; i < len(sp); i++ {
+			prev += sp[i]
+			ret += prev + " "
+		}
+	}
+
+	ret2 := strings.Split(ret, " ")
+	ret = strings.Join(removeDuplicates(ret2), " ")
+
+	return ret
+}
+
 func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
 	without_suff, _ := strings.CutSuffix(s, "/")
 	without_pref, _ := strings.CutPrefix(without_suff, "/")
@@ -606,6 +648,7 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 					town := strings.ToLower(params["town"])
 					desc := params["desc"]
 					addr := params["addr"]
+					keys := params["keys"]
 
 					if name != "" && town != "" && desc != "" && addr != "" {
 						userdb.InsertPlace(userdb.Place{
@@ -617,6 +660,7 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 							Address:     addr,
 							Images:      "[]",
 							Schedule:    `{"Mon": {"from": "00:00", "to": "24:00"}, "Tue": {"from": "00:00", "to": "24:00"}, "Wed": {"from": "00:00", "to": "24:00"},  "Thu": {"from": "00:00", "to": "24:00"}, "Fri": {"from": "00:00", "to": "24:00"}, "Sat": {"from": "00:00", "to": "24:00"}, "Sun": {"from": "00:00", "to": "24:00"}}`,
+							Keys:        prep_keys(keys),
 						})
 						default_get(params, w, r, settings, "/activsadd")
 					} else {

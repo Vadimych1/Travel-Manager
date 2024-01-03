@@ -47,6 +47,7 @@ type Place struct {
 	Images      string `json:"images"`
 	Schedule    string `json:"schedule"`
 	Description string `json:"description"`
+	Keys        string `json:"keys"`
 }
 
 // FeeDback
@@ -296,8 +297,8 @@ func InsertPlace(activity Place) bool {
 
 	// SQL query to insert a new activity into the activities table
 	query := `INSERT INTO activities 
-	(name, town, lan, lot, adress, images, schedule, description) 
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	(name, town, lan, lot, adress, images, schedule, description, keywords) 
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Arguments for the SQL query
 	args := []interface{}{
@@ -309,13 +310,16 @@ func InsertPlace(activity Place) bool {
 		activity.Images,
 		activity.Schedule,
 		activity.Description,
+		activity.Keys,
 	}
 
 	// Execute the SQL query with the arguments
 	_, err = Db.Exec(query, args...)
 
-	// Print the error (if any)
-	fmt.Println(err)
+	// Print the error
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// Return true if the error is nil, indicating successful insertion
 	return err == nil
@@ -339,7 +343,7 @@ func SearchPlace(id int) (Place, error) {
 	// Process the query result
 	if rows.Next() {
 		var activity Place
-		err := rows.Scan(&activity.Id, &activity.Name, &activity.Town, &activity.Lan, &activity.Lot, &activity.Address, &activity.Images, &activity.Schedule, &activity.Description)
+		err := rows.Scan(&activity.Id, &activity.Name, &activity.Town, &activity.Lan, &activity.Lot, &activity.Address, &activity.Images, &activity.Schedule, &activity.Description, &activity.Keys)
 		if err != nil {
 			return Place{}, err
 		}
@@ -393,9 +397,9 @@ func DeletePlace(id int) bool {
 
 // Search activities from table activities with given name
 func SearchPlaces(query string, town string) ([]Place, error) {
-	rows, err := Db.Query(`SELECT * , MATCH `+"`name`"+`
+	rows, err := Db.Query(`SELECT * , MATCH (name, keywords)
 	AGAINST (?) as relev FROM activities WHERE
-	MATCH`+"`name`"+` AGAINST (?)>0 AND town = ? ORDER BY relev DESC LIMIT 15`,
+	MATCH (name, keywords) AGAINST (?)>0 AND MATCH (town) AGAINST (?) ORDER BY relev DESC LIMIT 15`,
 		query,
 		query,
 		town,
@@ -414,11 +418,12 @@ func SearchPlaces(query string, town string) ([]Place, error) {
 	var images string
 	var schedule string
 	var description string
-	var unkn string
+	var keys string
+	var u string
 
 	var activities = make([]Place, 0)
 	for rows.Next() {
-		rows.Scan(&id, &name, &town_, &lan, &lot, &adress, &images, &schedule, &description, &unkn)
+		rows.Scan(&id, &name, &town_, &lan, &lot, &adress, &images, &schedule, &description, &keys, &u)
 		activities = append(activities, Place{
 			Id:          id,
 			Name:        name,
@@ -429,6 +434,7 @@ func SearchPlaces(query string, town string) ([]Place, error) {
 			Images:      images,
 			Schedule:    schedule,
 			Description: description,
+			Keys:        keys,
 		})
 	}
 

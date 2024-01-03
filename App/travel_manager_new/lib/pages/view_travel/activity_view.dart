@@ -46,7 +46,6 @@ class _ActivityViewState extends State<ActivityView> {
               ],
             ),
           ),
-
           // Info
           Container(
             padding: const EdgeInsets.all(15),
@@ -54,9 +53,11 @@ class _ActivityViewState extends State<ActivityView> {
             child: Column(
               children: [
                 Text(
-                  widget.activity["description"],
+                  widget.activity.keys.toString(),
                 ),
-                Text(widget.activity[""])
+                Text(
+                  widget.activity["address"] ?? "err",
+                ),
               ],
             ),
           ),
