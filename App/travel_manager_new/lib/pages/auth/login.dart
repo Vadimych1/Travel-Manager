@@ -15,6 +15,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+var loaded = false;
 var s = const FlutterSecureStorage();
 
 class _LoginPageState extends State<LoginPage> {
@@ -48,6 +49,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     );
                   } else {
+                    setState(() {
+                      loaded = true;
+                    });
+
                     switch (j["code"]) {
                       case "user_not_exists":
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -73,6 +78,10 @@ class _LoginPageState extends State<LoginPage> {
               );
             },
           );
+        } else {
+          setState(() {
+            loaded = true;
+          });
         }
       },
     );
@@ -231,6 +240,25 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ],
+          ),
+
+          // Loadscreen
+          Container(
+            width: loaded ? 0 : MediaQuery.of(context).size.width,
+            height: loaded ? 0 : MediaQuery.of(context).size.height,
+            color: Colors.white.withOpacity(0.5),
+            child: loaded
+                ? null
+                : const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Color(0xFF000000),
+                        semanticsLabel: "Загрузка...",
+                        semanticsValue: "Загрузка...",
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),

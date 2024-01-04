@@ -142,23 +142,6 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
                     var s = const FlutterSecureStorage();
                     var d = widget.params;
 
-                    print(
-                      {
-                        "username": "0",
-                        "password": "0",
-                        "plan_name": d["travelName"] ?? "0",
-                        "activities": jsonEncode(d["activities"] ?? "[]"),
-                        "from_date": d["startDate"].toString(),
-                        "to_date": d["endDate"].toString(),
-                        "budget": "-",
-                        "live_place": "null",
-                        "expenses": "{}",
-                        "meta": "{}",
-                        "people_count": d["peopleCount"] ?? "0",
-                        "town": d["town"] ?? "0",
-                      },
-                    );
-
                     s.read(key: "username").then(
                       (usr) {
                         s.read(key: "password").then(
@@ -186,10 +169,8 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
                             get(uri).then(
                               (value) {
                                 var j = jsonDecode(value.body);
-                                print("json decoded: $j");
 
                                 if (j["status"] == "success") {
-                                  print("OK");
                                   Navigator.of(context)
                                       .popUntil((route) => false);
                                   Navigator.of(context).push(

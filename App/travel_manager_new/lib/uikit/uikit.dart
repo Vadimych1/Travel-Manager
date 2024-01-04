@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import "../pages/view_travel/view.dart";
 import 'package:http/http.dart';
 import 'package:translit/translit.dart';
@@ -506,7 +505,9 @@ class Activities extends StatefulWidget {
     var toReturn = <Map<String, dynamic>>[];
 
     for (var item in bridge.value) {
-      toReturn.add(item.toJson());
+      toReturn.add(
+        item.toJson(),
+      );
     }
 
     return toReturn;
@@ -559,22 +560,12 @@ class _ActivitiesState extends State<Activities> {
                   ),
                 ).then(
                   (resp) {
-                    print(
-                      {
-                        'username': username,
-                        'password': password,
-                        'q': s,
-                        'town': widget.town.replaceAll(",", ""),
-                      },
-                    );
                     if (resp.statusCode == 200) {
                       try {
                         var responce = jsonDecode(resp.body);
-                        print(responce);
 
                         searchResults = [];
                         for (var item in responce) {
-                          print("ADDING");
                           searchResults.add(
                             Container(
                               child: TextButton(
@@ -600,6 +591,7 @@ class _ActivitiesState extends State<Activities> {
                                         schedule: schedule ?? {},
                                         bridge: widget.bridge,
                                         parent: this,
+                                        p: item,
                                       ),
                                     );
                                   });
@@ -696,6 +688,7 @@ class SelectedActivity extends StatefulWidget {
     required this.schedule,
     required this.bridge,
     required this.parent,
+    required this.p,
   });
 
   final String name;
@@ -703,13 +696,10 @@ class SelectedActivity extends StatefulWidget {
   final Map<String, dynamic> schedule;
   final ListBridge bridge;
   final State parent;
+  final Map<String, dynamic> p;
 
   Map<String, dynamic> toJson() {
-    return {
-      "name": name,
-      "address": address,
-      "schedule": schedule,
-    };
+    return p;
   }
 
   @override
@@ -734,20 +724,21 @@ class _SelectedActivityState extends State<SelectedActivity> {
                         Text("Адрес: ${widget.address}"),
                         const Text("Время работы: ",
                             style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text(
-                            "Понедельник - с ${widget.schedule["Mon"]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
-                        Text(
-                            "Вторник - с ${widget.schedule["Tue"]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
-                        Text(
-                            "Среда - с ${widget.schedule["Wed"]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
-                        Text(
-                            "Четверг - с ${widget.schedule["Thu"]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
-                        Text(
-                            "Пятница - с ${widget.schedule["Fri"]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
-                        Text(
-                            "Суббота - с ${widget.schedule["Sat"]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
-                        Text(
-                            "Воскресенье - с ${widget.schedule["Sun"]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
+                        // TODO: add working hours (on ss)
+                        // Text(
+                        //     "Понедельник - с ${widget.schedule["Mon"]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
+                        // Text(
+                        //     "Вторник - с ${widget.schedule["Tue"]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
+                        // Text(
+                        //     "Среда - с ${widget.schedule["Wed"]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
+                        // Text(
+                        //     "Четверг - с ${widget.schedule["Thu"]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
+                        // Text(
+                        //     "Пятница - с ${widget.schedule["Fri"]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
+                        // Text(
+                        //     "Суббота - с ${widget.schedule["Sat"]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
+                        // Text(
+                        //     "Воскресенье - с ${widget.schedule["Sun"]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
                       ]
                     : [
                         Text("Адрес: ${widget.address}"),
@@ -1780,4 +1771,3 @@ class _SmallInputState extends State<SmallInput> {
     );
   }
 }
-

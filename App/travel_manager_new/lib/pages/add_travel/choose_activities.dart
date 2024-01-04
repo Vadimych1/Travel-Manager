@@ -125,9 +125,6 @@ class _CreateTravelChooseActivitiesState
                 ConstrainedBox(
                   constraints:
                       const BoxConstraints(maxHeight: 1000, maxWidth: 400),
-                  // child: Expanded(
-                  //   child: Container(),
-                  // ),
                 ),
 
                 Container(

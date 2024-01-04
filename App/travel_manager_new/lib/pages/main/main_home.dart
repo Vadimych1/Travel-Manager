@@ -30,6 +30,7 @@ class _MainHomeState extends State<MainHome> {
   bool townsVisible = false;
 
   var ic = 0;
+  var loaded = false;
 
   TextEditingController controller = TextEditingController();
 
@@ -58,8 +59,8 @@ class _MainHomeState extends State<MainHome> {
           (usr) => {
             secureStorage.read(key: "password").then(
                   (pwd) => {
-                    print("usr: $usr"),
-                    print("pwd: $pwd"),
+                    // print("usr: $usr"),
+                    // print("pwd: $pwd"),
                     get(
                       Uri.https(
                         serveraddr,
@@ -77,7 +78,8 @@ class _MainHomeState extends State<MainHome> {
                               .replaceAll('}]"', "}]")
                               .replaceAll("\"{", "{")
                               .replaceAll("}\"", "}")
-                              .replaceAll("\\", ""),
+                              .replaceAll("\\", "")
+                              .replaceAll("}}\"", "}}"),
                         );
 
                         travels.add(SizedBox(
@@ -106,10 +108,14 @@ class _MainHomeState extends State<MainHome> {
                             },
                           );
                         }
+
+                        setState(() {
+                          loaded = true;
+                        });
                       },
                     ),
                   },
-                )
+                ),
           },
         );
 
@@ -354,10 +360,16 @@ class _MainHomeState extends State<MainHome> {
                       ),
                     ),
                   ),
-                  TravelScroll(
-                    itemCount: ic,
-                    children: travels,
-                  ),
+                  loaded
+                      ? TravelScroll(
+                          itemCount: ic,
+                          children: travels,
+                        )
+                      : const CircularProgressIndicator(
+                          color: Color(
+                            0xFFFFFFFF,
+                          ),
+                        ),
                   Container(
                     alignment: Alignment.topLeft,
                     margin: const EdgeInsets.only(

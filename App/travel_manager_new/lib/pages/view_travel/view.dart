@@ -66,6 +66,7 @@ class _ViewTravelState extends State<ViewTravel> {
               ),
             ).then(
               (r) {
+                print("LOADED");
                 try {
                   var resp = jsonDecode(
                     r.body
@@ -74,7 +75,8 @@ class _ViewTravelState extends State<ViewTravel> {
                         .replaceAll('}]"', "}]")
                         .replaceAll("\"{", "{")
                         .replaceAll("}\"", "}")
-                        .replaceAll("\\", ""),
+                        .replaceAll("\\", "")
+                        .replaceAll("}}\"", "}}"),
                   );
                   if (resp["status"] == "success") {
                     travel = resp["content"];
@@ -102,6 +104,7 @@ class _ViewTravelState extends State<ViewTravel> {
 
                     travel["activities"].forEach(
                       (e) => {
+                        print(e),
                         activities.add(
                           Container(
                             margin: const EdgeInsets.only(top: 5),
@@ -175,119 +178,113 @@ class _ViewTravelState extends State<ViewTravel> {
                         ),
                       ),
 
+                      // TODO: Create working reminders
                       // Reminders
-                      Container(
-                        width: 307,
-                        margin: const EdgeInsets.only(top: 40),
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            // напоминание?
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  "Напоминание:",
-                                  style: TextStyle(
-                                    fontFamily: "Pro",
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                CheckboxNew(
-                                  default_: napominanie,
-                                  onChanged: (v) {
-                                    setState(
-                                      () {
-                                        settingsChanged = true;
-                                        napominanie = !napominanie;
-                                      },
-                                    );
-                                  },
-                                )
-                              ],
-                            ),
-
-                            // напомнить за день до?
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  "Напомнить за день до:",
-                                  style: TextStyle(
-                                    fontFamily: "Pro",
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                CheckboxNew(
-                                  default_: zaDenDo,
-                                  onChanged: (v) {
-                                    setState(
-                                      () {
-                                        settingsChanged = true;
-                                        zaDenDo = !zaDenDo;
-                                      },
-                                    );
-                                  },
-                                )
-                              ],
-                            ),
-
-                            // время напоминания
-                            Container(
-                              margin: const EdgeInsets.only(
-                                top: 15,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    "Время напоминания:",
-                                    style: TextStyle(
-                                      fontFamily: "Pro",
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  SmallInput(
-                                    controller: _napominanieTimeController,
-                                    placeholder: "00:00",
-                                    onChanged: (s) {
-                                      setState(() {
-                                        settingsChanged = true;
-                                        s = s.trim();
-
-                                        if (s.length > prevS.length) {
-                                          if (s.length == 3) {
-                                            if (s[2] != ":") {
-                                              _napominanieTimeController.text =
-                                                  "${s.substring(0, 2)}:${s.substring(2)}";
-                                            }
-                                          }
-
-                                          var inputed = s[prevS.length];
-                                          if (!RegExp(r"[0-9:]")
-                                              .hasMatch(inputed)) {
-                                            _napominanieTimeController.text =
-                                                prevS;
-                                          } else {
-                                            prevS = s;
-                                          }
-                                        }
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Container(
+                      //   width: 307,
+                      //   margin: const EdgeInsets.only(top: 40),
+                      //   padding: const EdgeInsets.all(15),
+                      //   decoration: BoxDecoration(
+                      //     color: const Color(0xFFFFFFFF),
+                      //     borderRadius: BorderRadius.circular(10),
+                      //   ),
+                      //   child: Column(
+                      //     crossAxisAlignment: CrossAxisAlignment.start,
+                      //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      //     children: [
+                      //       Row(
+                      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //         children: [
+                      //           const Text(
+                      //             "Напоминание:",
+                      //             style: TextStyle(
+                      //               fontFamily: "Pro",
+                      //               fontSize: 14,
+                      //             ),
+                      //           ),
+                      //           CheckboxNew(
+                      //             default_: napominanie,
+                      //             onChanged: (v) {
+                      //               setState(
+                      //                 () {
+                      //                   settingsChanged = true;
+                      //                   napominanie = !napominanie;
+                      //                 },
+                      //               );
+                      //             },
+                      //           )
+                      //         ],
+                      //       ),
+                      //       Row(
+                      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //         children: [
+                      //           const Text(
+                      //             "Напомнить за день до:",
+                      //             style: TextStyle(
+                      //               fontFamily: "Pro",
+                      //               fontSize: 14,
+                      //             ),
+                      //           ),
+                      //           CheckboxNew(
+                      //             default_: zaDenDo,
+                      //             onChanged: (v) {
+                      //               setState(
+                      //                 () {
+                      //                   settingsChanged = true;
+                      //                   zaDenDo = !zaDenDo;
+                      //                 },
+                      //               );
+                      //             },
+                      //           )
+                      //         ],
+                      //       ),
+                      //       Container(
+                      //         margin: const EdgeInsets.only(
+                      //           top: 15,
+                      //         ),
+                      //         child: Row(
+                      //           mainAxisAlignment:
+                      //               MainAxisAlignment.spaceBetween,
+                      //           children: [
+                      //             const Text(
+                      //               "Время напоминания:",
+                      //               style: TextStyle(
+                      //                 fontFamily: "Pro",
+                      //                 fontSize: 14,
+                      //               ),
+                      //             ),
+                      //             SmallInput(
+                      //               controller: _napominanieTimeController,
+                      //               placeholder: "00:00",
+                      //               onChanged: (s) {
+                      //                 setState(() {
+                      //                   settingsChanged = true;
+                      //                   s = s.trim();
+                      //                   if (s.length > prevS.length) {
+                      //                     if (s.length == 3) {
+                      //                       if (s[2] != ":") {
+                      //                         _napominanieTimeController.text =
+                      //                             "${s.substring(0, 2)}:${s.substring(2)}";
+                      //                       }
+                      //                     }
+                      //                     var inputed = s[prevS.length];
+                      //                     if (!RegExp(r"[0-9:]")
+                      //                         .hasMatch(inputed)) {
+                      //                       _napominanieTimeController.text =
+                      //                           prevS;
+                      //                     } else {
+                      //                       prevS = s;
+                      //                     }
+                      //                   }
+                      //                 });
+                      //               },
+                      //             ),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
 
                       // Activities
                       Container(
@@ -306,7 +303,10 @@ class _ViewTravelState extends State<ViewTravel> {
                         ),
                       ),
                     ];
-                    setState(() {});
+
+                    setState(() {
+                      loaded = true;
+                    });
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -314,6 +314,9 @@ class _ViewTravelState extends State<ViewTravel> {
                             "Произошла ошибка. Попробуйте выйти из режима просмотра и повторить попытку"),
                       ),
                     );
+                    setState(() {
+                      loaded = true;
+                    });
                   }
                 } catch (e) {
                   print("Error");
@@ -326,6 +329,8 @@ class _ViewTravelState extends State<ViewTravel> {
       },
     );
   }
+
+  var loaded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -354,30 +359,44 @@ class _ViewTravelState extends State<ViewTravel> {
 
           // Content
           Container(
+            color: loaded
+                ? Colors.transparent
+                : const Color(0xFFFFFFFF).withOpacity(0.4),
             width: MediaQuery.of(context).size.width,
             child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.only(top: 50, left: 60),
-                  width: MediaQuery.of(context).size.width,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF101010),
-                  ),
-                  child: const Text(
-                    "Просмотр поездки",
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      fontFamily: "Pro",
-                      color: Color(0xFFFFFFFF),
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-                Column(
-                  children: content,
-                )
-              ],
+              mainAxisAlignment:
+                  loaded ? MainAxisAlignment.start : MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: loaded
+                  ? [
+                      Container(
+                        padding: const EdgeInsets.only(top: 50, left: 60),
+                        width: MediaQuery.of(context).size.width,
+                        height: 100,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF101010),
+                        ),
+                        child: const Text(
+                          "Просмотр поездки",
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                            fontFamily: "Pro",
+                            color: Color(0xFFFFFFFF),
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
+                      Column(
+                        children: content,
+                      ),
+                    ]
+                  : [
+                      const CircularProgressIndicator(
+                        color: Color(0xFF000000),
+                        semanticsLabel: "Загрузка...",
+                        semanticsValue: "Загрузка...",
+                      ),
+                    ],
             ),
           ),
 

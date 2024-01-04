@@ -11,6 +11,12 @@ import (
 
 var Db *sql.DB
 
+// TABLES
+const TABLE_ACTIVITIES = "activities"
+const TABLE_REVIEWS = "reviews"
+const TABLE_PLANS = "plans"
+const TABLE_USERS = "users"
+
 // User
 type User struct {
 	Id        int
@@ -50,8 +56,8 @@ type Place struct {
 	Keys        string `json:"keys"`
 }
 
-// FeeDback
-type FeedBack struct {
+// Review
+type Review struct {
 	Id      int    `json:"id"`
 	Owner   string `json:"owner"`
 	Text    string `json:"text"`
@@ -91,14 +97,8 @@ func Init(logger *log.Logger) {
 	Logger = logger
 }
 
+// ! Users block
 // InsertUser inserts a new user into the database.
-// Parameters:
-//   - usrname: the email of the user
-//   - pwd: the password of the user
-//   - name: the name of the user
-//
-// Returns:
-//   - bool: true if the insertion was successful, false otherwise
 func InsertUser(usrname string, pwd string, name string) bool {
 	// fmt.Println("Inserting user...")
 
@@ -116,7 +116,6 @@ func InsertUser(usrname string, pwd string, name string) bool {
 }
 
 // SearchUser searches for a user in the database based on their email.
-// It returns a slice of User structs containing the matching results.
 func SearchUser(email_ string) []User {
 	// Print a message to indicate that the user search is being performed
 	// fmt.Println("Searching user...")
@@ -160,9 +159,9 @@ func SearchUser(email_ string) []User {
 	return results
 }
 
+// ! Plans block
 // SearchTravel searches for a travel plan with the given ID and owner.
-// It returns the found travel plan or an error if the plan is not found or an error occurs.
-func SearchTravel(id int, usrname string) (Travel, error) {
+func SearchPlan(id int, usrname string) (Travel, error) {
 	fmt.Println("Searching travel...")
 
 	// Prepare the SQL query
@@ -234,7 +233,6 @@ func SearchAllPlans(owner string) ([]Travel, error) {
 }
 
 // InsertPlan inserts a travel plan into the database.
-// It returns true if the insertion is successful, otherwise false.
 func InsertPlan(plan Travel) bool {
 	// Declare an error variable
 	var err error
@@ -289,9 +287,8 @@ func DeleteTravel(id int, usrname string) bool {
 	return err == nil
 }
 
+// ! Places block (activities)
 // InsertPlace inserts a place into the database.
-// It takes an activity of type Place as input and returns a boolean indicating
-// whether the insertion was successful or not.
 func InsertPlace(activity Place) bool {
 	var err error
 
@@ -326,7 +323,6 @@ func InsertPlace(activity Place) bool {
 }
 
 // SearchPlace retrieves a Place with the given ID from the activities table in the database.
-// It returns the retrieved Place and any error encountered.
 func SearchPlace(id int) (Place, error) {
 	var err error
 
@@ -355,8 +351,6 @@ func SearchPlace(id int) (Place, error) {
 }
 
 // EditPlace updates the information of a Place in the database.
-// It takes an activity parameter and returns a boolean indicating
-// whether the update was successful or not.
 func EditPlace(activity Place) bool {
 	var err error
 
@@ -439,4 +433,54 @@ func SearchPlaces(query string, town string) ([]Place, error) {
 	}
 
 	return activities, nil
+}
+
+// ! Reviews block
+// InsertReview inserts a new review into the reviews table in the database.
+func InsertReview(review Review) bool {
+	q := fmt.Sprintf(`INSERT INTO %s (owner, text, stars, placeid) VALUES (?, ?, ?, ?)`, TABLE_REVIEWS)
+
+	_, err := Db.Exec(q, review.Owner, review.Text, review.Stars, review.Placeid)
+
+	return err == nil
+}
+
+func SearchReviews(placeid int) ([]Review, error) {
+	rows, err := Db.Query(fmt.Sprintf(`SELECT * FROM %s WHERE placeid = ?`, TABLE_REVIEWS), placeid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var id int
+	var owner string
+	var text string
+	var stars int
+	var placeid_ int
+
+	var reviews = make([]Review, 0)
+	for rows.Next() {
+		rows.Scan(&id, &owner, &text, &stars, &placeid_)
+		reviews = append(reviews, Review{
+			Id:      id,
+			Owner:   owner,
+			Text:    text,
+			Stars:   stars,
+			Placeid: placeid_,
+		})
+	}
+
+	return reviews, nil
+}
+
+func SearchReview(id int) (Review, error) {
+	var review Review
+	var err = Db.QueryRow(fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, TABLE_REVIEWS), id).Scan(&review.Id, &review.Owner, &review.Text, &review.Stars, &review.Placeid)
+
+	return review, err
+}
+
+func DeleteReview(id int) error {
+	_, err := Db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, TABLE_REVIEWS), id)
+	return err
 }

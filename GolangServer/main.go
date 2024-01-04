@@ -245,7 +245,7 @@ func getTravel(params map[string]string, w http.ResponseWriter) {
 
 			if dec == dbpwd {
 				id, _ := strconv.Atoi(params["id"])
-				travel, err := userdb.SearchTravel(id, r)
+				travel, err := userdb.SearchPlan(id, r)
 				if err != nil {
 					fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
 					Log("Server error") // debug
@@ -446,6 +446,24 @@ func default_get(params map[string]string, w http.ResponseWriter, r *http.Reques
 			// Log(err.Error())
 			return
 		}
+	} else if strings.HasSuffix(s, ".jpg") || strings.HasSuffix(s, ".jpeg") || strings.HasSuffix(s, ".png") {
+		w.Header().Set("Content-Type", "image/jpeg")
+		b, err = os.ReadFile("./pages" + s)
+		if err != nil {
+			w.WriteHeader(404)
+			return
+		}
+
+		w.Write(b)
+	} else if strings.HasSuffix(s, ".mp4") {
+		w.Header().Set("Content-Type", "video/mp4")
+		b, err = os.ReadFile("./pages" + s)
+		if err != nil {
+			w.WriteHeader(404)
+			return
+		}
+
+		w.Write(b)
 	} else {
 		b, err = os.ReadFile("./pages" + s + ".html")
 
@@ -528,7 +546,7 @@ func search_activities(s string, w http.ResponseWriter, params map[string]string
 		// auth
 		if params["api_key"] != "" {
 			// api_key
-			fmt.Fprint(w, `{"status":"error", "code":"api key is not allowed now"}`)
+			fmt.Fprint(w, `api keys is not allowed`)
 		} else {
 			// username and password
 			usr, _ := url.QueryUnescape(params["username"])
@@ -555,23 +573,24 @@ func search_activities(s string, w http.ResponseWriter, params map[string]string
 					res, err := userdb.SearchPlaces(query, town)
 
 					if err != nil {
-						fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+						fmt.Fprint(w, `server error`)
 						Log(err.Error())
 					}
 
 					json, err := json.Marshal(res)
+					fmt.Println(json)
 
 					if err != nil {
-						fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+						fmt.Fprint(w, `server error`)
 						Log(err.Error())
 					}
 
 					fmt.Fprint(w, string(json))
 				} else {
-					fmt.Fprint(w, `{"status":"error", "code":"invalid_password"}`)
+					fmt.Fprint(w, `invalid password`)
 				}
 			} else {
-				fmt.Fprint(w, `{"status": "error", "code":"user_not_exists"}`)
+				fmt.Fprint(w, `user not exists`)
 			}
 		}
 	}
@@ -611,6 +630,209 @@ func prep_keys(in string) string {
 	return ret
 }
 
+func addReview(params map[string]string, w http.ResponseWriter) {
+	var username = params["username"]
+	var password = params["password"]
+	var place_id = params["placeid"]
+	var stars = params["stars"]
+	var text = params["text"]
+
+	if username != "" && password != "" && place_id != "" && stars != "" && text != "" {
+		usr, _ := url.QueryUnescape(username)
+		res := userdb.SearchUser(usr)
+
+		if len(res) > 0 {
+			dbpwd := res[0].Password
+			usrpwd := password
+
+			hash := sha256.New()
+			hash.Write([]byte(usrpwd))
+			hs := hash.Sum(nil)
+
+			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
+
+			stars_p, err := strconv.Atoi(stars)
+			if err != nil {
+				fmt.Fprint(w, `400 bad request`)
+			}
+
+			placeid_p, err := strconv.Atoi(place_id)
+			if err != nil {
+				fmt.Fprint(w, `400 bad request`)
+			}
+
+			if dec == dbpwd {
+				if userdb.InsertReview(userdb.Review{
+					Placeid: placeid_p,
+					Stars:   stars_p,
+					Text:    text,
+					Owner:   usr,
+				}) {
+					fmt.Fprint(w, "success")
+				} else {
+					fmt.Fprint(w, "500 server error")
+				}
+			} else {
+				fmt.Fprint(w, `invalid password`)
+			}
+		}
+	} else {
+		fmt.Fprint(w, `400 bad request`)
+	}
+}
+
+func getReviews(params map[string]string, w http.ResponseWriter) {
+	var username = params["username"]
+	var password = params["password"]
+	var place_id = params["placeid"]
+
+	if username != "" && password != "" && place_id != "" {
+		usr, _ := url.QueryUnescape(username)
+		res := userdb.SearchUser(usr)
+
+		if len(res) > 0 {
+			dbpwd := res[0].Password
+			usrpwd := password
+
+			hash := sha256.New()
+			hash.Write([]byte(usrpwd))
+			hs := hash.Sum(nil)
+
+			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
+
+			if dec == dbpwd {
+				placeid_p, err := strconv.Atoi(place_id)
+				if err != nil {
+					fmt.Fprint(w, `400 bad request`)
+					return
+				}
+
+				reviews, err := userdb.SearchReviews(placeid_p)
+
+				if err != nil {
+					fmt.Fprint(w, `500 server error`)
+					Log(err.Error())
+				}
+
+				json, err := json.Marshal(reviews)
+
+				if err != nil {
+					fmt.Fprint(w, `500 server error`)
+					Log(err.Error())
+				}
+
+				w.Header().Add("Content-Type", "application/json")
+				fmt.Fprint(w, string(json))
+			} else {
+				fmt.Fprint(w, "invalid password")
+			}
+		}
+	} else {
+		fmt.Fprint(w, "400 bad request")
+	}
+}
+
+func getReview(params map[string]string, w http.ResponseWriter) {
+	var username = params["username"]
+	var password = params["password"]
+	var id = params["id"]
+
+	if username != "" && password != "" && id != "" {
+		usr, _ := url.QueryUnescape(username)
+		res := userdb.SearchUser(usr)
+
+		if len(res) > 0 {
+			dbpwd := res[0].Password
+			usrpwd := password
+
+			hash := sha256.New()
+			hash.Write([]byte(usrpwd))
+			hs := hash.Sum(nil)
+
+			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
+
+			if dec == dbpwd {
+				id_p, err := strconv.Atoi(id)
+				if err != nil {
+					fmt.Fprint(w, `400 bad request`)
+					return
+				}
+
+				review, err := userdb.SearchReview(id_p)
+
+				if err != nil {
+					fmt.Fprint(w, `server error`)
+					return
+				}
+
+				json, err := json.Marshal(review)
+
+				if err != nil {
+					fmt.Fprint(w, `server error`)
+					Log(err.Error())
+					return
+				}
+
+				w.Header().Add("Content-Type", "application/json")
+				fmt.Fprint(w, string(json))
+			} else {
+				fmt.Fprint(w, "invalid password")
+			}
+		}
+	} else {
+		fmt.Fprint(w, "400 bad request")
+	}
+}
+
+func deleteReview(params map[string]string, w http.ResponseWriter) {
+	var username = params["username"]
+	var password = params["password"]
+	var id = params["id"]
+
+	if username != "" && password != "" && id != "" {
+		usr, _ := url.QueryUnescape(username)
+		res := userdb.SearchUser(usr)
+
+		if len(res) > 0 {
+			dbpwd := res[0].Password
+			usrpwd := password
+
+			hash := sha256.New()
+			hash.Write([]byte(usrpwd))
+			hs := hash.Sum(nil)
+
+			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
+
+			if dec == dbpwd {
+				id_p, err := strconv.Atoi(id)
+				if err != nil {
+					fmt.Fprint(w, `400 bad request`)
+					return
+				}
+
+				r, err := userdb.SearchReview(id_p)
+
+				if err != nil {
+					fmt.Fprint(w, "review not found")
+				}
+				if r.Owner == usr {
+					err = userdb.DeleteReview(id_p)
+
+					if err != nil {
+						fmt.Fprint(w, `server error`)
+						Log(err.Error())
+						return
+					}
+
+					fmt.Fprint(w, "success")
+				} else {
+					fmt.Fprint(w, "review is not of user")
+				}
+			}
+		}
+	}
+}
+
 func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
 	without_suff, _ := strings.CutSuffix(s, "/")
 	without_pref, _ := strings.CutPrefix(without_suff, "/")
@@ -622,10 +844,12 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 			switch pathnames[1] {
 			case "v1":
 				switch pathnames[2] {
+				// db:users
 				case "register":
 					register(params, w)
 				case "login":
 					login(params, w)
+					// db:travels
 				case "create_travel":
 					createTravel(params, w)
 				case "get_all_travels":
@@ -636,6 +860,15 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 					editTravel(params, w)
 				case "delete_travel":
 					deleteTravel(params, w)
+					// db:reviews
+				case "add_review":
+					addReview(params, w)
+				case "get_reviews":
+					getReviews(params, w)
+				case "delete_review":
+					deleteReview(params, w)
+				case "get_review":
+					getReview(params, w)
 				default:
 					fmt.Fprint(w, "method not found")
 				}
