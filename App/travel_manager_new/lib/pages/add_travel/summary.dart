@@ -2,7 +2,6 @@
 import "dart:convert";
 import '../main/main_home.dart';
 import "package:flutter/material.dart";
-import "package:flutter_svg/flutter_svg.dart";
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:http/http.dart';
 import "package:flutter_secure_storage/flutter_secure_storage.dart";
@@ -50,17 +49,7 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
               left: 0,
             ),
             // color: Colors.red,
-            child: TextButton(
-              child: SvgPicture.asset(
-                "assets/images/svg/arrow_back.svg",
-                color: const Color(
-                  0xFFFFFFFF,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
+            child: const BackButton(),
           ),
 
           // FG
@@ -154,13 +143,12 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
                                 "username": usr ?? "0",
                                 "password": pwd ?? "0",
                                 "plan_name": d["travelName"] ?? "0",
-                                "activities":
-                                    jsonEncode(d["activities"] ?? "[]"),
+                                "activities": jsonEncode(d["activities"] ?? []),
                                 "from_date": d["startDate"].toString(),
                                 "to_date": d["endDate"].toString(),
-                                "budget": "0",
-                                "live_place": "null",
-                                "expenses": "{}",
+                                "budget": "0", // deprecated
+                                "live_place": "null", // deprecated
+                                "expenses": "[]",
                                 "meta": "{}",
                                 "people_count": d["peopleCount"] ?? "0",
                                 "town": d["town"] ?? "0",

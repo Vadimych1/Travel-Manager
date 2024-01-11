@@ -102,6 +102,7 @@ class _CreateTravelChooseTownState extends State<CreateTravelChooseTown> {
             child: TextButton(
               child: SvgPicture.asset(
                 "assets/images/svg/arrow_back.svg",
+                // ignore: deprecated_member_use
                 color: const Color(
                   0xFFFFFFFF,
                 ),

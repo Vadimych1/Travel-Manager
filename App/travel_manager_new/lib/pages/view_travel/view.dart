@@ -1,4 +1,5 @@
 import "dart:convert";
+// ignore: depend_on_referenced_packages
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import "package:flutter/material.dart";
 import "package:flutter_secure_storage/flutter_secure_storage.dart";
@@ -6,9 +7,9 @@ import "package:intl/intl.dart";
 import "package:timezone/timezone.dart";
 import "package:travel_manager_new/pages/auth/login.dart";
 import "../../uikit/uikit.dart";
-import "package:flutter_svg/flutter_svg.dart";
 import "package:http/http.dart";
 import "./activity_view.dart";
+import "./expense_view.dart";
 
 class ViewTravel extends StatefulWidget {
   const ViewTravel({super.key, required this.travelId});
@@ -34,6 +35,10 @@ class _ViewTravelState extends State<ViewTravel> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  var expenses = <Widget>[];
+  var usr = "";
+  var pwd = "";
+
   @override
   void initState() {
     super.initState();
@@ -51,9 +56,11 @@ class _ViewTravelState extends State<ViewTravel> {
     var s = const FlutterSecureStorage();
 
     s.read(key: "username").then(
-      (usr) {
+      (usr_) {
         s.read(key: "password").then(
-          (pwd) {
+          (pwd_) {
+            usr = usr_ ?? "";
+            pwd = pwd_ ?? "";
             get(
               Uri.https(
                 serveraddr,
@@ -66,7 +73,6 @@ class _ViewTravelState extends State<ViewTravel> {
               ),
             ).then(
               (r) {
-                print("LOADED");
                 try {
                   var resp = jsonDecode(
                     r.body
@@ -76,7 +82,9 @@ class _ViewTravelState extends State<ViewTravel> {
                         .replaceAll("\"{", "{")
                         .replaceAll("}\"", "}")
                         .replaceAll("\\", "")
-                        .replaceAll("}}\"", "}}"),
+                        .replaceAll("}}\"", "}}")
+                        .replaceAll("\"[", "[")
+                        .replaceAll("]\"", "]"),
                   );
                   if (resp["status"] == "success") {
                     travel = resp["content"];
@@ -102,9 +110,34 @@ class _ViewTravelState extends State<ViewTravel> {
                       _napominanieTimeController.text = "";
                     }
 
+                    expenses = <Widget>[];
+
+                    travel["expenses"].forEach(
+                      (val) => {
+                        expenses.add(
+                          SizedBox(
+                            child: TextButton(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${val["name"]}: ",
+                                  ),
+                                  Text(
+                                    "${int.parse(val["cost"])} руб.",
+                                  ),
+                                ],
+                              ),
+                              onPressed: () {},
+                            ),
+                          ),
+                        ),
+                      },
+                    );
+
                     travel["activities"].forEach(
                       (e) => {
-                        print(e),
                         activities.add(
                           Container(
                             margin: const EdgeInsets.only(top: 5),
@@ -134,7 +167,7 @@ class _ViewTravelState extends State<ViewTravel> {
                               },
                             ),
                           ),
-                        )
+                        ),
                       },
                     );
 
@@ -178,128 +211,30 @@ class _ViewTravelState extends State<ViewTravel> {
                         ),
                       ),
 
-                      // TODO: Create working reminders
-                      // Reminders
-                      // Container(
-                      //   width: 307,
-                      //   margin: const EdgeInsets.only(top: 40),
-                      //   padding: const EdgeInsets.all(15),
-                      //   decoration: BoxDecoration(
-                      //     color: const Color(0xFFFFFFFF),
-                      //     borderRadius: BorderRadius.circular(10),
-                      //   ),
-                      //   child: Column(
-                      //     crossAxisAlignment: CrossAxisAlignment.start,
-                      //     mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      //     children: [
-                      //       Row(
-                      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //         children: [
-                      //           const Text(
-                      //             "Напоминание:",
-                      //             style: TextStyle(
-                      //               fontFamily: "Pro",
-                      //               fontSize: 14,
-                      //             ),
-                      //           ),
-                      //           CheckboxNew(
-                      //             default_: napominanie,
-                      //             onChanged: (v) {
-                      //               setState(
-                      //                 () {
-                      //                   settingsChanged = true;
-                      //                   napominanie = !napominanie;
-                      //                 },
-                      //               );
-                      //             },
-                      //           )
-                      //         ],
-                      //       ),
-                      //       Row(
-                      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //         children: [
-                      //           const Text(
-                      //             "Напомнить за день до:",
-                      //             style: TextStyle(
-                      //               fontFamily: "Pro",
-                      //               fontSize: 14,
-                      //             ),
-                      //           ),
-                      //           CheckboxNew(
-                      //             default_: zaDenDo,
-                      //             onChanged: (v) {
-                      //               setState(
-                      //                 () {
-                      //                   settingsChanged = true;
-                      //                   zaDenDo = !zaDenDo;
-                      //                 },
-                      //               );
-                      //             },
-                      //           )
-                      //         ],
-                      //       ),
-                      //       Container(
-                      //         margin: const EdgeInsets.only(
-                      //           top: 15,
-                      //         ),
-                      //         child: Row(
-                      //           mainAxisAlignment:
-                      //               MainAxisAlignment.spaceBetween,
-                      //           children: [
-                      //             const Text(
-                      //               "Время напоминания:",
-                      //               style: TextStyle(
-                      //                 fontFamily: "Pro",
-                      //                 fontSize: 14,
-                      //               ),
-                      //             ),
-                      //             SmallInput(
-                      //               controller: _napominanieTimeController,
-                      //               placeholder: "00:00",
-                      //               onChanged: (s) {
-                      //                 setState(() {
-                      //                   settingsChanged = true;
-                      //                   s = s.trim();
-                      //                   if (s.length > prevS.length) {
-                      //                     if (s.length == 3) {
-                      //                       if (s[2] != ":") {
-                      //                         _napominanieTimeController.text =
-                      //                             "${s.substring(0, 2)}:${s.substring(2)}";
-                      //                       }
-                      //                     }
-                      //                     var inputed = s[prevS.length];
-                      //                     if (!RegExp(r"[0-9:]")
-                      //                         .hasMatch(inputed)) {
-                      //                       _napominanieTimeController.text =
-                      //                           prevS;
-                      //                     } else {
-                      //                       prevS = s;
-                      //                     }
-                      //                   }
-                      //                 });
-                      //               },
-                      //             ),
-                      //           ],
-                      //         ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
-
                       // Activities
                       Container(
                         width: 307,
-                        height: 210,
+                        height: 240,
                         margin: const EdgeInsets.only(top: 40),
                         padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFFFFF),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: activities,
-                          ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              "Активности",
+                            ),
+                            SizedBox(
+                              height: 190,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: activities,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ];
@@ -319,8 +254,7 @@ class _ViewTravelState extends State<ViewTravel> {
                     });
                   }
                 } catch (e) {
-                  print("Error");
-                  print(e);
+                  null;
                 }
               },
             );
@@ -386,8 +320,143 @@ class _ViewTravelState extends State<ViewTravel> {
                           ),
                         ),
                       ),
-                      Column(
-                        children: content,
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height - 100,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              ...content,
+                              // Expenses
+                              Container(
+                                width: 307,
+                                height: 330,
+                                margin: const EdgeInsets.only(top: 40),
+                                padding: const EdgeInsets.all(15),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFFFFF),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Text("Расходы"),
+                                    Container(
+                                      height: 200,
+                                      width: 295,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                          10,
+                                        ),
+                                        color: const Color(0xFFCCCCCC),
+                                      ),
+                                      margin: const EdgeInsets.only(bottom: 13),
+                                      child: SingleChildScrollView(
+                                        child: Column(children: expenses),
+                                      ),
+                                    ),
+                                    Container(
+                                      alignment: Alignment.bottomCenter,
+                                      child: BlackButton(
+                                        text: "Изменить",
+                                        onPressed: () {
+                                          Navigator.of(context)
+                                              .push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpenseView(travel: travel),
+                                            ),
+                                          )
+                                              .then(
+                                            (_) {
+                                              get(
+                                                Uri.https(
+                                                  serveraddr,
+                                                  "api/v1/get_travel",
+                                                  {
+                                                    "username": usr,
+                                                    "password": pwd,
+                                                    "id": widget.travelId
+                                                        .toString(),
+                                                  },
+                                                ),
+                                              ).then(
+                                                (resp) {
+                                                  var t = jsonDecode(
+                                                    resp.body
+                                                        .replaceAll("+", " ")
+                                                        .replaceAll(
+                                                            '"activities":"',
+                                                            '"activities":')
+                                                        .replaceAll('}]"', "}]")
+                                                        .replaceAll("\"{", "{")
+                                                        .replaceAll("}\"", "}")
+                                                        .replaceAll("\\", "")
+                                                        .replaceAll(
+                                                            "}}\"", "}}")
+                                                        .replaceAll("\"[", "[")
+                                                        .replaceAll("]\"", "]"),
+                                                  );
+
+                                                  if (t["status"] ==
+                                                      "success") {
+                                                    setState(
+                                                      () {
+                                                        expenses = <Widget>[];
+
+                                                        jsonDecode(travel[
+                                                                    "expenses"] ??
+                                                                "[]")
+                                                            .forEach(
+                                                          (val) => {
+                                                            setState(
+                                                              () {
+                                                                expenses.add(
+                                                                  SizedBox(
+                                                                    child:
+                                                                        TextButton(
+                                                                      child:
+                                                                          Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          Text(
+                                                                            "${val["name"]}: ",
+                                                                          ),
+                                                                          Text(
+                                                                            "${int.parse(val["cost"])} руб.",
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                      onPressed:
+                                                                          () {},
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          },
+                                                        );
+                                                      },
+                                                    );
+
+                                                    setState(() {});
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 50,
+                              )
+                            ],
+                          ),
+                        ),
                       ),
                     ]
                   : [
@@ -406,17 +475,7 @@ class _ViewTravelState extends State<ViewTravel> {
               top: 40,
               left: 0,
             ),
-            child: TextButton(
-              child: SvgPicture.asset(
-                "assets/images/svg/arrow_back.svg",
-                color: const Color(
-                  0xFFFFFFFF,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
+            child: const BackButton(),
           ),
 
           // Save button
@@ -463,6 +522,7 @@ class _ViewTravelState extends State<ViewTravel> {
                     platformChannelSpecifics,
                     uiLocalNotificationDateInterpretation:
                         UILocalNotificationDateInterpretation.absoluteTime,
+                    // ignore: deprecated_member_use
                     androidAllowWhileIdle: true,
                   );
                 }
@@ -527,10 +587,7 @@ class _ViewTravelState extends State<ViewTravel> {
                             AndroidScheduleMode.exactAllowWhileIdle,
                       )
                       .onError(
-                        (error, stackTrace) => {
-                          print(error),
-                          print("Trace" + stackTrace.toString()),
-                        },
+                        (error, stackTrace) => null,
                       );
                 }
 
@@ -577,7 +634,6 @@ class _ViewTravelState extends State<ViewTravel> {
                                     ),
                                   ),
                                 );
-                                print(resp);
                               }
                             }
                           },

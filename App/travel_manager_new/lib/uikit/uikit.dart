@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/svg.dart';
+import "package:flutter_vector_icons/flutter_vector_icons.dart";
+import "../pages/view_travel/view_reviews_and_photos.dart";
 
 const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms";
 
@@ -30,7 +32,7 @@ Map myColors = {
     1,
   ),
   "primaryText": Colors.white,
-  "secondaryText": Color.fromRGBO(190, 190, 190, 1),
+  "secondaryText": const Color.fromRGBO(190, 190, 190, 1),
   "gray": const Color.fromRGBO(
     148,
     148,
@@ -83,7 +85,7 @@ class BlackButton extends StatelessWidget {
         child: Text(
           text,
           style: const TextStyle(
-            fontFamily: "Pro",
+            fontFamily: "Calibri",
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.w300,
@@ -131,7 +133,7 @@ class WhiteButton extends StatelessWidget {
           style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
-            fontFamily: "Pro",
+            fontFamily: "Calibri",
             fontWeight: FontWeight.w300,
             letterSpacing: -0.2,
           ),
@@ -177,7 +179,7 @@ class Input extends StatelessWidget {
         style: TextStyle(
           fontWeight: FontWeight.w300,
           fontSize: 16,
-          // fontFamily: "Pro",
+          // fontFamily: "Calibri",
           color: myColors["gray"],
         ),
         controller: controller,
@@ -188,7 +190,7 @@ class Input extends StatelessWidget {
             fontWeight: FontWeight.w400,
             fontSize: 16,
             color: myColors["gray"],
-            // fontFamily: "Pro",
+            // fontFamily: "Calibri",
           ),
           filled: true,
           focusColor: Colors.transparent,
@@ -264,7 +266,7 @@ class PreferencesItemState extends State<PreferencesItem> {
           style: TextStyle(
             color: !widget.activated ? myColors["blue1"] : Colors.white,
             fontSize: MediaQuery.of(context).size.width > 361 ? 14 : 12,
-            fontFamily: "Pro",
+            fontFamily: "Calibri",
           ),
         ),
       ),
@@ -534,6 +536,168 @@ class _ActivitiesState extends State<Activities> {
       });
     });
 
+    void onchanged(s) {
+      if (s.length > 1) {
+        get(
+          Uri.https(
+            serveraddr,
+            'api/activities/search',
+            {
+              'username': username,
+              'password': password,
+              'q': s,
+              'town': widget.town.replaceAll(",", ""),
+            },
+          ),
+        ).then(
+          (resp) {
+            if (resp.statusCode == 200) {
+              try {
+                var responce = jsonDecode(resp.body);
+
+                searchResults = [];
+                for (var item in responce) {
+                  searchResults.add(
+                    Container(
+                      width: 307,
+                      margin: const EdgeInsets.only(bottom: 10, top: 10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF272727),
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            item["name"],
+                            style: const TextStyle(
+                              fontFamily: "Calibri",
+                              fontSize: 16,
+                              color: Color(0xFFFFFFFF),
+                            ),
+                          ),
+                          Text(
+                            item["description"],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: "Calibri",
+                              fontSize: 12,
+                              color: Color(0xFFCCCCCC),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 20, bottom: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFFFFF),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  width: 130,
+                                  height: 30,
+                                  child: TextButton(
+                                    style: ButtonStyle(
+                                      padding:
+                                          MaterialStateProperty.all<EdgeInsets>(
+                                        EdgeInsets.zero,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Добавить в план",
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF000000)),
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        var schedule = item["schedule"];
+                                        if (schedule is String) {
+                                          schedule = jsonDecode(schedule);
+                                        }
+
+                                        widget.bridge.value.add(
+                                          SelectedActivity(
+                                            name: item["name"],
+                                            address:
+                                                item["address"] ?? "нет адреса",
+                                            schedule: schedule ?? {},
+                                            bridge: widget.bridge,
+                                            parent: this,
+                                            p: item,
+                                          ),
+                                        );
+                                      });
+
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Добавлено в план"),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFFFFFFF),
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  width: 130,
+                                  height: 30,
+                                  child: TextButton(
+                                    style: ButtonStyle(
+                                      padding:
+                                          MaterialStateProperty.all<EdgeInsets>(
+                                        EdgeInsets.zero,
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "Фото и отзывы",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFFFFFFFF),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ViewReviewsAndPhotos(
+                                            placeid: item["id"],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                  setState(() {});
+                }
+              } catch (e) {
+                //
+              }
+            }
+          },
+        );
+      } else {
+        searchResults = [];
+        setState(() {});
+      }
+    }
+
     return ConstrainedBox(
       constraints: const BoxConstraints(
         maxWidth: 320,
@@ -541,136 +705,153 @@ class _ActivitiesState extends State<Activities> {
       ),
       child: Column(
         children: [
-          // Activity Name Input
-          Input(
-            controller: _controller,
-            placeholder: "начните ввод",
-            onChanged: (s) {
-              if (s.length > 1) {
-                get(
-                  Uri.https(
-                    serveraddr,
-                    'api/activities/search',
-                    {
-                      'username': username,
-                      'password': password,
-                      'q': s,
-                      'town': widget.town.replaceAll(",", ""),
-                    },
+          Container(
+            height: 182,
+            width: MediaQuery.of(context).size.width,
+            decoration: const BoxDecoration(
+              color: Color(0xFF232323),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(10),
+                bottomRight: Radius.circular(10),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Search input
+                Container(
+                  alignment: Alignment.topLeft,
+                  margin: const EdgeInsets.only(top: 36, left: 23),
+                  width: 330 * MediaQuery.of(context).size.width / 393,
+                  height: 45,
+                  // decoration: BoxDecoration(),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: "начните ввод",
+                        filled: true,
+                        fillColor: Color(0xFF4A4A4A),
+                        hintStyle: TextStyle(
+                          color: Color(
+                            0xFFD5D5D5,
+                          ),
+                        ),
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontFamily: "Calibri",
+                      ),
+                      onChanged: onchanged,
+                    ),
                   ),
-                ).then(
-                  (resp) {
-                    if (resp.statusCode == 200) {
-                      try {
-                        var responce = jsonDecode(resp.body);
+                ),
 
-                        searchResults = [];
-                        for (var item in responce) {
-                          searchResults.add(
-                            Container(
-                              child: TextButton(
-                                child: Text(
-                                  item["name"],
-                                  style: const TextStyle(
-                                    fontFamily: "Pro",
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    var schedule = item["schedule"];
-                                    if (schedule is String) {
-                                      schedule = jsonDecode(schedule);
-                                    }
+                // Presets
+                Container(
+                  margin: const EdgeInsets.only(top: 20, left: 23),
+                  width: 240,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Shops
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF2C2C2C,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            _controller.text = "магазин";
+                            onchanged(_controller.text);
+                          },
+                          icon: const Icon(
+                            MaterialCommunityIcons.cart,
+                            color: Color(0xFFFFFFFF),
+                            size: 24,
+                          ),
+                        ),
+                      ),
 
-                                    widget.bridge.value.add(
-                                      SelectedActivity(
-                                        name: item["name"],
-                                        address:
-                                            item["address"] ?? "нет адреса",
-                                        schedule: schedule ?? {},
-                                        bridge: widget.bridge,
-                                        parent: this,
-                                        p: item,
-                                      ),
-                                    );
-                                  });
-                                },
-                              ),
-                            ),
-                          );
-                          setState(() {});
-                        }
-                      } catch (e) {
-                        //
-                      }
-                    }
-                  },
-                );
-              } else {
-                searchResults = [];
-                setState(() {});
-              }
-            },
-            // icon: const SizedBox(height: 1),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(10),
-              topRight: Radius.circular(10),
+                      // Museum
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF2C2C2C,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            _controller.text = "достопримечательность";
+                            onchanged(_controller.text);
+                          },
+                          icon: const Icon(
+                            MaterialCommunityIcons.office_building,
+                            color: Color(0xFFFFFFFF),
+                            size: 24,
+                          ),
+                        ),
+                      ),
+
+                      // Games
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF2C2C2C,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            _controller.text = "развлечение";
+                            onchanged(_controller.text);
+                          },
+                          icon: const Icon(
+                            MaterialCommunityIcons.nintendo_game_boy,
+                            color: Color(0xFFFFFFFF),
+                            size: 24,
+                          ),
+                        ),
+                      ),
+
+                      // Food
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(
+                            0xFF2C2C2C,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            _controller.text = "ресторан";
+                            onchanged(_controller.text);
+                          },
+                          icon: const Icon(
+                            MaterialCommunityIcons.food,
+                            color: Color(0xFFFFFFFF),
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Search results
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              minWidth: 306,
-              maxWidth: 307,
-              minHeight: 120,
-              maxHeight: 200,
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
-                border: Border.all(color: const Color(0xFF000000)),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: searchResults,
-                ),
-              ),
-            ),
-          ),
-
-          // Selected
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              minWidth: 306,
-              maxWidth: 307,
-              minHeight: 120,
-              maxHeight: 200,
-            ),
-            child: Container(
-              // width: 307,
-              // height: 200,
-              margin: const EdgeInsets.only(top: 5),
-              padding: const EdgeInsets.symmetric(
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFFFF),
-                border: Border.all(color: const Color(0xFF000000)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: widget.bridge.value,
-                ),
+          Container(
+            margin: const EdgeInsets.only(top: 20),
+            child: SingleChildScrollView(
+              child: Column(
+                children: searchResults,
               ),
             ),
           ),
@@ -710,6 +891,7 @@ class _SelectedActivityState extends State<SelectedActivity> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      decoration: const BoxDecoration(),
       child: TextButton(
         child: Text(widget.name),
         onPressed: () {
@@ -724,7 +906,7 @@ class _SelectedActivityState extends State<SelectedActivity> {
                         Text("Адрес: ${widget.address}"),
                         const Text("Время работы: ",
                             style: TextStyle(fontWeight: FontWeight.w600)),
-                        // TODO: add working hours (on ss)
+                        // TODO: add working hours (on server side)
                         // Text(
                         //     "Понедельник - с ${widget.schedule["Mon"]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
                         // Text(
@@ -828,7 +1010,7 @@ class _TravelBlockState extends State<TravelBlock> {
               widget.travelName,
               textAlign: TextAlign.left,
               style: const TextStyle(
-                fontFamily: "Pro",
+                fontFamily: "Calibri",
                 color: Color(0xFFFFFFFF),
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -843,7 +1025,7 @@ class _TravelBlockState extends State<TravelBlock> {
               "В ${widget.town}",
               textAlign: TextAlign.left,
               style: const TextStyle(
-                fontFamily: "Pro",
+                fontFamily: "Calibri",
                 color: Color(0xFFFFFFFF),
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -873,7 +1055,7 @@ class _TravelBlockState extends State<TravelBlock> {
             child: const Text(
               "Просмотр и редактирование",
               style: TextStyle(
-                fontFamily: "Pro",
+                fontFamily: "Calibri",
                 color: Color(0xFFFFFFFF),
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -974,7 +1156,7 @@ class _DatePickerState extends State<DatePicker> {
               style: TextStyle(
                 color: myColors["gray"],
                 fontSize: 14,
-                fontFamily: "Pro",
+                fontFamily: "Calibri",
               ),
             ),
           ),
@@ -989,6 +1171,7 @@ class _DatePickerState extends State<DatePicker> {
             width: 28,
             height: 28,
             fit: BoxFit.scaleDown,
+            // ignore: deprecated_member_use
             color: myColors["gray"],
           ),
         )
@@ -998,6 +1181,7 @@ class _DatePickerState extends State<DatePicker> {
 }
 
 //! Town Hints
+// ignore: must_be_immutable
 class TownHints extends StatefulWidget {
   TownHints({super.key, required this.controller, required this.onSelected});
 
@@ -1029,6 +1213,7 @@ class TownHints extends StatefulWidget {
         (resp) {
           if (resp.statusCode == 200) {
             var resp_ = jsonDecode(resp.body);
+            // ignore: invalid_use_of_protected_member
             mystate.setState(
               () {
                 towns = [
@@ -1087,11 +1272,13 @@ class TownHints extends StatefulWidget {
                     .replaceAll(r"сх", "ш");
                 reg = reg[0].toUpperCase() + reg.substring(1);
 
+                // ignore: invalid_use_of_protected_member
                 mystate.setState(
                   () {
                     towns.add(
                       Container(
                         width: MediaQueryData.fromView(
+                              // ignore: deprecated_member_use
                               WidgetsBinding.instance.window,
                             ).size.width /
                             1.5,
@@ -1117,14 +1304,14 @@ class TownHints extends StatefulWidget {
                                 town,
                                 style: const TextStyle(
                                   color: Colors.black,
-                                  fontFamily: "Pro",
+                                  fontFamily: "Calibri",
                                 ),
                               ),
                               Text(
                                 reg,
                                 style: const TextStyle(
                                   color: Colors.grey,
-                                  fontFamily: "Pro",
+                                  fontFamily: "Calibri",
                                   fontSize: 12,
                                 ),
                               ),
@@ -1150,6 +1337,7 @@ class TownHints extends StatefulWidget {
         },
       );
     } else {
+      // ignore: invalid_use_of_protected_member
       mystate.setState(
         () {
           towns = [];
@@ -1266,7 +1454,7 @@ class InfoBlock extends StatelessWidget {
               color: Color(0xFFFFFFFF),
               fontWeight: FontWeight.w900,
               fontSize: 21.5,
-              fontFamily: "Pro",
+              fontFamily: "Calibri",
             ),
           ),
           const SizedBox(
@@ -1282,7 +1470,7 @@ class InfoBlock extends StatelessWidget {
               wordSpacing: -1,
               letterSpacing: -0.23,
               height: 1.1,
-              fontFamily: "Pro",
+              fontFamily: "Calibri",
             ),
           ),
         ],
@@ -1294,6 +1482,7 @@ class InfoBlock extends StatelessWidget {
 class Info extends StatefulWidget {
   const Info({super.key});
 
+  @override
   State<Info> createState() => _InfoState();
 }
 
@@ -1332,7 +1521,7 @@ class _InfoState extends State<Info> {
         });
       }
     });
-    return Container(
+    return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: SingleChildScrollView(
         controller: controller,
@@ -1444,7 +1633,7 @@ class _TravelScrollState extends State<TravelScroll> {
     });
     return Stack(
       children: [
-        Container(
+        SizedBox(
           width: MediaQuery.of(context).size.width,
           child: SingleChildScrollView(
             controller: controller,
@@ -1556,7 +1745,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
         children: [
           const Text(
             "Количество человек",
-            style: TextStyle(fontFamily: "Pro", fontSize: 14),
+            style: TextStyle(fontFamily: "Calibri", fontSize: 14),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1566,7 +1755,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
                   "-",
                   style: TextStyle(
                     fontSize: 22.5,
-                    fontFamily: "Pro",
+                    fontFamily: "Calibri",
                     color: Color(0xFF000000),
                   ),
                 ),
@@ -1584,7 +1773,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
                 "Взрослые: ${widget.bridge.value["parents"]}",
                 style: const TextStyle(
                   fontSize: 14,
-                  fontFamily: "Pro",
+                  fontFamily: "Calibri",
                   color: Color(0xFF000000),
                 ),
               ),
@@ -1593,7 +1782,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
                   "+",
                   style: TextStyle(
                     fontSize: 22,
-                    fontFamily: "Pro",
+                    fontFamily: "Calibri",
                     color: Color(0xFF000000),
                   ),
                 ),
@@ -1615,7 +1804,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
                   "-",
                   style: TextStyle(
                     fontSize: 22,
-                    fontFamily: "Pro",
+                    fontFamily: "Calibri",
                     color: Color(0xFF000000),
                   ),
                 ),
@@ -1633,7 +1822,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
                 "Дети: ${widget.bridge.value["children"]}",
                 style: const TextStyle(
                   fontSize: 14,
-                  fontFamily: "Pro",
+                  fontFamily: "Calibri",
                   color: Color(0xFF000000),
                 ),
               ),
@@ -1642,7 +1831,7 @@ class _PeoplesCountInputState extends State<PeoplesCountInput> {
                   "+",
                   style: TextStyle(
                     fontSize: 22.5,
-                    fontFamily: "Pro",
+                    fontFamily: "Calibri",
                     color: Color(0xFF000000),
                   ),
                 ),
@@ -1744,13 +1933,13 @@ class _SmallInputState extends State<SmallInput> {
         controller: widget.controller,
         onChanged: widget.onChanged,
         style: const TextStyle(
-          fontFamily: "Pro",
+          fontFamily: "Calibri",
           fontSize: 10,
         ),
         decoration: InputDecoration(
           hintText: widget.placeholder,
           hintStyle: const TextStyle(
-            fontFamily: "Pro",
+            fontFamily: "Calibri",
             fontSize: 10,
             fontWeight: FontWeight.w300,
           ),

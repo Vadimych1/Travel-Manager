@@ -26,7 +26,6 @@ func getFieldString(e *userdb.User, field string) string {
 }
 
 // EncryptAES encrypts the given plaintext using AES encryption with the provided key.
-// It returns the encrypted ciphertext as a hexadecimal string.
 func EncryptAES(key []byte, plaintext string) string {
 	// create cipher
 	c, err := aes.NewCipher(key)
@@ -38,6 +37,7 @@ func EncryptAES(key []byte, plaintext string) string {
 	return hex.EncodeToString(out)
 }
 
+// Read settings from config file
 func ReadSettings() map[string]string {
 	ret := map[string]string{}
 
@@ -51,9 +51,11 @@ func ReadSettings() map[string]string {
 	return ret
 }
 
+// Create loggers
 var logfile, _ = os.OpenFile(fmt.Sprintf("logs/log-%d-%d-%d.log", log.LUTC, log.Ldate, log.Ltime), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 var logger = log.New(io.Writer(logfile), "", 0)
 
+// Print log
 func Log(toLog string) {
 	logger.Println(toLog)
 	log.Default().Println(toLog)
@@ -61,6 +63,7 @@ func Log(toLog string) {
 
 var encode_key string
 
+// Create user
 func register(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["username"] != "" && params["password"] != "" && params["name"] != "" {
@@ -86,6 +89,7 @@ func register(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Login user
 func login(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["username"] != "" && params["password"] != "" {
@@ -116,6 +120,7 @@ func login(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Create plan in DB
 func createTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["username"] != "" &&
@@ -180,6 +185,7 @@ func createTravel(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Fetch all travels
 func getAllTravels(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["username"] != "" && params["password"] != "" {
@@ -226,6 +232,7 @@ func getAllTravels(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Fetch travel plan from db
 func getTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["username"] != "" && params["password"] != "" && params["id"] != "" {
@@ -269,6 +276,7 @@ func getTravel(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Edit travel in DB
 func editTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	username := params["username"]
@@ -336,6 +344,7 @@ func editTravel(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Delete travel plan from DB
 func deleteTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["id"] != "" && params["username"] != "" && params["password"] != "" {
@@ -371,6 +380,7 @@ func deleteTravel(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Admins panel get
 func admins(params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
 	if r.Method == "GET" {
 		if params["page"] == "" || params["pwd"] == "" {
@@ -424,6 +434,7 @@ func admins(params map[string]string, w http.ResponseWriter, r *http.Request, se
 	}
 }
 
+// Default HTTP get
 func default_get(params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string, s string) {
 	var err error
 	var b []byte
@@ -486,6 +497,7 @@ func default_get(params map[string]string, w http.ResponseWriter, r *http.Reques
 	fmt.Fprint(w, sd)
 }
 
+// Remove travels that expired
 func clearTravels() {
 	rows, err := userdb.Db.Query("SELECT * FROM plans")
 
@@ -530,6 +542,7 @@ func clearTravels() {
 	rows.Close()
 }
 
+// Replace placeholders in documents
 func replacePlaceholders(content string, settings map[string]string, log string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(
 		strings.ReplaceAll(content,
@@ -540,6 +553,7 @@ func replacePlaceholders(content string, settings map[string]string, log string)
 	)
 }
 
+// Fetch activities from DB
 func search_activities(s string, w http.ResponseWriter, params map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if (params["username"] != "" && params["password"] != "") || params["api_key"] != "" {
@@ -596,6 +610,7 @@ func search_activities(s string, w http.ResponseWriter, params map[string]string
 	}
 }
 
+// Remove dublicated values from arr (string)
 func removeDuplicates(arr []string) []string {
 	resultMap := make(map[string]bool)
 	result := []string{}
@@ -610,6 +625,7 @@ func removeDuplicates(arr []string) []string {
 	return result
 }
 
+// Prepare keywords for search
 func prep_keys(in string) string {
 	s := strings.Split(in, " ")
 	ret := ""
@@ -630,6 +646,7 @@ func prep_keys(in string) string {
 	return ret
 }
 
+// Add a new review to DB
 func addReview(params map[string]string, w http.ResponseWriter) {
 	var username = params["username"]
 	var password = params["password"]
@@ -681,6 +698,7 @@ func addReview(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Fetch all reviews from DB
 func getReviews(params map[string]string, w http.ResponseWriter) {
 	var username = params["username"]
 	var password = params["password"]
@@ -732,6 +750,7 @@ func getReviews(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Fetch review from DB
 func getReview(params map[string]string, w http.ResponseWriter) {
 	var username = params["username"]
 	var password = params["password"]
@@ -784,6 +803,7 @@ func getReview(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Delete review from DB
 func deleteReview(params map[string]string, w http.ResponseWriter) {
 	var username = params["username"]
 	var password = params["password"]
@@ -833,6 +853,7 @@ func deleteReview(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Guess responce method and call it
 func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
 	without_suff, _ := strings.CutSuffix(s, "/")
 	without_pref, _ := strings.CutPrefix(without_suff, "/")
@@ -914,6 +935,7 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 	}
 }
 
+// Run main function
 func main() {
 	logger.Println("-----------------" + time.Now().Format(time.DateOnly) + "--------------")
 	settings := ReadSettings()

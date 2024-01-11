@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:travel_manager_new/pages/main/main_home.dart';
 // import 'package:travel_manager_new/pages/auth/register/step2.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
-import 'package:flutter_svg/svg.dart';
 import 'login.dart';
 import "package:http/http.dart";
 import 'dart:convert';
@@ -210,11 +209,7 @@ class _RegisterStep1State extends State<RegisterStep1> {
               top: 86,
               left: 10,
             ),
-            child: TextButton(
-              child: SvgPicture.asset(
-                "assets/images/svg/arrow_back.svg",
-                color: Colors.white,
-              ),
+            child: BackButton(
               onPressed: () {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(

@@ -5,7 +5,6 @@ import 'package:travel_manager_new/pages/add_travel/choose_activities.dart';
 import "package:travel_manager_new/uikit/uikit.dart";
 import "package:flutter_svg/flutter_svg.dart";
 // import '../main/main_travels.dart';
-import 'choose_town.dart';
 // import 'package:intl/intl.dart';
 
 class CreateTravelMainInfo extends StatefulWidget {
@@ -65,37 +64,9 @@ class _CreateTravelMainInfoState extends State<CreateTravelMainInfo> {
 
           Column(
             children: [
-              // Title
+              // Inputs
               Container(
-                alignment: Alignment.center,
-                margin: const EdgeInsets.only(top: 50),
-                child: const Text(
-                  "Создание поездки",
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFFFFFFFF),
-                  ),
-                ),
-              ),
-
-              // Undertext
-              Container(
-                alignment: Alignment.center,
-                margin: const EdgeInsets.only(top: 0),
-                child: const Text(
-                  "Общая информация",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFFDCDCDC),
-                  ),
-                ),
-              ),
-
-              // // Inputs
-              Container(
-                margin: const EdgeInsets.only(top: 40),
+                margin: const EdgeInsets.only(top: 140),
                 child: PeoplesCountInput(bridge: peopleCountB),
               ),
 
@@ -182,16 +153,19 @@ class _CreateTravelMainInfoState extends State<CreateTravelMainInfo> {
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Row(children: [
-                            SvgPicture.asset(
-                              "assets/images/svg/warn.svg",
-                              color: Colors.red,
-                            ),
-                            const SizedBox(
-                              width: 20,
-                            ),
-                            const Text("Заполните все поля")
-                          ]),
+                          content: Row(
+                            children: [
+                              SvgPicture.asset(
+                                "assets/images/svg/warn.svg",
+                                // ignore: deprecated_member_use
+                                color: Colors.red,
+                              ),
+                              const SizedBox(
+                                width: 20,
+                              ),
+                              const Text("Заполните все поля")
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -202,6 +176,31 @@ class _CreateTravelMainInfoState extends State<CreateTravelMainInfo> {
             ],
           ),
 
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF232323),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(10),
+                bottomRight: Radius.circular(10),
+              ),
+            ),
+            width: MediaQuery.of(context).size.width,
+            height: 100,
+            padding: const EdgeInsets.only(
+              left: 40,
+              top: 67,
+            ),
+            child: const Text(
+              "Введите нужные данные",
+              style: TextStyle(
+                color: Color(
+                  0xFFFFFFFF,
+                ),
+                fontSize: 20,
+              ),
+            ),
+          ),
+
           // Back button
           Container(
             margin: const EdgeInsets.only(
@@ -209,16 +208,8 @@ class _CreateTravelMainInfoState extends State<CreateTravelMainInfo> {
               left: 0,
             ),
             // color: Colors.red,
-            child: TextButton(
-              child: SvgPicture.asset(
-                "assets/images/svg/arrow_back.svg",
-                color: const Color(
-                  0xFFFFFFFF,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            child: const BackButton(
+              color: Color(0xFFFFFFFF),
             ),
           ),
         ],

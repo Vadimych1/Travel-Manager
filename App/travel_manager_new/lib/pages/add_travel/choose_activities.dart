@@ -3,7 +3,6 @@
 // Выбор города
 import 'package:flutter/material.dart';
 import "package:travel_manager_new/uikit/uikit.dart";
-import "package:flutter_svg/flutter_svg.dart";
 import "summary.dart";
 // import 'package:address_search_field/address_search_field.dart';
 
@@ -48,7 +47,7 @@ class _CreateTravelChooseActivitiesState
         children: [
           // BG
           Container(
-            color: const Color(0xFF005E72),
+            color: const Color(0xFF3A3A3A),
           ),
 
           // Unfocus
@@ -72,82 +71,42 @@ class _CreateTravelChooseActivitiesState
               top: 57,
               left: 0,
             ),
-            child: TextButton(
-              child: SvgPicture.asset(
-                "assets/images/svg/arrow_back.svg",
-                color: const Color(
-                  0xFFFFFFFF,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+            child: const BackButton(
+              color: Color(0xFFFFFFFF),
             ),
           ),
 
           // FG
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                // Title
-                Container(
-                  alignment: Alignment.center,
-                  margin: const EdgeInsets.only(top: 50),
-                  child: const Text(
-                    "Создание поездки",
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFFFFFFFF),
-                    ),
-                  ),
-                ),
+          Column(
+            children: [
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: activs,
+              ),
+              ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxHeight: 1000, maxWidth: 400),
+              ),
+              Container(
+                margin: const EdgeInsets.only(bottom: 40, top: 10),
+                child: BlackButton(
+                  text: "Далее",
+                  onPressed: () {
+                    var pr = widget.params;
 
-                // Undertext
-                Container(
-                  alignment: Alignment.center,
-                  margin: const EdgeInsets.only(top: 0),
-                  child: const Text(
-                    "Выбор активностей",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFDCDCDC),
-                    ),
-                  ),
-                ),
-
-                Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  child: activs,
-                ),
-
-                ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxHeight: 1000, maxWidth: 400),
-                ),
-
-                Container(
-                  margin: const EdgeInsets.only(bottom: 40, top: 10),
-                  child: BlackButton(
-                    text: "Далее",
-                    onPressed: () {
-                      var pr = widget.params;
-
-                      pr["activities"] = activs.toJson();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => CreateTravelSummary(
-                            params: pr,
-                          ),
+                    pr["activities"] = activs.toJson();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => CreateTravelSummary(
+                          params: pr,
                         ),
-                      );
-                    },
-                    color: myColors['blue1'],
-                  ),
+                      ),
+                    );
+                  },
+                  color: myColors['blue1'],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

@@ -980,3 +980,22 @@ Starting HTTP server on 80
 Connected to database
 Server started successfully
 Clearing old travels
+-----------------2024-01-05--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-06--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+-----------------2024-01-07--------------
+Starting HTTP server on 80
+Connected to database
+Server started successfully
+Clearing old travels
+Error: bad query (username)
+Error: bad query (password)
+Error: bad query (username)
+Error: bad query (password)

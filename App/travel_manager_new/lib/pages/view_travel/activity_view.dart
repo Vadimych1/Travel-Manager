@@ -1,6 +1,3 @@
-import "dart:convert";
-
-import "./../../uikit/uikit.dart";
 import "package:flutter/material.dart";
 
 class ActivityView extends StatefulWidget {
@@ -19,11 +16,10 @@ class _ActivityViewState extends State<ActivityView> {
   void initState() {
     super.initState();
 
-    jsonDecode(widget.activity["images"]).forEach(
+    widget.activity["images"].forEach(
       (v) {
         setState(
           () {
-            print(v);
             images.add(Image.network(v));
           },
         );

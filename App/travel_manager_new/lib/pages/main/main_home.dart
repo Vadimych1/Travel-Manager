@@ -79,7 +79,9 @@ class _MainHomeState extends State<MainHome> {
                               .replaceAll("\"{", "{")
                               .replaceAll("}\"", "}")
                               .replaceAll("\\", "")
-                              .replaceAll("}}\"", "}}"),
+                              .replaceAll("}}\"", "}}")
+                              .replaceAll("\"[", "[")
+                              .replaceAll("]\"", "]"),
                         );
 
                         travels.add(SizedBox(
