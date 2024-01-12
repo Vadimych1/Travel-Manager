@@ -100,146 +100,171 @@ class _LoginPageState extends State<LoginPage> {
           ),
 
           // FG
-          Column(
-            children: [
-              // Text Войти
-              Container(
-                margin: const EdgeInsets.only(
-                  top: 70,
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  "Войти",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 38,
-                    letterSpacing: -0.4,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-
-              // Inputs
-              Container(
-                margin: const EdgeInsets.only(
-                  top: 43,
-                ),
-                alignment: Alignment.center,
-                width: 319,
-                height: 110,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Input(
-                      controller: _email,
-                      placeholder: "e-mail",
-                      onChanged: (s) {},
-                    ),
-                    Input(
-                      controller: _password,
-                      placeholder: "пароль",
-                      onChanged: (s) {},
-                    ),
-                  ],
-                ),
-              ),
-
-              // Margin
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: 100,
-                  ),
-                  child: Container(),
-                ),
-              ),
-
-              // Buttons
-              Container(
-                margin: const EdgeInsets.only(
-                  bottom: 60,
-                ),
-                alignment: Alignment.bottomCenter,
+          ConstrainedBox(
+            constraints: const BoxConstraints.expand(),
+            child: SingleChildScrollView(
+              child: Container(
+                height: 800,
                 child: Column(
                   children: [
-                    BlackButton(
-                      text: "Войти",
-                      onPressed: () {
-                        if (_email.text.trim() != "" &&
-                            _password.text.trim() != "") {
-                          get(
-                            Uri.http(
-                              "x1f9tspp-80.euw.devtunnels.ms",
-                              "/api/v1/login",
-                              {
-                                "username": _email.text,
-                                "password": _password.text
-                              },
-                            ),
-                          ).then(
-                            (value) {
-                              var j = jsonDecode(value.body);
+                    // Text Войти
+                    Container(
+                      margin: const EdgeInsets.only(
+                        top: 70,
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        "Войти",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 38,
+                          letterSpacing: -0.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
 
-                              if (j["status"] == "success") {
-                                s.write(key: "username", value: _email.text);
-                                s.write(key: "password", value: _password.text);
-                                s.write(key: "name", value: j["name"]);
+                    // Inputs
+                    Container(
+                      margin: const EdgeInsets.only(
+                        top: 43,
+                      ),
+                      alignment: Alignment.center,
+                      width: 319,
+                      height: 110,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Input(
+                            textFieldKey: const Key('loginKey'),
+                            controller: _email,
+                            placeholder: "e-mail",
+                            onChanged: (s) {},
+                          ),
+                          Input(
+                            textFieldKey: const Key('passwordKey'),
+                            controller: _password,
+                            placeholder: "пароль",
+                            onChanged: (s) {},
+                          ),
+                        ],
+                      ),
+                    ),
 
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainHome(),
+                    // Margin
+                    Expanded(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: 0,
+                        ),
+                        child: Container(),
+                      ),
+                    ),
+
+                    // Buttons
+                    Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 60,
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      child: Column(
+                        children: [
+                          BlackButton(
+                            text: "Войти",
+                            buttonKey: const Key('loginButtonKey'),
+                            onPressed: () {
+                              if (_email.text.trim() != "" &&
+                                  _password.text.trim() != "") {
+                                get(
+                                  Uri.http(
+                                    "x1f9tspp-80.euw.devtunnels.ms",
+                                    "/api/v1/login",
+                                    {
+                                      "username": _email.text,
+                                      "password": _password.text
+                                    },
                                   ),
+                                ).then(
+                                  (value) {
+                                    print(value.body);
+                                    var j = jsonDecode(value.body);
+
+                                    if (j["status"] == "success") {
+                                      s.write(
+                                          key: "username", value: _email.text);
+                                      s.write(
+                                          key: "password",
+                                          value: _password.text);
+                                      s.write(key: "name", value: j["name"]);
+
+                                      print("success");
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) {
+                                            print("Pushing");
+                                            return const MainHome(
+                                              key: Key("mainPageKey"),
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    } else {
+                                      switch (j["code"]) {
+                                        case "user_not_exists":
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Пользователь не найден"),
+                                            ),
+                                          );
+                                        case "invalid_password":
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text("Неверный пароль"),
+                                            ),
+                                          );
+                                        default:
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  "Произошла ошибка при входе"),
+                                            ),
+                                          );
+                                      }
+                                    }
+                                  },
                                 );
                               } else {
-                                switch (j["code"]) {
-                                  case "user_not_exists":
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Пользователь не найден"),
-                                      ),
-                                    );
-                                  case "invalid_password":
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Неверный пароль"),
-                                      ),
-                                    );
-                                  default:
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content:
-                                            Text("Произошла ошибка при входе"),
-                                      ),
-                                    );
-                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Вы не ввели логин/пароль"),
+                                  ),
+                                );
                               }
                             },
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Вы не ввели логин/пароль"),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    WhiteButton(
-                      text: "Зарегестрироваться",
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterStep1(),
                           ),
-                        );
-                      },
+                          WhiteButton(
+                            text: "Зарегестрироваться",
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterStep1(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
 
           // Loadscreen

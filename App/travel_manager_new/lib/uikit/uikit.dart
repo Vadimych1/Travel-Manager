@@ -50,16 +50,17 @@ bool isEmailValid(String email) {
 
 // ! Black button
 class BlackButton extends StatelessWidget {
-  const BlackButton({
-    super.key,
-    required this.text,
-    required this.onPressed,
-    this.color = const Color(0xFF000000),
-  });
+  const BlackButton(
+      {super.key,
+      required this.text,
+      required this.onPressed,
+      this.color = const Color(0xFF000000),
+      this.buttonKey = const Key('buttonKey')});
 
   final Function() onPressed;
   final String text;
   final Color color;
+  final Key buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +74,7 @@ class BlackButton extends StatelessWidget {
         ),
       ),
       child: TextButton(
+        key: buttonKey,
         style: ButtonStyle(
           padding: MaterialStateProperty.all<EdgeInsets>(
             const EdgeInsets.symmetric(vertical: 22, horizontal: 46),
@@ -157,8 +159,10 @@ class Input extends StatelessWidget {
     this.borderRadius = const BorderRadius.all(
       Radius.circular(10),
     ),
+    this.textFieldKey = const Key("textFieldKey"),
   });
 
+  final Key textFieldKey;
   final String placeholder;
   final Function(String) onChanged;
   final TextEditingController controller;
@@ -177,6 +181,7 @@ class Input extends StatelessWidget {
         borderRadius: borderRadius,
       ),
       child: TextField(
+        key: textFieldKey,
         style: TextStyle(
           fontWeight: FontWeight.w300,
           fontSize: 16,
@@ -672,6 +677,8 @@ class _ActivitiesState extends State<Activities> {
                                           builder: (context) =>
                                               ViewReviewsAndPhotos(
                                             placeid: item["id"],
+                                            photosAddresses:
+                                                item["photos"] ?? [],
                                           ),
                                         ),
                                       );
