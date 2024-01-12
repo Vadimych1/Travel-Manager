@@ -62,7 +62,7 @@ class _ViewTravelState extends State<ViewTravel> {
             usr = usr_ ?? "";
             pwd = pwd_ ?? "";
             get(
-              Uri.https(
+              Uri.http(
                 serveraddr,
                 "api/v1/get_travel",
                 {
@@ -369,7 +369,7 @@ class _ViewTravelState extends State<ViewTravel> {
                                               .then(
                                             (_) {
                                               get(
-                                                Uri.https(
+                                                Uri.http(
                                                   serveraddr,
                                                   "api/v1/get_travel",
                                                   {
@@ -596,7 +596,7 @@ class _ViewTravelState extends State<ViewTravel> {
                     s.read(key: "password").then(
                       (pwd) {
                         get(
-                          Uri.https(
+                          Uri.http(
                             serveraddr,
                             "api/v1/edit_travel",
                             {

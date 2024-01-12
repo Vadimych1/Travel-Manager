@@ -29,8 +29,8 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return const AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-          // statusBarColor: Colors.transparent,
-          ),
+        statusBarColor: Colors.transparent,
+      ),
       child: MaterialApp(
         home: Scaffold(
           body: Center(

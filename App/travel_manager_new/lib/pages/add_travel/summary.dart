@@ -136,7 +136,7 @@ class _CreateTravelSummaryState extends State<CreateTravelSummary> {
                         s.read(key: "password").then(
                           (pwd) {
                             // print(d);
-                            var uri = Uri.https(
+                            var uri = Uri.http(
                               serveraddr,
                               "api/v1/create_travel",
                               {

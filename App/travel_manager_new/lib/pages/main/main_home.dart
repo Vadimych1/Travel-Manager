@@ -62,7 +62,7 @@ class _MainHomeState extends State<MainHome> {
                     // print("usr: $usr"),
                     // print("pwd: $pwd"),
                     get(
-                      Uri.https(
+                      Uri.http(
                         serveraddr,
                         "api/v1/get_all_travels",
                         {"username": usr, "password": pwd},

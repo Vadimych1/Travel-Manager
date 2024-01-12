@@ -316,7 +316,7 @@ class _ExpenseViewState extends State<ExpenseView> {
                     storage.read(key: "password").then(
                       (pwd) {
                         get(
-                          Uri.https(
+                          Uri.http(
                             serveraddr,
                             "api/v1/edit_travel",
                             {

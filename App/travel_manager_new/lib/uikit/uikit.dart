@@ -10,12 +10,13 @@ import 'package:flutter_svg/svg.dart';
 import "package:flutter_vector_icons/flutter_vector_icons.dart";
 import "../pages/view_travel/view_reviews_and_photos.dart";
 
-const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms";
+const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms"; // local server
+// const String serveraddr = "213.226.125.231:3005"; // global server
 
 const String vkapiKey =
     "2320e98d2320e98d2320e98d652035789d223202320e98d47da2fa056600b3052f44d4c";
 
-const String gisapiKey = "633b455e-9da5-47b6-8d30-040293bc52a3";
+// const String gisapiKey = "633b455e-9da5-47b6-8d30-040293bc52a3"; // deprecated
 
 // ! COLORS
 Map myColors = {
@@ -539,7 +540,7 @@ class _ActivitiesState extends State<Activities> {
     void onchanged(s) {
       if (s.length > 1) {
         get(
-          Uri.https(
+          Uri.http(
             serveraddr,
             'api/activities/search',
             {

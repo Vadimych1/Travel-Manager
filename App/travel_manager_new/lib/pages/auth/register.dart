@@ -138,7 +138,7 @@ class _RegisterStep1State extends State<RegisterStep1> {
                       );
                     } else {
                       get(
-                        Uri.https(
+                        Uri.http(
                           serveraddr,
                           "/api/v1/register",
                           {

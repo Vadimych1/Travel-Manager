@@ -853,6 +853,23 @@ func deleteReview(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Fetch username from db
+func getUsername(params map[string]string, w http.ResponseWriter) {
+	var username = params["username"]
+
+	if username != "" {
+		usr, _ := url.QueryUnescape(username)
+		res := userdb.SearchUser(usr)
+
+		if len(res) > 0 {
+			w.Header().Add("Content-Type", "application/json")
+			fmt.Fprint(w, `{"username": "`+res[0].Name+`"}`)
+		} else {
+			fmt.Fprint(w, "user not found")
+		}
+	}
+}
+
 // Guess responce method and call it
 func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
 	without_suff, _ := strings.CutSuffix(s, "/")
@@ -870,7 +887,9 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 					register(params, w)
 				case "login":
 					login(params, w)
-					// db:travels
+				case "get_username":
+					getUsername(params, w)
+				// db:users
 				case "create_travel":
 					createTravel(params, w)
 				case "get_all_travels":
@@ -881,7 +900,7 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 					editTravel(params, w)
 				case "delete_travel":
 					deleteTravel(params, w)
-					// db:reviews
+				// db:reviews
 				case "add_review":
 					addReview(params, w)
 				case "get_reviews":

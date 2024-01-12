@@ -30,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
           s.read(key: "password").then(
             (password) {
               get(
-                Uri.https(
+                Uri.http(
                   serveraddr,
                   "/api/v1/login",
                   {"username": username, "password": password},
@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                         if (_email.text.trim() != "" &&
                             _password.text.trim() != "") {
                           get(
-                            Uri.https(
+                            Uri.http(
                               "x1f9tspp-80.euw.devtunnels.ms",
                               "/api/v1/login",
                               {

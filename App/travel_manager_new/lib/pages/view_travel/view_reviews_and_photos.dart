@@ -24,7 +24,7 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
         storage.read(key: "password").then(
           (pwd) {
             get(
-              Uri.https(
+              Uri.http(
                 serveraddr,
                 "api/v1/get_reviews",
                 {
@@ -40,7 +40,11 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
                     var j = jsonDecode(req.body);
 
                     j.forEach((r) {
-                      print(r);
+                      var rText = r["title"] ?? "";
+                      var rStars = r["stars"] ?? 0;
+                      var rOwner = r["owner"] ?? "";
+
+                      
                     });
                   } catch (e) {
                     null;
