@@ -42,7 +42,6 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
                 if (req.statusCode == 200) {
                   try {
                     var j = jsonDecode(req.body);
-                    print(j);
 
                     j.forEach(
                       (r) {
@@ -108,8 +107,7 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
       },
     );
 
-    widget.photosAddresses.forEach(
-      (addr) {
+    for (var addr in widget.photosAddresses) {
         setState(
           () {
             photos.add(
@@ -117,99 +115,107 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
             );
           },
         );
-      },
-    );
+      }
 
     return Scaffold(
       backgroundColor: const Color(0xFF333333),
-      body: Column(
+      body: Stack(
         children: [
-          Container(
-            width: MediaQuery.of(context).size.width,
-            height: 90,
-            padding: const EdgeInsets.only(
-              top: 60,
-              left: 30,
-            ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF101010),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+          Column(
+            children: [
+              Container(
+                width: MediaQuery.of(context).size.width,
+                height: 90,
+                padding: const EdgeInsets.only(
+                  top: 60,
+                  left: 30,
+                ),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF101010),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  "Отзывы и фотографии",
+                  style: TextStyle(
+                    color: Color(0xFFFFFFFF),
+                    fontFamily: "Inter",
+                    fontSize: 16,
+                  ),
+                ),
               ),
-            ),
-            child: const Text(
-              "Отзывы и фотографии",
-              style: TextStyle(
-                color: Color(0xFFFFFFFF),
-                fontFamily: "Inter",
-                fontSize: 16,
-              ),
-            ),
-          ),
 
-          // Photos
-          Container(
-            width: MediaQuery.of(context).size.width - 20,
-            height: 240,
-            padding: const EdgeInsets.all(
-              10,
-            ),
-            margin: const EdgeInsets.only(top: 20, left: 10, right: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF101010),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: photos.isNotEmpty
-                    ? photos
-                    : [
-                        Container(
-                          margin: EdgeInsets.only(
-                              left:
-                                  MediaQuery.of(context).size.width / 2 - 120),
-                          child: const Text(
-                            "Фотографий нет\nЛибо они еще загружаются",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFFFFFFFF),
+              // Photos
+              Container(
+                width: MediaQuery.of(context).size.width - 20,
+                height: 240,
+                padding: const EdgeInsets.all(
+                  10,
+                ),
+                margin: const EdgeInsets.only(top: 20, left: 10, right: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF101010),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: photos.isNotEmpty
+                        ? photos
+                        : [
+                            Container(
+                              margin: EdgeInsets.only(
+                                  left: MediaQuery.of(context).size.width / 2 -
+                                      120),
+                              child: const Text(
+                                "Фотографий нет\nЛибо они еще загружаются",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xFFFFFFFF),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
+                          ],
+                  ),
+                ),
               ),
-            ),
-          ),
 
-          // Reviews
-          Container(
-            width: MediaQuery.of(context).size.width - 20,
-            height: 300,
-            padding: const EdgeInsets.all(
-              10,
-            ),
-            margin: const EdgeInsets.only(top: 20, left: 10, right: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF101010),
-              borderRadius: BorderRadius.circular(
-                10,
+              // Reviews
+              Container(
+                width: MediaQuery.of(context).size.width - 20,
+                height: 300,
+                padding: const EdgeInsets.all(
+                  10,
+                ),
+                margin: const EdgeInsets.only(top: 20, left: 10, right: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF101010),
+                  borderRadius: BorderRadius.circular(
+                    10,
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    children: reviews.isNotEmpty
+                        ? reviews
+                        : [
+                            const Text(
+                              "Отзывов пока нет",
+                            ),
+                          ],
+                  ),
+                ),
               ),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Column(
-                children: reviews.isNotEmpty
-                    ? reviews
-                    : [
-                        const Text(
-                          "Отзывов пока нет",
-                        ),
-                      ],
-              ),
+            ],
+          ),
+          const BackButton(
+            color: Color(
+              0xFFFFFFFF,
             ),
           ),
         ],

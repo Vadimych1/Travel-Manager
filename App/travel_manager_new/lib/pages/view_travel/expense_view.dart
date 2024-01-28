@@ -63,7 +63,7 @@ class ExpenseView extends StatefulWidget {
 }
 
 class _ExpenseViewState extends State<ExpenseView> {
-  List<Widget> expenses = [];
+  List<ExpenseItem> expenses = [];
   List expensesj = [];
   int sum = 0;
 
@@ -77,7 +77,7 @@ class _ExpenseViewState extends State<ExpenseView> {
     }
 
     for (var e in expensesj) {
-      sum += int.parse(e["cost"]);
+      sum += int.tryParse(e["cost"]) ?? 0;
       expenses.add(
         ExpenseItem(
           expense: e,
@@ -107,6 +107,10 @@ class _ExpenseViewState extends State<ExpenseView> {
     }
   }
 
+  TextEditingController name = TextEditingController();
+  TextEditingController cost = TextEditingController();
+  TextEditingController category = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,13 +134,44 @@ class _ExpenseViewState extends State<ExpenseView> {
                 Container(
                   margin: const EdgeInsets.only(top: 20),
                   width: 307,
-                  height: 300,
+                  // height: 300,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(
+                        width: 307,
+                        height: 180,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: expenses.isNotEmpty
+                                ? [
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    ...expenses
+                                  ]
+                                : [
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    const Text(
+                                      "Пусто",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Color(
+                                          0xFF777777,
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                          ),
+                        ),
+                      ),
                       Container(
                         alignment: Alignment.topLeft,
                         margin: const EdgeInsets.only(top: 15, left: 20),
@@ -148,149 +183,125 @@ class _ExpenseViewState extends State<ExpenseView> {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: 180,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: expenses,
-                          ),
-                        ),
-                      ),
                       Container(
-                        alignment: Alignment.bottomCenter,
-                        child: BlackButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                TextEditingController nameC =
-                                    TextEditingController();
-                                TextEditingController costC =
-                                    TextEditingController();
-
-                                var prevCost = "";
-
-                                return AlertDialog(
-                                  title: const Text(
-                                    "Добавление расходов",
+                        width: 307,
+                        height: 230,
+                        margin: const EdgeInsets.only(left: 15, bottom: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: 200,
+                              height: 40,
+                              child: TextField(
+                                controller: name,
+                                decoration: InputDecoration(
+                                  contentPadding:
+                                      const EdgeInsets.only(left: 10),
+                                  filled: true,
+                                  fillColor: const Color(0xFFFFFFFF),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(
+                                        0xFF000000,
+                                      ),
+                                    ),
                                   ),
-                                  content: Column(
-                                    children: [
-                                      Container(
-                                        margin:
-                                            const EdgeInsets.only(bottom: 10),
-                                        child: Input(
-                                          controller: nameC,
-                                          placeholder: "Наименование",
-                                          onChanged: (s) {},
-                                        ),
+                                  hintText: "Название расхода",
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 200,
+                              height: 40,
+                              child: TextField(
+                                controller: cost,
+                                decoration: InputDecoration(
+                                  contentPadding:
+                                      const EdgeInsets.only(left: 10),
+                                  filled: true,
+                                  fillColor: const Color(0xFFFFFFFF),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(
+                                        0xFF000000,
                                       ),
-                                      SizedBox(
-                                        child: Input(
-                                          controller: costC,
-                                          placeholder: "Затраты",
-                                          onChanged: (s) {
-                                            if (s.length > prevCost.length) {
-                                              try {
-                                                int.parse(s);
-                                                prevCost = s;
-                                              } catch (e) {
-                                                costC.text = prevCost;
-                                              }
-                                            } else {
-                                              prevCost = s;
-                                            }
-                                          },
-                                          inputType: TextInputType.number,
-                                        ),
-                                      ),
-                                      Container(
-                                        margin: const EdgeInsets.only(
-                                          bottom: 10,
-                                          top: 10,
-                                        ),
-                                        alignment: Alignment.bottomCenter,
-                                        child: Row(
-                                          children: [
-                                            TextButton(
-                                              child: const Text("Отмена"),
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: const Text("Добавить"),
-                                              onPressed: () {
-                                                setState(
-                                                  () {
-                                                    expensesj.add(
-                                                      {
-                                                        "name": nameC.text,
-                                                        "cost": costC.text,
-                                                      },
-                                                    );
-
-                                                    expenses = [];
-                                                    sum = 0;
-                                                    for (var e in expensesj) {
-                                                      setState(
-                                                        () {
-                                                          sum += int.parse(
-                                                              e["cost"]);
-                                                        },
-                                                      );
-
-                                                      expenses.add(
-                                                        ExpenseItem(
-                                                          expense: e,
-                                                          after: () {
-                                                            sum = 0;
-                                                            for (var e
-                                                                in expensesj) {
-                                                              setState(
-                                                                () {
-                                                                  sum +=
-                                                                      int.parse(
-                                                                    e["cost"],
-                                                                  );
-                                                                },
-                                                              );
-                                                            }
-                                                          },
-                                                          delete_: (exp) {
-                                                            setState(
-                                                              () {
-                                                                var i = expensesj
-                                                                    .indexOf(
-                                                                        exp);
-                                                                expensesj
-                                                                    .remove(
-                                                                        exp);
-                                                                expenses
-                                                                    .removeAt(
-                                                                        i);
-                                                              },
-                                                            );
-                                                          },
-                                                        ),
-                                                      );
-                                                    }
-
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                );
+                                  hintText: "Сумма расхода",
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 200,
+                              height: 70,
+                              child: DropdownMenu(
+                                onSelected: (v) {
+                                  category.text = v;
+                                },
+                                width: 200,
+                                menuHeight: 200,
+                                hintText: "Категория",
+                                dropdownMenuEntries: const <DropdownMenuEntry>[
+                                  DropdownMenuEntry(
+                                    value: "food",
+                                    label: "Еда",
+                                  ),
+                                  DropdownMenuEntry(
+                                    value: "shops",
+                                    label: "Магазины",
+                                  ),
+                                ],
+                              ),
+                            ),
+                            BlackButton(
+                              text: "Добавить",
+                              onPressed: () {
+                                if (name.text != "" &&
+                                    cost.text != "" &&
+                                    category.text != "") {
+                                  expenses.add(
+                                    ExpenseItem(
+                                      key: Key(
+                                          "${name.text} ${cost.text} ${category.text}"),
+                                      expense: {
+                                        "name": name.text,
+                                        "cost": cost.text,
+                                        "category": category.text
+                                      },
+                                      delete_: (m) {
+                                        expensesj.remove(m);
+
+                                        for (var element in expenses) {
+                                          if (element.key ==
+                                              Key("${m["name"]} ${m["cost"]} ${m["category"]}")) {
+                                            expenses.remove(element);
+                                            setState(() {});
+                                          }
+                                        }
+                                      },
+                                      after: () {
+                                        setState(
+                                          () {},
+                                        );
+                                      },
+                                    ),
+                                  );
+                                  expensesj.add(
+                                    {
+                                      "name": name.text,
+                                      "cost": cost.text,
+                                      "category": category.text
+                                    },
+                                  );
+                                  setState(() {});
+                                }
                               },
-                            );
-                          },
-                          text: "Добавить",
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -306,8 +317,6 @@ class _ExpenseViewState extends State<ExpenseView> {
               onPressed: () {
                 var exp = jsonEncode(expensesj);
                 var tr = widget.travel;
-
-                tr["expenses"] = exp;
 
                 var storage = const FlutterSecureStorage();
 

@@ -535,12 +535,16 @@ class _ActivitiesState extends State<Activities> {
     var password = "";
 
     FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-    secureStorage.read(key: "username").then((username_) {
-      secureStorage.read(key: "password").then((password_) {
-        username = username_ ?? "";
-        password = password_ ?? "";
-      });
-    });
+    secureStorage.read(key: "username").then(
+      (username_) {
+        secureStorage.read(key: "password").then(
+          (password_) {
+            username = username_ ?? "";
+            password = password_ ?? "";
+          },
+        );
+      },
+    );
 
     void onchanged(s) {
       if (s.length > 1) {
@@ -563,139 +567,25 @@ class _ActivitiesState extends State<Activities> {
 
                 searchResults = [];
                 for (var item in responce) {
+                  var inPlan = false;
+
+                  for (var e in widget.bridge.value) {
+                    if (e.name == item["name"]) {
+                      inPlan = true;
+                    }
+                  }
+
                   searchResults.add(
-                    Container(
-                      width: 307,
-                      margin: const EdgeInsets.only(bottom: 10, top: 10),
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF272727),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            item["name"],
-                            style: const TextStyle(
-                              fontFamily: "Calibri",
-                              fontSize: 16,
-                              color: Color(0xFFFFFFFF),
-                            ),
-                          ),
-                          Text(
-                            item["description"],
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontFamily: "Calibri",
-                              fontSize: 12,
-                              color: Color(0xFFCCCCCC),
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(top: 20, bottom: 20),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFFFFF),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  width: 130,
-                                  height: 30,
-                                  child: TextButton(
-                                    style: ButtonStyle(
-                                      padding:
-                                          MaterialStateProperty.all<EdgeInsets>(
-                                        EdgeInsets.zero,
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      "Добавить в план",
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF000000)),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        var schedule = item["schedule"];
-                                        if (schedule is String) {
-                                          schedule = jsonDecode(schedule);
-                                        }
-
-                                        widget.bridge.value.add(
-                                          SelectedActivity(
-                                            name: item["name"],
-                                            address:
-                                                item["address"] ?? "нет адреса",
-                                            schedule: schedule ?? {},
-                                            bridge: widget.bridge,
-                                            parent: this,
-                                            p: item,
-                                          ),
-                                        );
-                                      });
-
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Добавлено в план"),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: const Color(0xFFFFFFFF),
-                                    ),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  width: 130,
-                                  height: 30,
-                                  child: TextButton(
-                                    style: ButtonStyle(
-                                      padding:
-                                          MaterialStateProperty.all<EdgeInsets>(
-                                        EdgeInsets.zero,
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      "Фото и отзывы",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFFFFFFFF),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ViewReviewsAndPhotos(
-                                            placeid: item["id"],
-                                            photosAddresses:
-                                                item["photos"] ?? [],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    AddActivityBlock(
+                      item: item,
+                      inPlan: inPlan,
+                      bridge: widget.bridge,
                     ),
                   );
-                  setState(() {});
                 }
+                setState(() {});
               } catch (e) {
-                //
+                // print(e.toString());
               }
             }
           },
@@ -883,7 +773,7 @@ class SelectedActivity extends StatefulWidget {
   final String name;
   final String address;
   final Map<String, dynamic> schedule;
-  final ListBridge bridge;
+  final ListBridge<SelectedActivity> bridge;
   final State parent;
   final Map<String, dynamic> p;
 
@@ -899,61 +789,103 @@ class _SelectedActivityState extends State<SelectedActivity> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(),
-      child: TextButton(
-        child: Text(widget.name),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text("Подробности"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: widget.schedule != {}
-                    ? [
-                        Text("Адрес: ${widget.address}"),
-                        const Text("Время работы: ",
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        // TODO: add working hours (on server side)
-                        // Text(
-                        //     "Понедельник - с ${widget.schedule["Mon"]["from"]} по ${widget.schedule["Mon"]["working_hours"][0]["to"]}"),
-                        // Text(
-                        //     "Вторник - с ${widget.schedule["Tue"]["from"]} по ${widget.schedule["Tue"]["working_hours"][0]["to"]}"),
-                        // Text(
-                        //     "Среда - с ${widget.schedule["Wed"]["from"]} по ${widget.schedule["Wed"]["working_hours"][0]["to"]}"),
-                        // Text(
-                        //     "Четверг - с ${widget.schedule["Thu"]["from"]} по ${widget.schedule["Thu"]["working_hours"][0]["to"]}"),
-                        // Text(
-                        //     "Пятница - с ${widget.schedule["Fri"]["from"]} по ${widget.schedule["Fri"]["working_hours"][0]["to"]}"),
-                        // Text(
-                        //     "Суббота - с ${widget.schedule["Sat"]["from"]} по ${widget.schedule["Sat"]["working_hours"][0]["to"]}"),
-                        // Text(
-                        //     "Воскресенье - с ${widget.schedule["Sun"]["from"]} по ${widget.schedule["Sun"]["working_hours"][0]["to"]}"),
-                      ]
-                    : [
-                        Text("Адрес: ${widget.address}"),
-                      ],
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+      decoration: const BoxDecoration(
+        color: Color(
+          0xFF2C2C2C,
+        ),
+        borderRadius: BorderRadius.all(
+          Radius.circular(10),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            alignment: Alignment.centerLeft,
+            width: 225,
+            child: TextButton(
+              style: ButtonStyle(
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
               ),
-              actions: [
-                TextButton(
-                  child: const Text("Закрыть"),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
+              child: Text(
+                widget.name,
+                textAlign: TextAlign.left,
+                style: const TextStyle(
+                  fontSize: 14,
                 ),
-                TextButton(
-                  child: const Text("Удалить активность"),
-                  onPressed: () {
-                    widget.bridge.value.remove(widget);
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Подробности"),
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children:
+                          widget.schedule != {} && widget.schedule.isNotEmpty
+                              ? [
+                                  Text("Адрес: ${widget.address}"),
+                                  const Text(
+                                    "Время работы: ",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ]
+                              : [
+                                  Text("Адрес: ${widget.address}"),
+                                ],
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text("Закрыть"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ).then(
+                  (r) {
                     widget.parent.setState(() {});
-                    Navigator.of(context).pop();
+                    setState(() {});
                   },
-                )
-              ],
+                );
+              },
             ),
-          );
-          setState(() {});
-        },
+          ),
+          Container(
+            alignment: Alignment.center,
+            height: 40,
+            child: IconButton(
+              onPressed: () {
+                if (widget.bridge.value.remove(widget)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Удалено",
+                      ),
+                    ),
+                  );
+
+                  widget.parent.setState(() {});
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Не удалось удалить",
+                      ),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(
+                Icons.delete,
+                color: Color(0xFFFFFFFF),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1964,6 +1896,183 @@ class _SmallInputState extends State<SmallInput> {
         keyboardType: TextInputType.datetime,
         maxLines: 1,
         showCursor: false,
+      ),
+    );
+  }
+}
+
+class AddActivityBlock extends StatefulWidget {
+  const AddActivityBlock(
+      {super.key,
+      required this.item,
+      required this.inPlan,
+      required this.bridge});
+
+  final Map<String, dynamic> item;
+  final bool inPlan;
+  final ListBridge<SelectedActivity> bridge;
+
+  @override
+  State<StatefulWidget> createState() => _AddActivityBlockState();
+}
+
+class _AddActivityBlockState extends State<AddActivityBlock> {
+  bool inPlan = false;
+
+  @override
+  Widget build(BuildContext context) {
+    //
+    inPlan = widget.inPlan;
+
+    return Container(
+      width: 307,
+      margin: const EdgeInsets.only(bottom: 10, top: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF272727),
+        borderRadius: BorderRadius.all(
+          Radius.circular(10),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            widget.item["name"],
+            style: const TextStyle(
+              fontFamily: "Calibri",
+              fontSize: 16,
+              color: Color(0xFFFFFFFF),
+            ),
+          ),
+          Text(
+            widget.item["description"],
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: "Calibri",
+              fontSize: 12,
+              color: Color(0xFFCCCCCC),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 20, bottom: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: inPlan
+                        ? const Color.fromARGB(255, 31, 192, 47)
+                        : const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  width: 130,
+                  height: 30,
+                  child: !inPlan
+                      ? TextButton(
+                          style: ButtonStyle(
+                            padding: MaterialStateProperty.all<EdgeInsets>(
+                              EdgeInsets.zero,
+                            ),
+                          ),
+                          child: const Text(
+                            "Добавить в план",
+                            style: TextStyle(
+                                fontSize: 12, color: Color(0xFF000000)),
+                          ),
+                          onPressed: () {
+                            setState(
+                              () {
+                                inPlan = true;
+
+                                var schedule = widget.item["schedule"];
+                                if (schedule is String) {
+                                  schedule = jsonDecode(schedule);
+                                }
+
+                                widget.bridge.value.add(
+                                  SelectedActivity(
+                                    name: widget.item["name"],
+                                    address:
+                                        widget.item["address"] ?? "нет адреса",
+                                    schedule: schedule ?? {},
+                                    bridge: widget.bridge,
+                                    parent: this,
+                                    p: widget.item,
+                                  ),
+                                );
+                              },
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Добавлено в план"),
+                              ),
+                            );
+                          },
+                        )
+                      : TextButton(
+                          style: ButtonStyle(
+                            padding: MaterialStateProperty.all<EdgeInsets>(
+                              EdgeInsets.zero,
+                            ),
+                          ),
+                          child: Text(
+                            "Уже в плане",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: inPlan
+                                  ? const Color(0xFFFFFFFF)
+                                  : const Color(0xFF000000),
+                            ),
+                          ),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Уже в плане"),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: const Color(0xFFFFFFFF),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  width: 130,
+                  height: 30,
+                  child: TextButton(
+                    style: ButtonStyle(
+                      padding: MaterialStateProperty.all<EdgeInsets>(
+                        EdgeInsets.zero,
+                      ),
+                    ),
+                    child: const Text(
+                      "Фото и отзывы",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFFFFFFF),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ViewReviewsAndPhotos(
+                            placeid: widget.item["id"],
+                            photosAddresses: widget.item["photos"] ?? [],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'pages/auth/login.dart';
 import 'package:timezone/data/latest.dart' as tz;
 // import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-// import "package:flutter/cupertino.dart";
 // import "package:flutter_secure_storage/flutter_secure_storage.dart";
 
 void main() {
@@ -12,9 +11,6 @@ void main() {
   //   SystemUiMode.immersiveSticky,
   // );
   tz.initializeTimeZones();
-
-  // var s = const FlutterSecureStorage();
-  // s.deleteAll();
 }
 
 class MainApp extends StatefulWidget {
@@ -27,6 +23,9 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
+    // var storage = FlutterSecureStorage();
+    // storage.deleteAll();
+
     return const AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,

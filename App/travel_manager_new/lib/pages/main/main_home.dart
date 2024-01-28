@@ -329,14 +329,15 @@ class _MainHomeState extends State<MainHome> {
               ],
             ),
           ),
-          Container(
-            alignment: Alignment.topRight,
-            margin: const EdgeInsets.only(
-              top: 65,
-              right: 11,
-            ),
-            child: SvgPicture.asset("assets/images/svg/settings.svg"),
-          ),
+          // TODO: Settings
+          // Container(
+          //   alignment: Alignment.topRight,
+          //   margin: const EdgeInsets.only(
+          //     top: 65,
+          //     right: 11,
+          //   ),
+          //   child: SvgPicture.asset("assets/images/svg/settings.svg"),
+          // ),
           Container(
             margin: const EdgeInsets.only(top: 224),
             child: SingleChildScrollView(
@@ -363,10 +364,20 @@ class _MainHomeState extends State<MainHome> {
                     ),
                   ),
                   loaded
-                      ? TravelScroll(
-                          itemCount: ic,
-                          children: travels,
-                        )
+                      ? ic > 0
+                          ? TravelScroll(
+                              itemCount: ic,
+                              children: travels,
+                            )
+                          : Container(
+                              alignment: Alignment.center,
+                              child: const Text(
+                                "Пока что тут пусто",
+                                style: TextStyle(
+                                  color: Color(0xFFaaaaaa),
+                                ),
+                              ),
+                            )
                       : const CircularProgressIndicator(
                           color: Color(
                             0xFFFFFFFF,
@@ -394,7 +405,7 @@ class _MainHomeState extends State<MainHome> {
                     height: 30,
                   ),
                   const Text(
-                    "© 2023. Travel Manager",
+                    "© 2024. Travel Manager",
                     style: TextStyle(
                       color: Color(
                         0xFFFFFFFF,

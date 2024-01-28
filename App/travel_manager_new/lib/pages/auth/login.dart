@@ -29,59 +29,69 @@ class _LoginPageState extends State<LoginPage> {
         if (username != null && username != "") {
           s.read(key: "password").then(
             (password) {
-              get(
-                Uri.http(
-                  serveraddr,
-                  "/api/v1/login",
-                  {"username": username, "password": password},
-                ),
-              ).then(
-                (value) {
-                  var j = jsonDecode(value.body);
+              if (password != null && password != "") {
+                get(
+                  Uri.http(
+                    serveraddr,
+                    "/api/v1/login",
+                    {"username": username, "password": password},
+                  ),
+                ).then(
+                  (value) {
+                    var j = jsonDecode(value.body);
 
-                  s.write(key: "name", value: j["name"]);
+                    s.write(key: "name", value: j["name"]);
 
-                  if (j["status"] == "success") {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MainHome(),
-                      ),
-                    );
-                  } else {
-                    setState(() {
-                      loaded = true;
-                    });
+                    if (j["status"] == "success") {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MainHome(),
+                        ),
+                      );
+                    } else {
+                      setState(
+                        () {
+                          loaded = true;
+                        },
+                      );
 
-                    switch (j["code"]) {
-                      case "user_not_exists":
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Пользователь не найден"),
-                          ),
-                        );
-                      case "invalid_password":
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Неверный пароль"),
-                          ),
-                        );
-                      default:
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Произошла ошибка при входе"),
-                          ),
-                        );
+                      switch (j["code"]) {
+                        case "user_not_exists":
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Пользователь не найден"),
+                            ),
+                          );
+                        case "invalid_password":
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Неверный пароль"),
+                            ),
+                          );
+                        default:
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Произошла ошибка при входе"),
+                            ),
+                          );
+                      }
                     }
-                  }
-                },
-              );
+                  },
+                );
+              } else {
+                setState(() {
+                  loaded = true;
+                });
+                print("LOADED FALSE");
+              }
             },
           );
         } else {
           setState(() {
             loaded = true;
           });
+          print("LOADED FALSE");
         }
       },
     );
@@ -103,8 +113,8 @@ class _LoginPageState extends State<LoginPage> {
           ConstrainedBox(
             constraints: const BoxConstraints.expand(),
             child: SingleChildScrollView(
-              child: Container(
-                height: 800,
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height,
                 child: Column(
                   children: [
                     // Text Войти
@@ -177,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                                   _password.text.trim() != "") {
                                 get(
                                   Uri.http(
-                                    "x1f9tspp-80.euw.devtunnels.ms",
+                                    serveraddr,
                                     "/api/v1/login",
                                     {
                                       "username": _email.text,
@@ -186,7 +196,6 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ).then(
                                   (value) {
-                                    print(value.body);
                                     var j = jsonDecode(value.body);
 
                                     if (j["status"] == "success") {
@@ -197,12 +206,10 @@ class _LoginPageState extends State<LoginPage> {
                                           value: _password.text);
                                       s.write(key: "name", value: j["name"]);
 
-                                      print("success");
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) {
-                                            print("Pushing");
                                             return const MainHome(
                                               key: Key("mainPageKey"),
                                             );

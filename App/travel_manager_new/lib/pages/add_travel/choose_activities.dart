@@ -1,6 +1,5 @@
-// Выбор активностей
-// Бюджет
-// Выбор города
+// import "dart:convert";
+
 import 'package:flutter/material.dart';
 import "package:travel_manager_new/uikit/uikit.dart";
 import "summary.dart";
@@ -36,6 +35,7 @@ class _CreateTravelChooseActivitiesState
   @override
   void initState() {
     super.initState();
+
     activs = Activities(town: widget.params["town"], bridge: actBridge);
   }
 
@@ -77,36 +77,105 @@ class _CreateTravelChooseActivitiesState
           ),
 
           // FG
-          Column(
-            children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: activs,
-              ),
-              ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxHeight: 1000, maxWidth: 400),
-              ),
-              Container(
-                margin: const EdgeInsets.only(bottom: 40, top: 10),
-                child: BlackButton(
-                  text: "Далее",
-                  onPressed: () {
-                    var pr = widget.params;
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: activs,
+                ),
+                ConstrainedBox(
+                  constraints:
+                      const BoxConstraints(maxHeight: 1000, maxWidth: 400),
+                ),
+              ],
+            ),
+          ),
 
-                    pr["activities"] = activs.toJson();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => CreateTravelSummary(
-                          params: pr,
+          // Next and check buttons
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              color: const Color(0xFF303030),
+              child: Row(
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(
+                      left: MediaQuery.of(context).size.width / 2 - 140,
+                    ),
+                    width: 120,
+                    child: TextButton(
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                          Colors.black,
+                        ),
+                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
-                    );
-                  },
-                  color: myColors['blue1'],
-                ),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            content: SingleChildScrollView(
+                              child: Column(
+                                children: actBridge.value.isNotEmpty
+                                    ? actBridge.value
+                                    : [
+                                        const Text(
+                                          "Ничего не выбрано",
+                                        ),
+                                      ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Просмотреть",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 120,
+                    margin: const EdgeInsets.only(left: 40),
+                    child: TextButton(
+                      style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all<Color>(Colors.white),
+                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      child: const Text(
+                        "Далее",
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                      onPressed: () {
+                        var pr = widget.params;
+
+                        pr["activities"] = activs.toJson();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CreateTravelSummary(
+                              params: pr,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
