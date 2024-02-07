@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	userdb "golangserver/GolangServer/db"
+	userdb "travel_server/db"
 )
 
 func getFieldString(e *userdb.User, field string) string {
@@ -74,8 +74,6 @@ func register(params map[string]string, w http.ResponseWriter) {
 
 		enc := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
 
-		println(enc)
-
 		res, _ = url.QueryUnescape(params["username"])
 		res2, _ := url.QueryUnescape(params["name"])
 
@@ -94,7 +92,6 @@ func login(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["username"] != "" && params["password"] != "" {
 		r, _ := url.QueryUnescape(params["username"])
-		fmt.Println(r)
 		res := userdb.SearchUser(r)
 
 		if len(res) > 0 {
@@ -136,7 +133,6 @@ func createTravel(params map[string]string, w http.ResponseWriter) {
 		params["meta"] != "" &&
 		params["town"] != "" {
 		usr, _ := url.QueryUnescape(params["username"])
-		fmt.Println("Username:", usr) // debug
 		res := userdb.SearchUser(usr)
 
 		if len(res) > 0 {
@@ -150,8 +146,6 @@ func createTravel(params map[string]string, w http.ResponseWriter) {
 			hs := hash.Sum(nil)
 
 			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			fmt.Println(dec, " ", dbpwd) // debug
 
 			if dec == dbpwd {
 				if (userdb.InsertPlan(
@@ -592,7 +586,6 @@ func search_activities(s string, w http.ResponseWriter, params map[string]string
 					}
 
 					json, err := json.Marshal(res)
-					fmt.Println(json)
 
 					if err != nil {
 						fmt.Fprint(w, `server error`)
@@ -870,8 +863,27 @@ func getUsername(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
+// Stories recomendations algoritm
+func get_user_stories(params map[string]string, w http.ResponseWriter) {
+	stories, err := userdb.SearchUserStories(params["username"])
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err != nil {
+		fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
+		Log("Server error: " + err.Error())
+		return
+	}
+
+	fmt.Fprint(w, stories)
+}
+
+func add_story(form url.Values, w http.ResponseWriter) {
+
+}
+
 // Guess responce method and call it
-func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
+func get(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
 	without_suff, _ := strings.CutSuffix(s, "/")
 	without_pref, _ := strings.CutPrefix(without_suff, "/")
 	pathnames := strings.Split(without_pref, "/")
@@ -909,6 +921,9 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 					deleteReview(params, w)
 				case "get_review":
 					getReview(params, w)
+				// db:stories
+				case "get_stories":
+					get_user_stories(params, w)
 				default:
 					fmt.Fprint(w, "method not found")
 				}
@@ -954,8 +969,21 @@ func guess_metod(s string, params map[string]string, w http.ResponseWriter, r *h
 	}
 }
 
+func post(s string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
+	without_suff, _ := strings.CutSuffix(s, "/")
+	without_pref, _ := strings.CutPrefix(without_suff, "/")
+	pathnames := strings.Split(without_pref, "/")
+
+	if len(pathnames) > 1 {
+		switch pathnames[1] {
+		case "add_story":
+			add_story(r.Form, w)
+		}
+	}
+}
+
 // Run main function
-func main() {
+func runserver() {
 	logger.Println("-----------------" + time.Now().Format(time.DateOnly) + "--------------")
 	settings := ReadSettings()
 
@@ -992,7 +1020,13 @@ func main() {
 			}
 		}
 
-		guess_metod(s, params, w, r, settings)
+		// If request type == GET
+		if r.Method == "GET" {
+			get(s, params, w, r, settings)
+		} else if r.Method == "POST" {
+			post(s, w, r, settings)
+		}
+
 	})
 
 	Log("Server started successfully")
@@ -1008,5 +1042,36 @@ func main() {
 		if e != nil {
 			Log(e.Error())
 		}
+	}
+}
+
+func printhelp() {
+	fmt.Println(`
+	Travel Manager Server - help
+
+	Run without arguments to start the server
+
+	help, -h, --help:
+		Show this message
+
+	run, start, runserver, startserver:
+		Start the server
+	`)
+}
+
+func main() {
+	args := os.Args
+
+	if len(args) > 1 {
+		switch args[1] {
+		case "help", "-h", "--help":
+			printhelp()
+		case "run", "start", "runserver", "startserver":
+			runserver()
+		default:
+			printhelp()
+		}
+	} else {
+		runserver()
 	}
 }

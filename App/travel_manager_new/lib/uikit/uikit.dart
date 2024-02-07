@@ -10,8 +10,8 @@ import 'package:flutter_svg/svg.dart';
 import "package:flutter_vector_icons/flutter_vector_icons.dart";
 import "../pages/view_travel/view_reviews_and_photos.dart";
 
-// const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms"; // local server
-const String serveraddr = "213.226.125.231:3005"; // global server
+const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms"; // local server
+// const String serveraddr = "213.226.125.231:3005"; // global server
 
 const String vkapiKey =
     "2320e98d2320e98d2320e98d652035789d223202320e98d47da2fa056600b3052f44d4c";
@@ -2071,6 +2071,47 @@ class _AddActivityBlockState extends State<AddActivityBlock> {
                 )
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LoadingScreen extends StatefulWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _LoadingScreenState();
+}
+
+class _LoadingScreenState extends State<LoadingScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      decoration: const BoxDecoration(
+        color: Color(0xFF272727),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            "Travel Manager",
+            style: TextStyle(
+                color: Color(0xFFFFFFFF),
+                fontFamily: "Pro",
+                fontSize: 24,
+                fontWeight: FontWeight.w700),
+          ),
+          Icon(Icons.airplane_ticket, size: 50, color: Color(0xFFFFFFFF)),
+          SizedBox(
+            height: 200,
+          ),
+          CircularProgressIndicator(
+            color: Color(0xFFFFFFFF),
           ),
         ],
       ),

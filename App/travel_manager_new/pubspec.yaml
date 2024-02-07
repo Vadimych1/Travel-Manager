@@ -1,7 +1,7 @@
 name: travel_manager_new
 description: Manage your travels
 publish_to: 'none'
-version: 1.0.0-beta
+version: 1.0.1-beta
 
 environment:
   sdk: '>=3.1.0-262.3.beta <4.0.0'
@@ -80,4 +80,4 @@ flutter:
 flutter_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "D:/BIG_CHALLENGES/2023-2024/App/travel_manager_new/assets/images/icon/icon.jpg"
+  image_path: "D:/BIG_CHALLENGES/2023-2024/App/travel_manager_new/assets/images/icon/icon.png"

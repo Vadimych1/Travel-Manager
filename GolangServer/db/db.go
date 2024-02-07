@@ -1,4 +1,4 @@
-package usersdatabase
+package db
 
 import (
 	"database/sql"
@@ -12,10 +12,20 @@ import (
 var Db *sql.DB
 
 // TABLES
-const TABLE_ACTIVITIES = "activities"
-const TABLE_REVIEWS = "reviews"
-const TABLE_PLANS = "plans"
-const TABLE_USERS = "users"
+const (
+	TABLE_ACTIVITIES string = "activities"
+	TABLE_REVIEWS    string = "reviews"
+	TABLE_PLANS      string = "plans"
+	TABLE_USERS      string = "users"
+	TABLE_STORIES    string = "stories"
+)
+
+// STORY TYPES
+const (
+	STORY_PUBLIC       string = "public"
+	STORY_FRIENDS_ONLY string = "friends_only"
+	STORY_PRIVATE      string = "private"
+)
 
 // User
 type User struct {
@@ -63,6 +73,15 @@ type Review struct {
 	Text    string `json:"text"`
 	Stars   int    `json:"stars"`
 	Placeid int    `json:"placeid"`
+}
+
+type Story struct {
+	Id          int    `json:"id"`
+	Owner       string `json:"owner"`
+	Visibility  string `json:"visibility"`
+	Text        string `json:"text"`
+	VideoPath   string `json:"videopath"`
+	PublishDate string `json:"publish_date"`
 }
 
 var Logger *log.Logger
@@ -192,6 +211,9 @@ func SearchPlan(id int, usrname string) (Travel, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return Travel{}, errors.New("SearchError: plan not found")
+		} else {
+			Logger.Fatal(err)
+			log.Fatal(err)
 		}
 		return Travel{}, err
 	}
@@ -484,3 +506,59 @@ func DeleteReview(id int) error {
 	_, err := Db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, TABLE_REVIEWS), id)
 	return err
 }
+
+// ! Stories block
+func InsertStory(story Story) bool {
+	_, err := Db.Exec(
+		fmt.Sprintf(`INSERT INTO %s (owner, visibility, text, videopath) VALUES (?, ?, ?, ?)`, TABLE_STORIES),
+		story.Owner,
+		story.Visibility,
+		story.Text,
+		story.VideoPath,
+	)
+
+	return err == nil
+}
+
+func SearchStory(id int) (Story, error) {
+	var story Story
+	var err = Db.QueryRow(fmt.Sprintf(`SELECT * FROM %s WHERE id = ?`, TABLE_STORIES), id).Scan(&story.Id, &story.Owner, &story.Visibility, &story.Text, &story.VideoPath)
+
+	return story, err
+}
+
+func SearchUserStories(owner string) ([]Story, error) {
+	rows, err := Db.Query(fmt.Sprintf(`SELECT * FROM %s WHERE owner = ?`, TABLE_STORIES), owner)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var id int
+	var owner_ string
+	var visibility string
+	var text string
+	var videopath string
+	var publish_date string
+
+	var stories = make([]Story, 0)
+	for rows.Next() {
+		rows.Scan(&id, &owner_, &visibility, &text, &videopath, &publish_date)
+		stories = append(stories, Story{
+			Id:          id,
+			Owner:       owner_,
+			Visibility:  visibility,
+			Text:        text,
+			VideoPath:   videopath,
+			PublishDate: publish_date,
+		})
+	}
+
+	return stories, nil
+}
+
+func DeleteStory(id int) error {
+	_, err := Db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, TABLE_STORIES), id)
+	return err
+}
+

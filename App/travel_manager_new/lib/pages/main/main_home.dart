@@ -329,15 +329,6 @@ class _MainHomeState extends State<MainHome> {
               ],
             ),
           ),
-          // TODO: Settings
-          // Container(
-          //   alignment: Alignment.topRight,
-          //   margin: const EdgeInsets.only(
-          //     top: 65,
-          //     right: 11,
-          //   ),
-          //   child: SvgPicture.asset("assets/images/svg/settings.svg"),
-          // ),
           Container(
             margin: const EdgeInsets.only(top: 224),
             child: SingleChildScrollView(
@@ -400,13 +391,13 @@ class _MainHomeState extends State<MainHome> {
                       ),
                     ),
                   ),
-                  const Info(),
-                  const SizedBox(
-                    height: 30,
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: const Info(),
                   ),
-                  const Text(
-                    "© 2024. Travel Manager",
-                    style: TextStyle(
+                  Text(
+                    "© ${DateTime.now().year}. Travel Manager",
+                    style: const TextStyle(
                       color: Color(
                         0xFFFFFFFF,
                       ),

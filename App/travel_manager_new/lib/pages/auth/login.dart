@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
@@ -43,6 +44,9 @@ class _LoginPageState extends State<LoginPage> {
                     s.write(key: "name", value: j["name"]);
 
                     if (j["status"] == "success") {
+                      sleep(
+                        const Duration(seconds: 1),
+                      );
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -80,10 +84,11 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 );
               } else {
-                setState(() {
-                  loaded = true;
-                });
-                print("LOADED FALSE");
+                setState(
+                  () {
+                    loaded = true;
+                  },
+                );
               }
             },
           );
@@ -279,18 +284,7 @@ class _LoginPageState extends State<LoginPage> {
             width: loaded ? 0 : MediaQuery.of(context).size.width,
             height: loaded ? 0 : MediaQuery.of(context).size.height,
             color: Colors.white.withOpacity(0.5),
-            child: loaded
-                ? null
-                : const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        color: Color(0xFF000000),
-                        semanticsLabel: "Загрузка...",
-                        semanticsValue: "Загрузка...",
-                      ),
-                    ],
-                  ),
+            child: loaded ? null : const LoadingScreen(),
           ),
         ],
       ),
