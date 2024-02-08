@@ -7,6 +7,10 @@ def process(self: hts.BaseHTTPRequestHandler) -> str:
     # Process data here
     p.main(self.rfile.read(int(self.headers['Content-Length'])))
 
+    data = ""
+
+    return data
+
 class Handler(hts.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
