@@ -31,6 +31,30 @@ import html5lib
 #
 # Ad = str.find("a", attrs={"jsname": "UWckNb"})
 # print(Ad)
+
+def repair_link(url: str) -> str:
+    url = urllib.parse.unquote(url)
+
+    if url.startswith("/url?q="):
+        url = url.replace("/url?q=", "")
+
+        if "google.com" in url or "google.ru" in url:
+            return ""
+        
+        return url if url.startswith("http") else ""
+    else:
+        return ""
+    
+def repair_links(urls: list) -> list:
+    new_urls = []
+    for link in urls:
+        rep = repair_link(link)
+
+        if rep != "":
+            new_urls.append(rep)
+    
+    return new_urls
+
 url = 'https://www.google.ru/search?q=достопримечательности&newwindow=1&sca_esv=97a1783dabf6226b&sxsrf=ACQVn08qk6SUH35_BjgZ_L6jrXLAF2U3sg%3A1707659675424&source=hp&ei=m9HIZY-KGMvawPAPsI6O-AE&iflsig=ANes7DEAAAAAZcjfq1MZ52KtDnaHjPJxmWSzROAputae&udm=&ved=0ahUKEwjPw-WCuKOEAxVLLRAIHTCHAx8Q4dUDCA0&uact=5&oq=достопримечательности&gs_lp=Egdnd3Mtd2l6IirQtNC-0YHRgtC-0L_RgNC40LzQtdGH0LDRgtC10LvRjNC90L7RgdGC0LgyChAjGIAEGIoFGCcyCxAAGIAEGIoFGJIDMgsQABiABBiKBRiSAzIFEAAYgAQyCxAAGIAEGLEDGMkDMgUQABiABDIIEAAYgAQYsQMyCxAAGIAEGLEDGIMBMgsQABiABBixAxiDATIFEAAYgARIpkNQggZYtztwAXgAkAEAmAFPoAGXC6oBAjIxuAEDyAEA-AEBqAIKwgIHECMY6gIYJ8ICExAuGIAEGIoFGMcBGK8BGI4FGCfCAhEQLhiABBixAxiDARjHARjRA8ICBBAjGCfCAgsQLhiABBjHARivAcICCxAuGIAEGLEDGIMBwgILEC4YgwEYsQMYgATCAggQABiABBjJAw&sclient=gws-wiz'
 r = requests.get(url, timeout=5)
 
@@ -45,8 +69,11 @@ if r.status_code == 200:
         html_file = open(html_file, encoding='UTF-8').read()
         soup = BeautifulSoup(html_file, 'lxml') # name of our soup
 
-        for link in soup.find_all('a'):
-            print(link.get('href'))
+        # for link in soup.find_all('a'):
+        #     print(link.get('href'))
+        
+        links = [link.get('href') for link in soup.find_all('a')]
+        print(*repair_links(links), sep="\n")
 
     fromSoup()
 
@@ -67,7 +94,10 @@ if r.status_code == 200:
         html_file = open(html_file, encoding='UTF-8').read()
         soup = BeautifulSoup(html_file, 'lxml') # name of our soup
 
-        for link in soup.find_all('a'):
-            print(link.get('href'))
+        # for link in soup.find_all('a'):
+        #     print(link.get('href'))
+
+        links = [link.get('href') for link in soup.find_all('a')]
+        print(*repair_links(links), sep="\n")
 
     fromSoup()
