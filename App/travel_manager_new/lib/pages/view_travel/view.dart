@@ -256,14 +256,46 @@ class _ViewTravelState extends State<ViewTravel> {
                         decoration: const BoxDecoration(
                           color: Color(0xFF101010),
                         ),
-                        child: const Text(
-                          "Просмотр поездки",
-                          textAlign: TextAlign.left,
-                          style: TextStyle(
-                            fontFamily: "Pro",
-                            color: Color(0xFFFFFFFF),
-                            fontSize: 20,
-                          ),
+                        child: Row(
+                          children: [
+                            const Text(
+                              "Просмотр поездки",
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                fontFamily: "Pro",
+                                color: Color(0xFFFFFFFF),
+                                fontSize: 20,
+                              ),
+                            ),
+
+                            // Delete
+                            Container(
+                              margin: const EdgeInsets.only(left: 20),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                ),
+                                onPressed: () {
+                                  get(
+                                    Uri.https(
+                                      serveraddr,
+                                      "api/v1/delete_travel",
+                                      {
+                                        "username": usr,
+                                        "password": pwd,
+                                        "id": widget.travelId.toString(),
+                                      },
+                                    ),
+                                  ).then(
+                                    (v) {
+                                      print(v.body);
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
+                            )
+                          ],
                         ),
                       ),
                       SizedBox(

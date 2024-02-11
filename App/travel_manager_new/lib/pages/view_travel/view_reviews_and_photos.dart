@@ -108,14 +108,14 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
     );
 
     for (var addr in widget.photosAddresses) {
-        setState(
-          () {
-            photos.add(
-              Image.network(addr),
-            );
-          },
-        );
-      }
+      setState(
+        () {
+          photos.add(
+            Image.network(addr),
+          );
+        },
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF333333),
@@ -125,10 +125,11 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
             children: [
               Container(
                 width: MediaQuery.of(context).size.width,
-                height: 90,
+                height: 110,
                 padding: const EdgeInsets.only(
                   top: 60,
                   left: 30,
+                  bottom: 10,
                 ),
                 decoration: const BoxDecoration(
                   color: Color(0xFF101010),
@@ -137,13 +138,18 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
                     bottomRight: Radius.circular(20),
                   ),
                 ),
-                child: const Text(
-                  "Отзывы и фотографии",
-                  style: TextStyle(
-                    color: Color(0xFFFFFFFF),
-                    fontFamily: "Inter",
-                    fontSize: 16,
-                  ),
+                child: const Row(
+                  children: [
+                    BackButton(color: Colors.white),
+                    Text(
+                      "Отзывы и фотографии",
+                      style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontFamily: "Inter",
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 

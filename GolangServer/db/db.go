@@ -561,4 +561,3 @@ func DeleteStory(id int) error {
 	_, err := Db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, TABLE_STORIES), id)
 	return err
 }
-

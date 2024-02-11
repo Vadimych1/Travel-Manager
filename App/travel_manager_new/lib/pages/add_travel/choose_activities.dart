@@ -41,7 +41,6 @@ class _CreateTravelChooseActivitiesState
 
   @override
   Widget build(BuildContext context) {
-    // print(widget.params);
     return Scaffold(
       body: Stack(
         children: [

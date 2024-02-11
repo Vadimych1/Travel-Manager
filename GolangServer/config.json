@@ -1,7 +1,7 @@
 {
     "encode_key": "Ie467fHcP8UiscTrGPU537gu9EDQ9eRC",
     "port": "80",
-    "global": "false",
+    "global": "true",
     "path": "/",
     "admin_pwd": "admin"
 }

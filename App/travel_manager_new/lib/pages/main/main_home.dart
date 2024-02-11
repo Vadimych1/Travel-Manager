@@ -34,9 +34,17 @@ class _MainHomeState extends State<MainHome> {
 
   TextEditingController controller = TextEditingController();
 
+  void rebuildAllChildren(BuildContext context) {
+    void rebuild(Element el) {
+      el.markNeedsBuild();
+      el.visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+  }
+
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context) {
     time = int.parse(formatHours.format(now));
 
     FlutterSecureStorage secureStorage = const FlutterSecureStorage();
@@ -59,8 +67,6 @@ class _MainHomeState extends State<MainHome> {
           (usr) => {
             secureStorage.read(key: "password").then(
                   (pwd) => {
-                    // print("usr: $usr"),
-                    // print("pwd: $pwd"),
                     get(
                       Uri.http(
                         serveraddr,
@@ -102,6 +108,10 @@ class _MainHomeState extends State<MainHome> {
                                   toDate: elem["to_date"],
                                   moneys: elem["budget"],
                                   activities: elem["activities"],
+                                  onReturn: () {
+                                    // rebuild the widget
+                                    rebuildAllChildren(context);
+                                  },
                                 ),
                               );
                               travels.add(SizedBox(
@@ -133,13 +143,44 @@ class _MainHomeState extends State<MainHome> {
 
     name += "  " * (texttime.length - name.length);
 
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF222222),
+      bottomNavigationBar: BottomAppBar(
+        height: 65,
+        elevation: 0,
+        color: Colors.black,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            AppFooterButton(
+              text: "Главная",
+              icon: Icons.home,
+              onPressed: () {},
+            ),
+            AppFooterButton(
+              text: "Лента",
+              icon: Icons.list,
+              onPressed: () {
+                // TODO: open feed
+              },
+            ),
+            AppFooterButton(
+              text: "Истории",
+              icon: Icons.history,
+              onPressed: () {
+                // TODO: open history
+              },
+            ),
+            AppFooterButton(
+              text: "Настройки",
+              icon: Icons.settings,
+              onPressed: () {
+                // TODO: open settings
+              },
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: const Color(0xFF453E34),
       body: Stack(
         children: [
           Container(
@@ -395,14 +436,6 @@ class _MainHomeState extends State<MainHome> {
                     margin: const EdgeInsets.only(bottom: 10),
                     child: const Info(),
                   ),
-                  Text(
-                    "© ${DateTime.now().year}. Travel Manager",
-                    style: const TextStyle(
-                      color: Color(
-                        0xFFFFFFFF,
-                      ),
-                    ),
-                  )
                 ],
               ),
             ),

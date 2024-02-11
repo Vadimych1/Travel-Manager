@@ -12,11 +12,12 @@ import "../pages/view_travel/view_reviews_and_photos.dart";
 
 const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms"; // local server
 // const String serveraddr = "213.226.125.231:3005"; // global server
+// const String serveraddr = "localhost";
 
 const String vkapiKey =
     "2320e98d2320e98d2320e98d652035789d223202320e98d47da2fa056600b3052f44d4c";
 
-// const String gisapiKey = "633b455e-9da5-47b6-8d30-040293bc52a3"; // deprecated
+// const String gisapiKey = "633b455e-9da5-47b6-8d30-040293bc52a3"; // ? deprecated
 
 // ! COLORS
 Map myColors = {
@@ -546,6 +547,15 @@ class _ActivitiesState extends State<Activities> {
       },
     );
 
+    void rebuildAllChildren(BuildContext context) {
+      void rebuild(Element el) {
+        el.markNeedsBuild();
+        el.visitChildren(rebuild);
+      }
+
+      (context as Element).visitChildren(rebuild);
+    }
+
     void onchanged(s) {
       if (s.length > 1) {
         get(
@@ -580,6 +590,9 @@ class _ActivitiesState extends State<Activities> {
                       item: item,
                       inPlan: inPlan,
                       bridge: widget.bridge,
+                      onPressed: () {
+                        rebuildAllChildren(context);
+                      },
                     ),
                   );
                 }
@@ -604,7 +617,8 @@ class _ActivitiesState extends State<Activities> {
       child: Column(
         children: [
           Container(
-            height: 182,
+            padding: const EdgeInsets.only(top: 30),
+            height: 210,
             width: MediaQuery.of(context).size.width,
             decoration: const BoxDecoration(
               color: Color(0xFF232323),
@@ -622,7 +636,6 @@ class _ActivitiesState extends State<Activities> {
                   margin: const EdgeInsets.only(top: 36, left: 23),
                   width: 330 * MediaQuery.of(context).size.width / 393,
                   height: 45,
-                  // decoration: BoxDecoration(),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: TextField(
@@ -802,7 +815,6 @@ class _SelectedActivityState extends State<SelectedActivity> {
         children: [
           Container(
             alignment: Alignment.centerLeft,
-            width: 225,
             child: TextButton(
               style: ButtonStyle(
                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
@@ -854,6 +866,7 @@ class _SelectedActivityState extends State<SelectedActivity> {
               },
             ),
           ),
+          const Spacer(),
           Container(
             alignment: Alignment.center,
             height: 40,
@@ -903,6 +916,7 @@ class TravelBlock extends StatefulWidget {
     required this.toDate,
     required this.moneys,
     required this.activities,
+    required this.onReturn,
   });
 
   final int id;
@@ -912,6 +926,7 @@ class TravelBlock extends StatefulWidget {
   final String toDate;
   final String moneys;
   final List activities;
+  final void Function() onReturn;
 
   @override
   State<TravelBlock> createState() => _TravelBlockState();
@@ -1003,12 +1018,18 @@ class _TravelBlockState extends State<TravelBlock> {
               ),
             ),
             onPressed: () {
-              Navigator.of(context).push(
+              Navigator.of(context)
+                  .push(
                 MaterialPageRoute(
                   builder: (context) => ViewTravel(
                     travelId: widget.id,
                   ),
                 ),
+              )
+                  .then(
+                (_) {
+                  widget.onReturn();
+                },
               );
             },
           ),
@@ -1526,8 +1547,11 @@ class _InfoState extends State<Info> {
 
 // ! Travel Scroll
 class TravelScroll extends StatefulWidget {
-  const TravelScroll(
-      {super.key, required this.children, required this.itemCount});
+  const TravelScroll({
+    super.key,
+    required this.children,
+    required this.itemCount,
+  });
 
   final List<Widget> children;
   final int itemCount;
@@ -1902,15 +1926,18 @@ class _SmallInputState extends State<SmallInput> {
 }
 
 class AddActivityBlock extends StatefulWidget {
-  const AddActivityBlock(
-      {super.key,
-      required this.item,
-      required this.inPlan,
-      required this.bridge});
+  const AddActivityBlock({
+    super.key,
+    required this.item,
+    required this.inPlan,
+    required this.bridge,
+    required this.onPressed,
+  });
 
   final Map<String, dynamic> item;
   final bool inPlan;
   final ListBridge<SelectedActivity> bridge;
+  final Function() onPressed;
 
   @override
   State<StatefulWidget> createState() => _AddActivityBlockState();
@@ -1921,7 +1948,6 @@ class _AddActivityBlockState extends State<AddActivityBlock> {
 
   @override
   Widget build(BuildContext context) {
-    //
     inPlan = widget.inPlan;
 
     return Container(
@@ -2003,6 +2029,8 @@ class _AddActivityBlockState extends State<AddActivityBlock> {
                                 );
                               },
                             );
+                            setState(() {});
+                            widget.onPressed();
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -2112,6 +2140,40 @@ class _LoadingScreenState extends State<LoadingScreen> {
           ),
           CircularProgressIndicator(
             color: Color(0xFFFFFFFF),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AppFooterButton extends StatelessWidget {
+  const AppFooterButton({
+    super.key,
+    required this.text,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String text;
+  final IconData icon;
+  final Function() onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: const Color(0xFFFFFFFF),
+          ),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFFFFFFFF),
+            ),
           ),
         ],
       ),

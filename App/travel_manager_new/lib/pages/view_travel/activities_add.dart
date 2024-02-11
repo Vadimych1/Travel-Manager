@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import '../../uikit/uikit.dart';
 
 class ViewTravelChooseActivities extends StatefulWidget {
-  const ViewTravelChooseActivities(
-      {super.key,
-      required this.travel,
-      required this.parent,
-      required this.actBridge});
+  const ViewTravelChooseActivities({
+    super.key,
+    required this.travel,
+    required this.parent,
+    required this.actBridge,
+  });
 
   final Map travel;
   final State parent;
@@ -26,8 +27,6 @@ class _ViewTravelChooseActivitiesState
     ),
   );
 
-  // late List<SelectedActivity> tActivs;
-
   @override
   void initState() {
     super.initState();
@@ -38,24 +37,6 @@ class _ViewTravelChooseActivitiesState
       town: widget.travel["town"],
       bridge: bridge,
     );
-
-    // var activities = widget.travel["activities"];
-    // tActivs = <SelectedActivity>[];
-
-    // activities.forEach(
-    //   (v) {
-    //     tActivs.add(
-    //       SelectedActivity(
-    //         name: v["name"],
-    //         address: v["address"],
-    //         schedule: v["schedule"],
-    //         bridge: bridge,
-    //         p: v,
-    //         parent: widget.parent,
-    //       ),
-    //     );
-    //   },
-    // );
   }
 
   @override

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/sha256"
 	"encoding/hex"
@@ -433,59 +434,29 @@ func default_get(params map[string]string, w http.ResponseWriter, r *http.Reques
 	var err error
 	var b []byte
 
-	if strings.HasSuffix(s, ".html") || strings.HasSuffix(s, ".css") {
-		b, err = os.ReadFile("./pages" + s)
-		if strings.HasSuffix(s, "css") {
-			w.Header().Set("Content-Type", "text/css; charset=utf-8")
-		}
-		if err != nil {
-			fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
-			// Log(err.Error())
-			return
-		}
-	} else if strings.HasSuffix(s, ".mp3") || strings.HasSuffix(s, ".ogg") {
-		w.Header().Set("Content-Type", "audio/mpeg")
-		b, err = os.ReadFile("./pages" + s)
-		if err != nil {
-			fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
-			// Log(err.Error())
-			return
-		}
-	} else if strings.HasSuffix(s, ".jpg") || strings.HasSuffix(s, ".jpeg") || strings.HasSuffix(s, ".png") {
-		w.Header().Set("Content-Type", "image/jpeg")
-		b, err = os.ReadFile("./pages" + s)
-		if err != nil {
-			w.WriteHeader(404)
-			return
-		}
-
-		w.Write(b)
-	} else if strings.HasSuffix(s, ".mp4") {
-		w.Header().Set("Content-Type", "video/mp4")
-		b, err = os.ReadFile("./pages" + s)
-		if err != nil {
-			w.WriteHeader(404)
-			return
-		}
-
-		w.Write(b)
-	} else {
-		b, err = os.ReadFile("./pages" + s + ".html")
-
-		if err != nil {
-			b, err = os.ReadFile("./pages" + s + "index.html")
-
-			if err != nil {
-				b, err = os.ReadFile("./pages" + s + "/index.html")
-
-				if err != nil {
-					w.WriteHeader(404)
-					fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
-					return
-				}
-			}
-		}
+	if err != nil {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
+		Log(err.Error())
+		return
 	}
+
+	if strings.HasSuffix(s, "/") {
+		s = s + "index.html"
+	}
+
+	// Get content
+	b, err = os.ReadFile(fmt.Sprintf("./pages%s", s))
+	if err != nil {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
+		Log(err.Error())
+		return
+	}
+
+	// Get content type
+	mtype := http.DetectContentType(b)
+	w.Header().Set("Content-Type", mtype)
 
 	sd := string(b)
 	fmt.Fprint(w, sd)
@@ -878,8 +849,64 @@ func get_user_stories(params map[string]string, w http.ResponseWriter) {
 	fmt.Fprint(w, stories)
 }
 
-func add_story(form url.Values, w http.ResponseWriter) {
+func add_story(r *http.Request, w http.ResponseWriter) {
+	println("Adding story")
 
+	if r.FormValue("username") == "" ||
+		r.FormValue("visibility") == "" ||
+		r.FormValue("text") == "" ||
+		r.FormValue("password") == "" {
+		fmt.Fprint(w, `{"status":"error", "code":"400 bad request"}`)
+		return
+	}
+
+	println("Auth")
+	// Auth
+	dbpwd := userdb.SearchUser(r.FormValue("username"))[0].Password
+	hash := sha256.New()
+	hash.Write([]byte(r.FormValue("password")))
+	hs := hash.Sum(nil)
+	dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
+	if dec != dbpwd {
+		fmt.Fprint(w, `{"status":"error", "code":"400 bad request"}`)
+		return
+	}
+
+	println("Video")
+	// Read video file
+	videoFile, _, err := r.FormFile("video")
+
+	var buf bytes.Buffer
+	if err != nil {
+		fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
+		Log("Server error: " + err.Error())
+		return
+	}
+	defer videoFile.Close()
+
+	println("Write")
+	// Write file
+	name := strings.ReplaceAll(time.Now().Format(time.DateTime), ":", "-")
+
+	io.Copy(&buf, videoFile)
+	err = os.WriteFile("./pages/video/"+name+".mp4", buf.Bytes(), 0644)
+	if err != nil {
+		fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
+		Log("Server error: " + err.Error())
+		return
+	}
+	buf.Reset()
+
+	println("Insert")
+	// Insert story
+	userdb.InsertStory(userdb.Story{
+		Owner:      r.FormValue("username"),
+		Visibility: r.FormValue("visibility"),
+		Text:       r.FormValue("text"),
+		VideoPath:  "video/" + name + ".mp4",
+	})
+
+	fmt.Fprint(w, `{"status":"success"}`)
 }
 
 // Guess responce method and call it
@@ -974,10 +1001,18 @@ func post(s string, w http.ResponseWriter, r *http.Request, settings map[string]
 	without_pref, _ := strings.CutPrefix(without_suff, "/")
 	pathnames := strings.Split(without_pref, "/")
 
-	if len(pathnames) > 1 {
-		switch pathnames[1] {
-		case "add_story":
-			add_story(r.Form, w)
+	r.ParseMultipartForm(32 << 20)
+
+	if len(pathnames) > 2 {
+		switch pathnames[0] {
+		case "api":
+			switch pathnames[1] {
+			case "v1":
+				switch pathnames[2] {
+				case "add_story":
+					add_story(r, w)
+				}
+			}
 		}
 	}
 }
@@ -1059,6 +1094,41 @@ func printhelp() {
 	`)
 }
 
+func check() {
+	fmt.Println("Travel Manager Server - checking")
+
+	settings := ReadSettings()
+	module_server_port := settings["module_server_port"]
+	module_server_address := settings["module_server_address"]
+
+	// Ping server
+	resp, err := http.Get("http://" + module_server_address + ":" + module_server_port)
+
+	if err != nil {
+		fmt.Println("Error (while pinging module server): " + err.Error())
+		return
+	}
+
+	if resp.StatusCode != 200 {
+		fmt.Println("Error (while pinging module server): " + resp.Status)
+		return
+	}
+
+	fmt.Println("Module server state: ok")
+
+	// Ping database
+	userdb.Init(logger)
+
+	if err = userdb.Db.Ping(); err != nil {
+		fmt.Println("Error (while pinging database): " + err.Error())
+		return
+	}
+
+	fmt.Println("Database state: ok")
+
+	fmt.Println("All services OK")
+}
+
 func main() {
 	args := os.Args
 
@@ -1068,6 +1138,8 @@ func main() {
 			printhelp()
 		case "run", "start", "runserver", "startserver":
 			runserver()
+		case "check":
+			check()
 		default:
 			printhelp()
 		}

@@ -96,7 +96,6 @@ class _LoginPageState extends State<LoginPage> {
           setState(() {
             loaded = true;
           });
-          print("LOADED FALSE");
         }
       },
     );
