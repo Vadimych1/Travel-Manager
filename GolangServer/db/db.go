@@ -224,9 +224,6 @@ func SearchPlan(id int, usrname string) (Travel, error) {
 
 // SearchAllPlans returns all travel plans owned by the given owner.
 func SearchAllPlans(owner string) ([]Travel, error) {
-	// Print a message indicating that we are searching all plans
-	fmt.Println("Searching all plans")
-
 	// Construct the SQL query
 	query := "SELECT * FROM plans WHERE owner = ?"
 
