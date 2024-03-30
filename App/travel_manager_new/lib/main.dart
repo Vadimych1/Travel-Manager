@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:travel_manager_new/uikit/uikit.dart';
+import 'package:travel_manager_new/pages/uikit/uikit.dart';
 import 'pages/auth/login.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'services.dart';
@@ -13,6 +13,7 @@ final Service service = Service(serveraddr: serveraddr);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   service.init();
+  service.storage.clear();
 
   runApp(const MainApp());
   tz.initializeTimeZones();

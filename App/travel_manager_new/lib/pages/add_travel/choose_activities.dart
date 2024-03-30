@@ -1,7 +1,7 @@
 // import "dart:convert";
 
 import 'package:flutter/material.dart';
-import "package:travel_manager_new/uikit/uikit.dart";
+import 'package:travel_manager_new/pages/uikit/uikit.dart';
 import "summary.dart";
 // import 'package:address_search_field/address_search_field.dart';
 

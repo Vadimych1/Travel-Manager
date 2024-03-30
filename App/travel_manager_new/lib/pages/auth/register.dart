@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travel_manager_new/pages/main/main_home.dart';
 import '../../main.dart';
-import 'package:travel_manager_new/uikit/uikit.dart';
+import 'package:travel_manager_new/pages/uikit/uikit.dart';
 import 'login.dart';
 import "package:http/http.dart";
 import 'dart:convert';

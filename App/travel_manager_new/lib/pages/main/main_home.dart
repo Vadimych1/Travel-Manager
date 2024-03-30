@@ -3,7 +3,7 @@ import 'dart:ui';
 import "package:flutter/material.dart";
 import 'package:intl/intl.dart';
 import 'package:travel_manager_new/pages/add_travel/choose_town.dart';
-import 'package:travel_manager_new/uikit/uikit.dart';
+import 'package:travel_manager_new/pages/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../main.dart';
 

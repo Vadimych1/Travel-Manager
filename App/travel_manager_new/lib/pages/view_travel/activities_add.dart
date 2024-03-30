@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../uikit/uikit.dart';
+import '../uikit/uikit.dart';
 
 class ViewTravelChooseActivities extends StatefulWidget {
   const ViewTravelChooseActivities({

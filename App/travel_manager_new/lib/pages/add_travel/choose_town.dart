@@ -1,6 +1,6 @@
 // Выбор города
 import 'package:flutter/material.dart';
-import "package:travel_manager_new/uikit/uikit.dart";
+import 'package:travel_manager_new/pages/uikit/uikit.dart';
 import "package:flutter_svg/flutter_svg.dart";
 import "main_info.dart";
 

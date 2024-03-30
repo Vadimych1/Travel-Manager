@@ -1,5 +1,5 @@
 import 'dart:convert';
-import "../pages/view_travel/view.dart";
+import '../view_travel/view.dart';
 import 'package:http/http.dart';
 import 'package:translit/translit.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/svg.dart';
 import "package:flutter_vector_icons/flutter_vector_icons.dart";
-import "../pages/view_travel/view_reviews_and_photos.dart";
-import "../pages/view_travel/add_review.dart";
-import "../main.dart";
+import '../view_travel/view_reviews_and_photos.dart';
+import '../view_travel/add_review.dart';
+import '../../main.dart';
 
 const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms"; // local server
 // const String serveraddr = "213.226.125.231:3005"; // global server

@@ -5,7 +5,7 @@ import "package:flutter/material.dart";
 import "package:intl/intl.dart";
 import "package:timezone/timezone.dart";
 import "package:travel_manager_new/pages/auth/login.dart";
-import "../../uikit/uikit.dart";
+import '../uikit/uikit.dart';
 import "package:http/http.dart";
 import "./expense_view.dart";
 import "./activities_add.dart";

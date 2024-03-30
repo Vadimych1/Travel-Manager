@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_manager_new/pages/add_travel/choose_activities.dart';
-import "package:travel_manager_new/uikit/uikit.dart";
+import 'package:travel_manager_new/pages/uikit/uikit.dart';
 import "package:flutter_svg/flutter_svg.dart";
 // import '../main/main_travels.dart';
 // import 'package:intl/intl.dart';

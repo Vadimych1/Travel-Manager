@@ -45,30 +45,32 @@ class AuthService {
   Future<bool> login(String username, String password) async {
     var result = false;
 
-    var r = await get(
-      Uri.http(
-        serveraddr,
-        "api/v1/login",
-        {
-          "username": username,
-          "password": password,
-        },
-      ),
-    );
+    try {
+      var r = await get(
+        Uri.http(
+          serveraddr,
+          "api/v1/login",
+          {
+            "username": username,
+            "password": password,
+          },
+        ),
+      );
 
-    var value = jsonDecode(r.body);
+      var value = jsonDecode(r.body);
 
-    if (value["status"] == "success") {
-      result = true;
+      if (value["status"] == "success") {
+        result = true;
 
-      storage.write("session", value["session"]);
-      storage.write("name", value["name"]);
-      storage.write("subscribe", value["subscribe"]);
-    } else {
-      result = false;
+        storage.write("session", value["session"]);
+        storage.write("name", value["name"]);
+        storage.write("subscribe", value["subscribe"]);
+      } else {
+        result = false;
+      }
+    } catch (e) {
+      print(e);
     }
-
-    print(value);
 
     print(result);
 
@@ -84,9 +86,13 @@ class AuthService {
     var r =
         await get(Uri.http(serveraddr, "api/v1/check_session", {"session": s}));
 
-    if (r.statusCode == 200 && jsonDecode(r.body)["status"] == "success") {
-      t = true;
-      jsn = jsonDecode(r.body);
+    try {
+      if (r.statusCode == 200 && jsonDecode(r.body)["status"] == "success") {
+        t = true;
+        jsn = jsonDecode(r.body);
+      }
+    } catch (e) {
+      print(e);
     }
 
     return t
