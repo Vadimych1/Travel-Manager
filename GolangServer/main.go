@@ -52,8 +52,8 @@ func ReadSettings() map[string]string {
 }
 
 // Create loggers
-var logfile, _ = os.OpenFile(fmt.Sprintf("logs/log-%d-%d-%d.log", log.LUTC, log.Ldate, log.Ltime), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-var logger = log.New(io.Writer(logfile), "", 0)
+var log_file, _ = os.OpenFile(fmt.Sprintf("logs/log-%d-%d-%d.log", log.LUTC, log.Ldate, log.Ltime), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+var logger = log.New(io.Writer(log_file), "", 0)
 
 // Print log
 func Log(toLog string) {
@@ -101,16 +101,16 @@ func login(params map[string]string, w http.ResponseWriter) {
 		res := userdb.SearchUser(r)
 
 		if len(res) > 0 {
-			dbpwd := getFieldString(&res[0], "Password")
-			usrpwd := params["password"]
+			database_password := getFieldString(&res[0], "Password")
+			user_password := params["password"]
 
 			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
+			hash.Write([]byte(user_password))
 			hs := hash.Sum(nil)
 
 			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
 
-			if dec == dbpwd {
+			if dec == database_password {
 				sessions, err := userdb.GetSessions(res[0].Id)
 				var uuid string
 				var err_ = true
@@ -411,8 +411,8 @@ func default_get(w http.ResponseWriter, s string) {
 	}
 
 	// Get content type
-	mtype := http.DetectContentType(b)
-	w.Header().Set("Content-Type", mtype)
+	media_type := http.DetectContentType(b)
+	w.Header().Set("Content-Type", media_type)
 
 	sd := string(b)
 	fmt.Fprint(w, sd)
@@ -430,7 +430,7 @@ func clearTravels() {
 		var id int
 		var owner string
 		var name string
-		var activs string
+		var activities string
 		var from_date string
 		var to_date string
 		var live_place string
@@ -440,7 +440,7 @@ func clearTravels() {
 		var town string
 		var people_count string
 
-		err = rows.Scan(&id, &owner, &name, &activs, &from_date, &to_date, &live_place, &budget, &expenses, &meta, &town, &people_count)
+		err = rows.Scan(&id, &owner, &name, &activities, &from_date, &to_date, &live_place, &budget, &expenses, &meta, &town, &people_count)
 
 		if err != nil {
 			Log(err.Error())
@@ -509,7 +509,7 @@ func search_activities(w http.ResponseWriter, params map[string]string) {
 	}
 }
 
-// Remove dublicated values from arr (string)
+// Remove duplicated values from arr (string)
 func removeDuplicates(arr []string) []string {
 	resultMap := make(map[string]bool)
 	result := []string{}
@@ -566,13 +566,13 @@ func addReview(params map[string]string, w http.ResponseWriter) {
 			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
 		}
 
-		placeid_p, err := strconv.Atoi(place_id)
+		place_id_p, err := strconv.Atoi(place_id)
 		if err != nil {
 			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
 		}
 
 		if userdb.InsertReview(userdb.Review{
-			Placeid: placeid_p,
+			Placeid: place_id_p,
 			Stars:   stars_p,
 			Text:    text,
 			Owner:   res.Email,
@@ -592,7 +592,7 @@ func getReviews(params map[string]string, w http.ResponseWriter) {
 	w.Header().Add("Content-Type", "application/json")
 
 	var session = params["session"]
-	var place_id = params["placeid"]
+	var place_id = params["place_id"]
 
 	if session != "" && place_id != "" {
 		sess, _ := url.QueryUnescape(session)
@@ -603,13 +603,13 @@ func getReviews(params map[string]string, w http.ResponseWriter) {
 			return
 		}
 
-		placeid_p, err := strconv.Atoi(place_id)
+		place_id_p, err := strconv.Atoi(place_id)
 		if err != nil {
 			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
 			return
 		}
 
-		reviews, err := userdb.SearchReviews(placeid_p)
+		reviews, err := userdb.SearchReviews(place_id_p)
 
 		if err != nil {
 			fmt.Fprint(w, `server_error`)
@@ -774,75 +774,10 @@ func logout(params map[string]string, w http.ResponseWriter) {
 	}
 }
 
-// Stories recomendations algoritm
-// func get_user_stories(params map[string]string, w http.ResponseWriter) {
-// 	stories, err := userdb.SearchUserStories(params["username"])
-// 	w.Header().Set("Content-Type", "application/json")
-// 	if err != nil {
-// 		fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
-// 		Log("Server error: " + err.Error())
-// 		return
-// 	}
-// 	fmt.Fprint(w, stories)
-// }
-
-// add story
-// func add_story(r *http.Request, w http.ResponseWriter) {
-// 	println("Adding story")
-// 	if r.FormValue("username") == "" ||
-// 		r.FormValue("visibility") == "" ||
-// 		r.FormValue("text") == "" ||
-// 		r.FormValue("password") == "" {
-// 		fmt.Fprint(w, `{"status":"error", "code":"bad_request"}`)
-// 		return
-// 	}
-// 	println("Auth")
-// 	// Auth
-// 	dbpwd := userdb.SearchUser(r.FormValue("username"))[0].Password
-// 	hash := sha256.New()
-// 	hash.Write([]byte(r.FormValue("password")))
-// 	hs := hash.Sum(nil)
-// 	dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-// 	if dec != dbpwd {
-// 		fmt.Fprint(w, `{"status":"error", "code":"bad_request"}`)
-// 		return
-// 	}
-// 	println("Video")
-// 	// Read video file
-// 	videoFile, _, err := r.FormFile("video")
-// 	var buf bytes.Buffer
-// 	if err != nil {
-// 		fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
-// 		Log("Server error: " + err.Error())
-// 		return
-// 	}
-// 	defer videoFile.Close()
-// 	println("Write")
-// 	// Write file
-// 	name := strings.ReplaceAll(time.Now().Format(time.DateTime), ":", "-")
-// 	io.Copy(&buf, videoFile)
-// 	err = os.WriteFile("./pages/video/"+name+".mp4", buf.Bytes(), 0644)
-// 	if err != nil {
-// 		fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
-// 		Log("Server error: " + err.Error())
-// 		return
-// 	}
-// 	buf.Reset()
-// 	println("Insert")
-// 	// Insert story
-// 	userdb.InsertStory(userdb.Story{
-// 		Owner:      r.FormValue("username"),
-// 		Visibility: r.FormValue("visibility"),
-// 		Text:       r.FormValue("text"),
-// 		VideoPath:  "video/" + name + ".mp4",
-// 	})
-// 	fmt.Fprint(w, `{"status":"success"}`)
-// }
-
-// Guess responce method and call it
+// Guess response method and call it
 func get(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
-	without_suff, _ := strings.CutSuffix(s, "/")
-	without_pref, _ := strings.CutPrefix(without_suff, "/")
+	without_suffix, _ := strings.CutSuffix(s, "/")
+	without_pref, _ := strings.CutPrefix(without_suffix, "/")
 	pathnames := strings.Split(without_pref, "/")
 
 	switch pathnames[0] {
@@ -878,9 +813,7 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 					deleteReview(params, w)
 				case "get_review":
 					getReview(params, w)
-				// db:stories
-				// case "get_stories":
-				// 	get_user_stories(params, w)
+				// db:sessions
 				case "check_session":
 					checkSession(params, w)
 				case "logout":
@@ -931,8 +864,8 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 }
 
 func post(s string, w http.ResponseWriter, r *http.Request) {
-	without_suff, _ := strings.CutSuffix(s, "/")
-	without_pref, _ := strings.CutPrefix(without_suff, "/")
+	without_suffix, _ := strings.CutSuffix(s, "/")
+	without_pref, _ := strings.CutPrefix(without_suffix, "/")
 	pathnames := strings.Split(without_pref, "/")
 
 	r.ParseMultipartForm(32 << 20)
@@ -954,7 +887,7 @@ func post(s string, w http.ResponseWriter, r *http.Request) {
 }
 
 // Run main function
-func runserver() {
+func run_server() {
 	logger.Println("-----------------" + time.Now().Format(time.DateOnly) + "--------------")
 	settings := ReadSettings()
 
@@ -1023,7 +956,7 @@ func runserver() {
 	}
 }
 
-func printhelp() {
+func print_help() {
 	fmt.Println(`
 	Travel Manager Server - help
 
@@ -1032,7 +965,7 @@ func printhelp() {
 	help, -h, --help:
 		Show this message
 
-	run, start, runserver, startserver:
+	run, start, run_server, startserver:
 		Start the server
 	`)
 }
@@ -1078,15 +1011,15 @@ func main() {
 	if len(args) > 1 {
 		switch args[1] {
 		case "help", "-h", "--help":
-			printhelp()
-		case "run", "start", "runserver", "startserver":
-			runserver()
+			print_help()
+		case "run", "start", "run_server", "startserver":
+			run_server()
 		case "check":
 			check()
 		default:
-			printhelp()
+			print_help()
 		}
 	} else {
-		runserver()
+		run_server()
 	}
 }
