@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import "../pages/view_travel/view.dart";
 import 'package:http/http.dart';
 import 'package:translit/translit.dart';
@@ -9,15 +8,14 @@ import 'package:intl/intl.dart';
 import 'package:flutter_svg/svg.dart';
 import "package:flutter_vector_icons/flutter_vector_icons.dart";
 import "../pages/view_travel/view_reviews_and_photos.dart";
+import "../pages/view_travel/add_review.dart";
+import "../main.dart";
 
 const String serveraddr = "x1f9tspp-80.euw.devtunnels.ms"; // local server
 // const String serveraddr = "213.226.125.231:3005"; // global server
-// const String serveraddr = "localhost";
 
 const String vkapiKey =
     "2320e98d2320e98d2320e98d652035789d223202320e98d47da2fa056600b3052f44d4c";
-
-// const String gisapiKey = "633b455e-9da5-47b6-8d30-040293bc52a3"; // ? deprecated
 
 // ! COLORS
 Map myColors = {
@@ -532,21 +530,6 @@ class _ActivitiesState extends State<Activities> {
 
   @override
   Widget build(BuildContext context) {
-    var username = "";
-    var password = "";
-
-    FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-    secureStorage.read(key: "username").then(
-      (username_) {
-        secureStorage.read(key: "password").then(
-          (password_) {
-            username = username_ ?? "";
-            password = password_ ?? "";
-          },
-        );
-      },
-    );
-
     void rebuildAllChildren(BuildContext context) {
       void rebuild(Element el) {
         el.markNeedsBuild();
@@ -556,53 +539,37 @@ class _ActivitiesState extends State<Activities> {
       (context as Element).visitChildren(rebuild);
     }
 
-    void onchanged(s) {
+    void onchanged(s) async {
       if (s.length > 1) {
-        get(
-          Uri.http(
-            serveraddr,
-            'api/activities/search',
-            {
-              'username': username,
-              'password': password,
-              'q': s,
-              'town': widget.town.replaceAll(",", ""),
-            },
-          ),
-        ).then(
-          (resp) {
-            if (resp.statusCode == 200) {
-              try {
-                var responce = jsonDecode(resp.body);
+        var responce =
+            await service.data.searchActivities(widget.town.replaceAll(",", ""), s);
 
-                searchResults = [];
-                for (var item in responce) {
-                  var inPlan = false;
+        try {
+          searchResults = [];
+          for (var item in responce) {
+            var inPlan = false;
 
-                  for (var e in widget.bridge.value) {
-                    if (e.name == item["name"]) {
-                      inPlan = true;
-                    }
-                  }
-
-                  searchResults.add(
-                    AddActivityBlock(
-                      item: item,
-                      inPlan: inPlan,
-                      bridge: widget.bridge,
-                      onPressed: () {
-                        rebuildAllChildren(context);
-                      },
-                    ),
-                  );
-                }
-                setState(() {});
-              } catch (e) {
-                // print(e.toString());
+            for (var e in widget.bridge.value) {
+              if (e.name == item["name"]) {
+                inPlan = true;
               }
             }
-          },
-        );
+
+            searchResults.add(
+              AddActivityBlock(
+                item: item,
+                inPlan: inPlan,
+                bridge: widget.bridge,
+                onPressed: () {
+                  rebuildAllChildren(context);
+                },
+              ),
+            );
+          }
+          setState(() {});
+        } catch (e) {
+          // print(e.toString());
+        }
       } else {
         searchResults = [];
         setState(() {});
@@ -853,6 +820,18 @@ class _SelectedActivityState extends State<SelectedActivity> {
                         child: const Text("Закрыть"),
                         onPressed: () {
                           Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: const Text("Оставить отзыв"),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ViewTravelAddReview(
+                                travelId: widget.p['id'],
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ],

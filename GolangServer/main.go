@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/sha256"
 	"encoding/hex"
@@ -79,12 +78,18 @@ func register(params map[string]string, w http.ResponseWriter) {
 		res2, _ := url.QueryUnescape(params["name"])
 
 		if userdb.InsertUser(res, enc, res2) {
-			fmt.Fprint(w, `{"status":"success"}`)
+			uuid, err_ := userdb.CreateSession(res)
+
+			if err_ {
+				fmt.Fprint(w, `{"status":"success", "session":"`+uuid+`", "name": "`+res2+`", "subscribe": "notsub"}`)
+			} else {
+				fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+			}
 		} else {
 			fmt.Fprint(w, `{"status":"error", "code":"user_exists"}`)
 		}
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
@@ -106,7 +111,28 @@ func login(params map[string]string, w http.ResponseWriter) {
 			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
 
 			if dec == dbpwd {
-				fmt.Fprint(w, `{"status":"success", "name":"`+getFieldString(&res[0], "Name")+`", "subscribe":"`+getFieldString(&res[0], "Subscribe")+`"}`)
+				sessions, err := userdb.GetSessions(res[0].Id)
+				var uuid string
+				var err_ = true
+
+				if err != nil {
+					fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+					return
+				}
+
+				if len(sessions) > 0 { // "895765db-edfb-48a0-9868-47e6aca900ce"
+					uuid = sessions[0]
+					err_ = userdb.UpdateSession(uuid)
+				} else {
+					uuid, err_ = userdb.CreateSession(res[0].Email)
+				}
+
+				if !err_ {
+					fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+					return
+				}
+
+				fmt.Fprint(w, `{"status":"success", "name":"`+getFieldString(&res[0], "Name")+`", "subscribe":"`+getFieldString(&res[0], "Subscribe")+`", "session":"`+uuid+`"}`)
 			} else {
 				fmt.Fprint(w, `{"status":"error", "code":"invalid_password"}`)
 			}
@@ -114,15 +140,14 @@ func login(params map[string]string, w http.ResponseWriter) {
 			fmt.Fprint(w, `{"status": "error", "code":"user_not_exists"}`)
 		}
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
 // Create plan in DB
 func createTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if params["username"] != "" &&
-		params["password"] != "" &&
+	if params["session"] != "" &&
 		params["plan_name"] != "" &&
 		params["activities"] != "" &&
 		params["from_date"] != "" &&
@@ -133,149 +158,108 @@ func createTravel(params map[string]string, w http.ResponseWriter) {
 		params["people_count"] != "" &&
 		params["meta"] != "" &&
 		params["town"] != "" {
-		usr, _ := url.QueryUnescape(params["username"])
-		res := userdb.SearchUser(usr)
 
-		if len(res) > 0 {
-			var m = res[0]
+		session, _ := url.QueryUnescape(params["session"])
+		res, err := logInBySession(session)
 
-			dbpwd := getFieldString(&m, "Password")
-			usrpwd := params["password"]
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				if (userdb.InsertPlan(
-					userdb.Travel{
-						Owner:       usr,
-						Plan_name:   params["plan_name"],
-						Expenses:    params["expenses"],
-						Activities:  params["activities"],
-						From_date:   params["from_date"],
-						To_date:     params["to_date"],
-						Live_place:  params["live_place"],
-						Budget:      params["budget"],
-						PeopleCount: params["people_count"],
-						Meta:        params["meta"],
-						Town:        params["town"],
-					},
-				)) {
-					fmt.Fprint(w, `{"status":"success"}`)
-				} else {
-					fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-				}
-
-			} else {
-				fmt.Fprint(w, `{"status":"error", "code":"invalid_password"}`)
-			}
-		} else {
-			fmt.Fprint(w, `{"status": "error", "code":"user_not_exists"}`)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		if (userdb.InsertPlan(
+			userdb.Travel{
+				Owner:       res.Email,
+				Plan_name:   params["plan_name"],
+				Expenses:    params["expenses"],
+				Activities:  params["activities"],
+				From_date:   params["from_date"],
+				To_date:     params["to_date"],
+				Live_place:  params["live_place"],
+				Budget:      params["budget"],
+				PeopleCount: params["people_count"],
+				Meta:        params["meta"],
+				Town:        params["town"],
+			},
+		)) {
+			fmt.Fprint(w, `{"status":"success"}`)
+		} else {
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+		}
+
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
 // Fetch all travels
 func getAllTravels(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if params["username"] != "" && params["password"] != "" {
-		r, _ := url.QueryUnescape(params["username"])
-		res := userdb.SearchUser(r)
+	if params["session"] != "" {
+		r, _ := url.QueryUnescape(params["session"])
+		res, err := logInBySession(r)
 
-		if len(res) > 0 {
-			var m = res[0]
-
-			dbpwd := getFieldString(&m, "Password")
-			usrpwd := params["password"]
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				travels, err := userdb.SearchAllPlans(r)
-
-				if err != nil {
-					fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-					Log("Server error") // debug
-					return
-				}
-
-				j, err := json.Marshal(travels)
-				if err != nil {
-					Log("Server error") // debug
-					fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-					return
-				}
-
-				fmt.Fprint(w, `{"status":"success", "content":`+string(j)+`}`)
-			} else {
-				fmt.Fprint(w, `{"status":"error", "code":"invalid_password"}`)
-			}
-		} else {
-			fmt.Fprint(w, `{"status": "error", "code":"user_not_exists"}`)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		travels, err := userdb.SearchAllPlans(res.Email)
+
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+			Log("Server error") // debug
+			return
+		}
+
+		j, err := json.Marshal(travels)
+		if err != nil {
+			Log("Server error") // debug
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+			return
+		}
+
+		fmt.Fprint(w, `{"status":"success", "content":`+string(j)+`}`)
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
 // Fetch travel plan from db
 func getTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if params["username"] != "" && params["password"] != "" && params["id"] != "" {
-		r, _ := url.QueryUnescape(params["username"])
-		res := userdb.SearchUser(r)
+	if params["session"] != "" && params["id"] != "" {
+		r, _ := url.QueryUnescape(params["session"])
+		res, err := logInBySession(r)
 
-		if len(res) > 0 {
-			var m = res[0]
-			dbpwd := getFieldString(&m, "Password")
-			usrpwd := params["password"]
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				id, _ := strconv.Atoi(params["id"])
-				travel, err := userdb.SearchPlan(id, r)
-				if err != nil {
-					fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-					Log("Server error") // debug
-					return
-				}
-
-				j, err := json.Marshal(travel)
-				if err != nil {
-					Log("Server error") // debug
-					fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-					return
-				}
-
-				fmt.Fprint(w, `{"status":"success", "content":`+string(j)+`}`)
-			} else {
-				fmt.Fprint(w, `{"status":"error", "code":"invalid_password"}`)
-			}
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		id, _ := strconv.Atoi(params["id"])
+		travel, err := userdb.SearchPlan(id, res.Email)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+			return
+		}
+
+		j, err := json.Marshal(travel)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+			return
+		}
+
+		fmt.Fprint(w, `{"status":"success", "content":`+string(j)+`}`)
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
 // Edit travel in DB
 func editTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	username := params["username"]
-	password := params["password"]
+	session := params["session"]
 	planName := params["plan_name"]
 	activities := params["activities"]
 	fromDate := params["from_date"]
@@ -288,90 +272,63 @@ func editTravel(params map[string]string, w http.ResponseWriter) {
 	town := params["town"]
 	id := params["id"]
 
-	if username != "" && password != "" && planName != "" && activities != "" &&
+	if session != "" && planName != "" && activities != "" &&
 		fromDate != "" && toDate != "" && livePlace != "" && budget != "" &&
 		expenses != "" && peopleCount != "" && meta != "" && town != "" && id != "" {
-		usr, _ := url.QueryUnescape(username)
-		res := userdb.SearchUser(usr)
+		sess, _ := url.QueryUnescape(session)
+		res, err := logInBySession(sess)
 
-		if len(res) > 0 {
-			m := res[0]
-
-			dbpwd := getFieldString(&m, "Password")
-			usrpwd := password
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				tid, _ := strconv.Atoi(id)
-				if userdb.DeleteTravel(tid, usr) {
-					if userdb.InsertPlan(userdb.Travel{
-						Id:          id,
-						Owner:       usr,
-						Plan_name:   planName,
-						Expenses:    expenses,
-						Activities:  activities,
-						From_date:   fromDate,
-						To_date:     toDate,
-						Live_place:  livePlace,
-						Budget:      budget,
-						PeopleCount: peopleCount,
-						Meta:        meta,
-						Town:        town,
-					}) {
-						fmt.Fprint(w, `{"status":"success"}`)
-					} else {
-						fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-					}
-				}
-			} else {
-				fmt.Fprint(w, `{"status":"error", "code":"invalid_password"}`)
-			}
-		} else {
-			fmt.Fprint(w, `{"status": "error", "code":"user_not_exists"}`)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		if userdb.EditTravel(userdb.Travel{
+			Id:          id,
+			Owner:       res.Email,
+			Plan_name:   planName,
+			Activities:  activities,
+			From_date:   fromDate,
+			To_date:     toDate,
+			Live_place:  livePlace,
+			Budget:      budget,
+			Expenses:    expenses,
+			PeopleCount: peopleCount,
+			Meta:        meta,
+			Town:        town,
+		}) {
+			fmt.Fprint(w, `{"status":"success"}`)
+		} else {
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+		}
+
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
 // Delete travel plan from DB
 func deleteTravel(params map[string]string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if params["id"] != "" && params["username"] != "" && params["password"] != "" {
-		usr, _ := url.QueryUnescape(params["username"])
-		res := userdb.SearchUser(usr)
+	if params["id"] != "" && params["session"] != "" {
+		session, _ := url.QueryUnescape(params["session"])
+		res, err := logInBySession(session)
 
-		if len(res) > 0 {
-			m := res[0]
-
-			dbpwd := m.Password
-			usrpwd := params["password"]
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				tid, _ := strconv.Atoi(params["id"])
-
-				if userdb.DeleteTravel(tid, usr) {
-					fmt.Fprint(w, `{"status":"success"}`)
-				} else {
-					fmt.Fprint(w, `{"status": "error", "code":"500 server error"}`)
-				}
-			}
-		} else {
-			fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		tid, _ := strconv.Atoi(params["id"])
+
+		if userdb.DeleteTravel(tid, res.Email) {
+			fmt.Fprint(w, `{"status":"success"}`)
+		} else {
+			fmt.Fprint(w, `{"status": "error", "code":"server_error"}`)
+		}
+
 	} else {
-		fmt.Fprint(w, `{"status": "error", "code":"400 bad request"}`)
+		fmt.Fprint(w, `{"status": "error", "code":"bad_request"}`)
 	}
 }
 
@@ -429,17 +386,16 @@ func admins(params map[string]string, w http.ResponseWriter, r *http.Request, se
 	}
 }
 
+func logInBySession(session string) (userdb.User, error) {
+	user, err := userdb.SearchUserBySession(session)
+
+	return user, err
+}
+
 // Default HTTP get
-func default_get(params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string, s string) {
+func default_get(w http.ResponseWriter, s string) {
 	var err error
 	var b []byte
-
-	if err != nil {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprint(w, `<html><head><title>Error 404</title></head><body><h1>Error 404<h1></body></html>`)
-		Log(err.Error())
-		return
-	}
 
 	if strings.HasSuffix(s, "/") {
 		s = s + "index.html"
@@ -519,57 +475,36 @@ func replacePlaceholders(content string, settings map[string]string, log string)
 }
 
 // Fetch activities from DB
-func search_activities(s string, w http.ResponseWriter, params map[string]string) {
+func search_activities(w http.ResponseWriter, params map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if (params["username"] != "" && params["password"] != "") || params["api_key"] != "" {
-		// auth
-		if params["api_key"] != "" {
-			// api_key
-			fmt.Fprint(w, `api keys is not allowed`)
-		} else {
-			// username and password
-			usr, _ := url.QueryUnescape(params["username"])
-			res := userdb.SearchUser(usr)
+	if params["session"] != "" && params["q"] != "" && params["town"] != "" {
 
-			if len(res) > 0 {
-				m := res[0]
+		session, _ := url.QueryUnescape(params["session"])
+		_, err := logInBySession(session)
 
-				dbpwd := m.Password
-				usrpwd := params["password"]
+		if err == nil {
+			query, _ := url.QueryUnescape(params["q"])
+			query = strings.ToLower(query)
+			town, _ := url.QueryUnescape(params["town"])
+			town = strings.ToLower(town)
 
-				hash := sha256.New()
-				hash.Write([]byte(usrpwd))
-				hs := hash.Sum(nil)
+			res, err := userdb.SearchPlaces(query, town)
 
-				dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-				if dec == dbpwd {
-					query, _ := url.QueryUnescape(params["q"])
-					query = strings.ToLower(query)
-					town, _ := url.QueryUnescape(params["town"])
-					town = strings.ToLower(town)
-
-					res, err := userdb.SearchPlaces(query, town)
-
-					if err != nil {
-						fmt.Fprint(w, `server error`)
-						Log(err.Error())
-					}
-
-					json, err := json.Marshal(res)
-
-					if err != nil {
-						fmt.Fprint(w, `server error`)
-						Log(err.Error())
-					}
-
-					fmt.Fprint(w, string(json))
-				} else {
-					fmt.Fprint(w, `invalid password`)
-				}
-			} else {
-				fmt.Fprint(w, `user not exists`)
+			if err != nil {
+				fmt.Fprint(w, `{"status":"error", "code":"server_error"`)
+				Log(err.Error())
 			}
+
+			json, err := json.Marshal(res)
+
+			if err != nil {
+				fmt.Fprint(w, `{"status":"error", "code":"server_error"`)
+				Log(err.Error())
+			}
+
+			fmt.Fprint(w, `{"status":"success", "content":`+string(json)+`}`)
+		} else {
+			fmt.Fprint(w, `{"status": "error", "code": "user_not_exists"}`)
 		}
 	}
 }
@@ -612,302 +547,297 @@ func prep_keys(in string) string {
 
 // Add a new review to DB
 func addReview(params map[string]string, w http.ResponseWriter) {
-	var username = params["username"]
-	var password = params["password"]
-	var place_id = params["placeid"]
+	var session = params["session"]
+	var place_id = params["id"]
 	var stars = params["stars"]
 	var text = params["text"]
 
-	if username != "" && password != "" && place_id != "" && stars != "" && text != "" {
-		usr, _ := url.QueryUnescape(username)
-		res := userdb.SearchUser(usr)
+	if session != "" && place_id != "" && stars != "" && text != "" {
+		sess, _ := url.QueryUnescape(session)
+		res, err := logInBySession(sess)
 
-		if len(res) > 0 {
-			dbpwd := res[0].Password
-			usrpwd := password
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			stars_p, err := strconv.Atoi(stars)
-			if err != nil {
-				fmt.Fprint(w, `400 bad request`)
-			}
-
-			placeid_p, err := strconv.Atoi(place_id)
-			if err != nil {
-				fmt.Fprint(w, `400 bad request`)
-			}
-
-			if dec == dbpwd {
-				if userdb.InsertReview(userdb.Review{
-					Placeid: placeid_p,
-					Stars:   stars_p,
-					Text:    text,
-					Owner:   usr,
-				}) {
-					fmt.Fprint(w, "success")
-				} else {
-					fmt.Fprint(w, "500 server error")
-				}
-			} else {
-				fmt.Fprint(w, `invalid password`)
-			}
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		stars_p, err := strconv.Atoi(stars)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+		}
+
+		placeid_p, err := strconv.Atoi(place_id)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+		}
+
+		if userdb.InsertReview(userdb.Review{
+			Placeid: placeid_p,
+			Stars:   stars_p,
+			Text:    text,
+			Owner:   res.Email,
+		}) {
+			fmt.Fprint(w, `{"status":"success"`)
+		} else {
+			fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+		}
+
 	} else {
-		fmt.Fprint(w, `400 bad request`)
+		fmt.Fprint(w, `{"status":"error", "code":"bad_request"}`)
 	}
 }
 
 // Fetch all reviews from DB
 func getReviews(params map[string]string, w http.ResponseWriter) {
-	var username = params["username"]
-	var password = params["password"]
+	w.Header().Add("Content-Type", "application/json")
+
+	var session = params["session"]
 	var place_id = params["placeid"]
 
-	if username != "" && password != "" && place_id != "" {
-		usr, _ := url.QueryUnescape(username)
-		res := userdb.SearchUser(usr)
+	if session != "" && place_id != "" {
+		sess, _ := url.QueryUnescape(session)
+		_, err := logInBySession(sess)
 
-		if len(res) > 0 {
-			dbpwd := res[0].Password
-			usrpwd := password
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				placeid_p, err := strconv.Atoi(place_id)
-				if err != nil {
-					fmt.Fprint(w, `400 bad request`)
-					return
-				}
-
-				reviews, err := userdb.SearchReviews(placeid_p)
-
-				if err != nil {
-					fmt.Fprint(w, `500 server error`)
-					Log(err.Error())
-				}
-
-				json, err := json.Marshal(reviews)
-
-				if err != nil {
-					fmt.Fprint(w, `500 server error`)
-					Log(err.Error())
-				}
-
-				w.Header().Add("Content-Type", "application/json")
-				fmt.Fprint(w, string(json))
-			} else {
-				fmt.Fprint(w, "invalid password")
-			}
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		placeid_p, err := strconv.Atoi(place_id)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+			return
+		}
+
+		reviews, err := userdb.SearchReviews(placeid_p)
+
+		if err != nil {
+			fmt.Fprint(w, `server_error`)
+			Log(err.Error())
+		}
+
+		json, err := json.Marshal(reviews)
+
+		if err != nil {
+			fmt.Fprint(w, `server_error`)
+			Log(err.Error())
+		}
+
+		fmt.Fprint(w, `{"status":"success", "content":`+string(json)+`}`)
+
 	} else {
-		fmt.Fprint(w, "400 bad request")
+		fmt.Fprint(w, `{"status": "error", "code": "bad_request"}`)
 	}
 }
 
 // Fetch review from DB
 func getReview(params map[string]string, w http.ResponseWriter) {
-	var username = params["username"]
-	var password = params["password"]
+	w.Header().Add("Content-Type", "application/json")
+
+	var session = params["session"]
 	var id = params["id"]
 
-	if username != "" && password != "" && id != "" {
-		usr, _ := url.QueryUnescape(username)
-		res := userdb.SearchUser(usr)
+	if session != "" && id != "" {
+		sess, _ := url.QueryUnescape(session)
+		_, err := logInBySession(sess)
 
-		if len(res) > 0 {
-			dbpwd := res[0].Password
-			usrpwd := password
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				id_p, err := strconv.Atoi(id)
-				if err != nil {
-					fmt.Fprint(w, `400 bad request`)
-					return
-				}
-
-				review, err := userdb.SearchReview(id_p)
-
-				if err != nil {
-					fmt.Fprint(w, `server error`)
-					return
-				}
-
-				json, err := json.Marshal(review)
-
-				if err != nil {
-					fmt.Fprint(w, `server error`)
-					Log(err.Error())
-					return
-				}
-
-				w.Header().Add("Content-Type", "application/json")
-				fmt.Fprint(w, string(json))
-			} else {
-				fmt.Fprint(w, "invalid password")
-			}
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		id_p, err := strconv.Atoi(id)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+			return
+		}
+
+		review, err := userdb.SearchReview(id_p)
+
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code": "server_error"}`)
+			return
+		}
+
+		json, err := json.Marshal(review)
+
+		if err != nil {
+			fmt.Fprint(w, `{"status": "error", "code": "server_error"}`)
+			Log(err.Error())
+			return
+		}
+
+		fmt.Fprint(w, `{"status":"success", "content":`+string(json)+`}`)
 	} else {
-		fmt.Fprint(w, "400 bad request")
+		fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
 	}
 }
 
 // Delete review from DB
 func deleteReview(params map[string]string, w http.ResponseWriter) {
-	var username = params["username"]
-	var password = params["password"]
+	var session = params["session"]
 	var id = params["id"]
 
-	if username != "" && password != "" && id != "" {
-		usr, _ := url.QueryUnescape(username)
-		res := userdb.SearchUser(usr)
+	if session != "" && id != "" {
+		sess, _ := url.QueryUnescape(session)
+		res, err := logInBySession(sess)
 
-		if len(res) > 0 {
-			dbpwd := res[0].Password
-			usrpwd := password
-
-			hash := sha256.New()
-			hash.Write([]byte(usrpwd))
-			hs := hash.Sum(nil)
-
-			dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-
-			if dec == dbpwd {
-				id_p, err := strconv.Atoi(id)
-				if err != nil {
-					fmt.Fprint(w, `400 bad request`)
-					return
-				}
-
-				r, err := userdb.SearchReview(id_p)
-
-				if err != nil {
-					fmt.Fprint(w, "review not found")
-				}
-				if r.Owner == usr {
-					err = userdb.DeleteReview(id_p)
-
-					if err != nil {
-						fmt.Fprint(w, `server error`)
-						Log(err.Error())
-						return
-					}
-
-					fmt.Fprint(w, "success")
-				} else {
-					fmt.Fprint(w, "review is not of user")
-				}
-			}
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
 		}
+
+		id_p, err := strconv.Atoi(id)
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+			return
+		}
+
+		r, err := userdb.SearchReview(id_p)
+
+		if err != nil {
+			fmt.Fprint(w, "review not found")
+		}
+		if r.Owner == res.Email {
+			err = userdb.DeleteReview(id_p)
+
+			if err != nil {
+				fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+				Log(err.Error())
+				return
+			}
+
+			fmt.Fprint(w, `{"status":"success"}`)
+		} else {
+			fmt.Fprint(w, `{"status": "error", "code": "not_your_review"}`)
+		}
+
 	}
 }
 
 // Fetch username from db
 func getUsername(params map[string]string, w http.ResponseWriter) {
-	var username = params["username"]
+	w.Header().Add("Content-Type", "application/json")
 
-	if username != "" {
-		usr, _ := url.QueryUnescape(username)
-		res := userdb.SearchUser(usr)
+	var session = params["session"]
+	var otherUsername = params["other_user"]
 
-		if len(res) > 0 {
-			w.Header().Add("Content-Type", "application/json")
-			fmt.Fprint(w, `{"username": "`+res[0].Name+`"}`)
+	if session != "" {
+		sess, _ := url.QueryUnescape(session)
+		_, err := logInBySession(sess)
+
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
+		}
+
+		user := userdb.SearchUser(otherUsername)
+
+		if len(user) > 0 {
+			fmt.Fprint(w, `{"status":"success", "name": "`+user[0].Name+`"}`)
 		} else {
-			fmt.Fprint(w, "user not found")
+			fmt.Fprint(w, `{"status":"error", "code": "user_not_found"}`)
 		}
 	}
 }
 
+func checkSession(params map[string]string, w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
+
+	var session, err = url.QueryUnescape(params["session"])
+
+	if session != "" && err == nil {
+		user, err := logInBySession(session)
+
+		if err != nil {
+			fmt.Fprint(w, `{"status":"error", "code":"session_not_exists"}`)
+			return
+		}
+
+		fmt.Fprint(w, `{"status":"success", "name": "`+user.Name+`", "subscribe": "`+user.Subscribe+`"}`)
+	} else {
+		fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+	}
+}
+
+func logout(params map[string]string, w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
+
+	var session = params["session"]
+
+	if session != "" {
+		sess, _ := url.QueryUnescape(session)
+		userdb.DeleteSession(sess)
+		fmt.Fprint(w, `{"status":"success"}`)
+	} else {
+		fmt.Fprint(w, `{"status":"error", "code": "bad_request"}`)
+	}
+}
+
 // Stories recomendations algoritm
-func get_user_stories(params map[string]string, w http.ResponseWriter) {
-	stories, err := userdb.SearchUserStories(params["username"])
+// func get_user_stories(params map[string]string, w http.ResponseWriter) {
+// 	stories, err := userdb.SearchUserStories(params["username"])
+// 	w.Header().Set("Content-Type", "application/json")
+// 	if err != nil {
+// 		fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+// 		Log("Server error: " + err.Error())
+// 		return
+// 	}
+// 	fmt.Fprint(w, stories)
+// }
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err != nil {
-		fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-		Log("Server error: " + err.Error())
-		return
-	}
-
-	fmt.Fprint(w, stories)
-}
-
-func add_story(r *http.Request, w http.ResponseWriter) {
-	println("Adding story")
-
-	if r.FormValue("username") == "" ||
-		r.FormValue("visibility") == "" ||
-		r.FormValue("text") == "" ||
-		r.FormValue("password") == "" {
-		fmt.Fprint(w, `{"status":"error", "code":"400 bad request"}`)
-		return
-	}
-
-	println("Auth")
-	// Auth
-	dbpwd := userdb.SearchUser(r.FormValue("username"))[0].Password
-	hash := sha256.New()
-	hash.Write([]byte(r.FormValue("password")))
-	hs := hash.Sum(nil)
-	dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
-	if dec != dbpwd {
-		fmt.Fprint(w, `{"status":"error", "code":"400 bad request"}`)
-		return
-	}
-
-	println("Video")
-	// Read video file
-	videoFile, _, err := r.FormFile("video")
-
-	var buf bytes.Buffer
-	if err != nil {
-		fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-		Log("Server error: " + err.Error())
-		return
-	}
-	defer videoFile.Close()
-
-	println("Write")
-	// Write file
-	name := strings.ReplaceAll(time.Now().Format(time.DateTime), ":", "-")
-
-	io.Copy(&buf, videoFile)
-	err = os.WriteFile("./pages/video/"+name+".mp4", buf.Bytes(), 0644)
-	if err != nil {
-		fmt.Fprint(w, `{"status":"error", "code":"500 server error"}`)
-		Log("Server error: " + err.Error())
-		return
-	}
-	buf.Reset()
-
-	println("Insert")
-	// Insert story
-	userdb.InsertStory(userdb.Story{
-		Owner:      r.FormValue("username"),
-		Visibility: r.FormValue("visibility"),
-		Text:       r.FormValue("text"),
-		VideoPath:  "video/" + name + ".mp4",
-	})
-
-	fmt.Fprint(w, `{"status":"success"}`)
-}
+// add story
+// func add_story(r *http.Request, w http.ResponseWriter) {
+// 	println("Adding story")
+// 	if r.FormValue("username") == "" ||
+// 		r.FormValue("visibility") == "" ||
+// 		r.FormValue("text") == "" ||
+// 		r.FormValue("password") == "" {
+// 		fmt.Fprint(w, `{"status":"error", "code":"bad_request"}`)
+// 		return
+// 	}
+// 	println("Auth")
+// 	// Auth
+// 	dbpwd := userdb.SearchUser(r.FormValue("username"))[0].Password
+// 	hash := sha256.New()
+// 	hash.Write([]byte(r.FormValue("password")))
+// 	hs := hash.Sum(nil)
+// 	dec := EncryptAES([]byte(encode_key), hex.EncodeToString(hs))
+// 	if dec != dbpwd {
+// 		fmt.Fprint(w, `{"status":"error", "code":"bad_request"}`)
+// 		return
+// 	}
+// 	println("Video")
+// 	// Read video file
+// 	videoFile, _, err := r.FormFile("video")
+// 	var buf bytes.Buffer
+// 	if err != nil {
+// 		fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+// 		Log("Server error: " + err.Error())
+// 		return
+// 	}
+// 	defer videoFile.Close()
+// 	println("Write")
+// 	// Write file
+// 	name := strings.ReplaceAll(time.Now().Format(time.DateTime), ":", "-")
+// 	io.Copy(&buf, videoFile)
+// 	err = os.WriteFile("./pages/video/"+name+".mp4", buf.Bytes(), 0644)
+// 	if err != nil {
+// 		fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
+// 		Log("Server error: " + err.Error())
+// 		return
+// 	}
+// 	buf.Reset()
+// 	println("Insert")
+// 	// Insert story
+// 	userdb.InsertStory(userdb.Story{
+// 		Owner:      r.FormValue("username"),
+// 		Visibility: r.FormValue("visibility"),
+// 		Text:       r.FormValue("text"),
+// 		VideoPath:  "video/" + name + ".mp4",
+// 	})
+// 	fmt.Fprint(w, `{"status":"success"}`)
+// }
 
 // Guess responce method and call it
 func get(s string, params map[string]string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
@@ -949,15 +879,19 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 				case "get_review":
 					getReview(params, w)
 				// db:stories
-				case "get_stories":
-					get_user_stories(params, w)
+				// case "get_stories":
+				// 	get_user_stories(params, w)
+				case "check_session":
+					checkSession(params, w)
+				case "logout":
+					logout(params, w)
 				default:
 					fmt.Fprint(w, "method not found")
 				}
 			case "activities":
 				switch pathnames[2] {
 				case "search":
-					search_activities(s, w, params)
+					search_activities(w, params)
 				case "insert":
 					name := params["name"]
 					town := strings.ToLower(params["town"])
@@ -977,7 +911,7 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 							Schedule:    `{"Mon": {"from": "00:00", "to": "24:00"}, "Tue": {"from": "00:00", "to": "24:00"}, "Wed": {"from": "00:00", "to": "24:00"},  "Thu": {"from": "00:00", "to": "24:00"}, "Fri": {"from": "00:00", "to": "24:00"}, "Sat": {"from": "00:00", "to": "24:00"}, "Sun": {"from": "00:00", "to": "24:00"}}`,
 							Keys:        prep_keys(keys),
 						})
-						default_get(params, w, r, settings, "/activsadd")
+						default_get(w, "/activsadd")
 					} else {
 						m, _ := json.Marshal(params)
 						fmt.Fprint(w, "bad request. \n <h1>Попробуйте снова</h1> <p>"+string(m)+"</p>")
@@ -992,11 +926,11 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 	case "admins":
 		admins(params, w, r, settings)
 	default:
-		default_get(params, w, r, settings, s)
+		default_get(w, s)
 	}
 }
 
-func post(s string, w http.ResponseWriter, r *http.Request, settings map[string]string) {
+func post(s string, w http.ResponseWriter, r *http.Request) {
 	without_suff, _ := strings.CutSuffix(s, "/")
 	without_pref, _ := strings.CutPrefix(without_suff, "/")
 	pathnames := strings.Split(without_pref, "/")
@@ -1009,8 +943,10 @@ func post(s string, w http.ResponseWriter, r *http.Request, settings map[string]
 			switch pathnames[1] {
 			case "v1":
 				switch pathnames[2] {
-				case "add_story":
-					add_story(r, w)
+				// case "add_story":
+				// 	add_story(r, w)
+				default:
+					fmt.Fprint(w, `{"status":"error", "code":"method_not_found"}`)
 				}
 			}
 		}
@@ -1034,6 +970,13 @@ func runserver() {
 			time.Sleep(time.Hour * 12)
 		}
 	}()
+
+	// go func() {
+	// 	for {
+	// 		Log("Clearing old sessions")
+	// 		time.Sleep(time.Hour * 24 * 14)
+	// 	}
+	// }()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var s, _ = url.QueryUnescape(r.URL.Path)
@@ -1059,7 +1002,7 @@ func runserver() {
 		if r.Method == "GET" {
 			get(s, params, w, r, settings)
 		} else if r.Method == "POST" {
-			post(s, w, r, settings)
+			post(s, w, r)
 		}
 
 	})

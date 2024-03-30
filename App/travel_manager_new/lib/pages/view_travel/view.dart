@@ -1,8 +1,7 @@
 import "dart:convert";
-// ignore: depend_on_referenced_packages
+import "../../main.dart";
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import "package:flutter/material.dart";
-import "package:flutter_secure_storage/flutter_secure_storage.dart";
 import "package:intl/intl.dart";
 import "package:timezone/timezone.dart";
 import "package:travel_manager_new/pages/auth/login.dart";
@@ -37,8 +36,6 @@ class _ViewTravelState extends State<ViewTravel> {
       FlutterLocalNotificationsPlugin();
 
   var expenses = <Widget>[];
-  var usr = "";
-  var pwd = "";
 
   var activitiesBridge = ListBridge<SelectedActivity>(
     value: [],
@@ -48,167 +45,113 @@ class _ViewTravelState extends State<ViewTravel> {
   void initState() {
     super.initState();
 
-    var initializationSettingsAndroid = const AndroidInitializationSettings(
-      r"@drawable/app_icon",
-    );
-    var initializationSettingsIOS = const DarwinInitializationSettings();
-    var initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    Future.delayed(Duration.zero, () async {
+      var initializationSettingsAndroid = const AndroidInitializationSettings(
+        r"@drawable/app_icon",
+      );
+      var initializationSettingsIOS = const DarwinInitializationSettings();
+      var initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
+      flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-    var s = const FlutterSecureStorage();
+      travel = await service.data.getTravel(widget.travelId.toString());
 
-    s.read(key: "username").then(
-      (usr_) {
-        s.read(key: "password").then(
-          (pwd_) {
-            usr = usr_ ?? "";
-            pwd = pwd_ ?? "";
+      try {
+        napominanie = travel["meta"]["napominanie"];
+      } catch (e) {
+        napominanie = false;
+      }
+      try {
+        zaDenDo = travel["meta"]["za_den_do"];
+      } catch (e) {
+        zaDenDo = false;
+      }
 
-            get(
-              Uri.http(
-                serveraddr,
-                "api/v1/get_travel",
-                {
-                  "username": usr,
-                  "password": pwd,
-                  "id": widget.travelId.toString(),
-                },
+      try {
+        _napominanieTimeController.text = travel["meta"]["napominanie_time"];
+      } catch (e) {
+        _napominanieTimeController.text = "";
+      }
+
+      expenses = <Widget>[];
+      var summ = 0;
+
+      (travel["expenses"].runtimeType == String
+              ? jsonDecode(travel["expenses"])
+              : travel["expenses"])
+          .forEach(
+        (val) => {
+          summ += int.parse(val["cost"]),
+          expenses.add(
+            SizedBox(
+              child: TextButton(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "${val["name"]}: ",
+                    ),
+                    Text(
+                      "${int.parse(val["cost"])} руб.",
+                    ),
+                  ],
+                ),
+                onPressed: () {},
               ),
-            ).then(
-              (r) {
-                try {
-                  var resp = jsonDecode(
-                    r.body
-                        .replaceAll("+", " ")
-                        .replaceAll('"activities":"', '"activities":')
-                        .replaceAll('}]"', "}]")
-                        .replaceAll("\"{", "{")
-                        .replaceAll("}\"", "}")
-                        .replaceAll("\\", "")
-                        .replaceAll("}}\"", "}}")
-                        .replaceAll("\"[", "[")
-                        .replaceAll("]\"", "]"),
-                  );
-                  if (resp["status"] == "success") {
-                    travel = resp["content"];
-                    try {
-                      napominanie = travel["meta"]["napominanie"];
-                    } catch (e) {
-                      napominanie = false;
-                    }
-                    try {
-                      zaDenDo = travel["meta"]["za_den_do"];
-                    } catch (e) {
-                      zaDenDo = false;
-                    }
+            ),
+          ),
+        },
+      );
 
-                    try {
-                      _napominanieTimeController.text =
-                          travel["meta"]["napominanie_time"];
-                    } catch (e) {
-                      _napominanieTimeController.text = "";
-                    }
+      expenses.add(
+        SizedBox(
+          child: TextButton(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Всего: ",
+                ),
+                Text(
+                  "$summ руб.",
+                ),
+              ],
+            ),
+            onPressed: () {},
+          ),
+        ),
+      );
 
-                    expenses = <Widget>[];
-                    var summ = 0;
+      jsonDecode(
+        travel["activities"],
+      ).forEach(
+        (e) => {
+          activitiesBridge.value.add(
+            SelectedActivity(
+              address: e["address"],
+              name: e["name"],
+              schedule: e["schedule"],
+              bridge: activitiesBridge,
+              p: e,
+              parent: this,
+            ),
+          ),
+        },
+      );
 
-                    (travel["expenses"].runtimeType == String
-                            ? jsonDecode(travel["expenses"])
-                            : travel["expenses"])
-                        .forEach(
-                      (val) => {
-                        summ += int.parse(val["cost"]),
-                        expenses.add(
-                          SizedBox(
-                            child: TextButton(
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "${val["name"]}: ",
-                                  ),
-                                  Text(
-                                    "${int.parse(val["cost"])} руб.",
-                                  ),
-                                ],
-                              ),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ),
-                      },
-                    );
+      var meta = jsonDecode(travel["meta"]);
+      if (meta["comments"] != null) {
+        commentsController.text = meta["comments"];
+      }
 
-                    expenses.add(
-                      SizedBox(
-                        child: TextButton(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Всего: ",
-                              ),
-                              Text(
-                                "$summ руб.",
-                              ),
-                            ],
-                          ),
-                          onPressed: () {},
-                        ),
-                      ),
-                    );
+      nameController.text = travel["plan_name"];
 
-                    (travel.runtimeType == String
-                            ? jsonDecode(travel["activities"])
-                            : travel["activities"])
-                        .forEach(
-                      (e) => {
-                        activitiesBridge.value.add(
-                          SelectedActivity(
-                            address: e["address"],
-                            name: e["name"],
-                            schedule: e["schedule"],
-                            bridge: activitiesBridge,
-                            p: e,
-                            parent: this,
-                          ),
-                        ),
-                      },
-                    );
-
-                    if (travel["meta"]["comments"] != null) {
-                      commentsController.text = travel["meta"]["comments"];
-                    }
-
-                    nameController.text = travel["plan_name"];
-
-                    setState(() {
-                      loaded = true;
-                    });
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            "Произошла ошибка. Попробуйте выйти из режима просмотра и повторить попытку"),
-                      ),
-                    );
-                    setState(() {
-                      loaded = true;
-                    });
-                  }
-                } catch (e) {
-                  print(e.toString());
-                }
-              },
-            );
-          },
-        );
-      },
-    );
+      setState(() {
+        loaded = true;
+      });
+    });
   }
 
   var loaded = false;
@@ -275,23 +218,19 @@ class _ViewTravelState extends State<ViewTravel> {
                                 icon: const Icon(
                                   Icons.delete,
                                 ),
-                                onPressed: () {
-                                  get(
-                                    Uri.https(
-                                      serveraddr,
-                                      "api/v1/delete_travel",
-                                      {
-                                        "username": usr,
-                                        "password": pwd,
-                                        "id": widget.travelId.toString(),
-                                      },
-                                    ),
-                                  ).then(
-                                    (v) {
-                                      print(v.body);
-                                      Navigator.pop(context);
-                                    },
-                                  );
+                                onPressed: () async {
+                                  var r = await service.data
+                                      .deleteTravel(widget.travelId.toString());
+
+                                  if (r) {
+                                    Navigator.of(context).pop();
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Произошла ошибка"),
+                                      ),
+                                    );
+                                  }
                                 },
                               ),
                             )
@@ -479,8 +418,8 @@ class _ViewTravelState extends State<ViewTravel> {
                                                   serveraddr,
                                                   "api/v1/get_travel",
                                                   {
-                                                    "username": usr,
-                                                    "password": pwd,
+                                                    // "username": usr,
+                                                    // "password": pwd,
                                                     "id": widget.travelId
                                                         .toString(),
                                                   },

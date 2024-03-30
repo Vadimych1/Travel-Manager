@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:ui';
 import "package:flutter/material.dart";
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:travel_manager_new/pages/add_travel/choose_town.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../main.dart';
 
 class MainHome extends StatefulWidget {
   const MainHome({super.key});
@@ -47,89 +46,50 @@ class _MainHomeState extends State<MainHome> {
   Widget build(BuildContext context) {
     time = int.parse(formatHours.format(now));
 
-    FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-    try {
-      secureStorage.read(key: "name").then(
-        (e) {
-          setState(() {
-            name = e ?? "<ошибка>";
-          });
-        },
-      );
-      setState(() {});
-    } catch (e) {
-      setState(() {
-        name = "<ошибка>";
-      });
-    }
+    Future.delayed(Duration.zero, () async {
+      name = await service.storage.read("name");
 
-    secureStorage.read(key: "username").then(
-          (usr) => {
-            secureStorage.read(key: "password").then(
-                  (pwd) => {
-                    get(
-                      Uri.http(
-                        serveraddr,
-                        "api/v1/get_all_travels",
-                        {"username": usr, "password": pwd},
-                      ),
-                    ).then(
-                      (value) {
-                        var undec = value.body;
+      var content = await service.data.getAllTravels();
 
-                        var j = jsonDecode(
-                          undec
-                              .replaceAll("+", " ")
-                              .replaceAll('"activities":"', '"activities":')
-                              .replaceAll('}]"', "}]")
-                              .replaceAll("\"{", "{")
-                              .replaceAll("}\"", "}")
-                              .replaceAll("\\", "")
-                              .replaceAll("}}\"", "}}")
-                              .replaceAll("\"[", "[")
-                              .replaceAll("]\"", "]"),
-                        );
+      travels = [];
 
-                        travels.add(SizedBox(
-                          width: (MediaQuery.of(context).size.width - 291) / 2,
-                        ));
+      travels.add(SizedBox(
+        width: (MediaQuery.of(context).size.width - 291) / 2,
+      ));
 
-                        ic = 0;
-                        for (var elem in j["content"]) {
-                          setState(
-                            () {
-                              ic++;
-                              travels.add(
-                                TravelBlock(
-                                  id: int.parse(elem["id"]),
-                                  travelName: elem["plan_name"],
-                                  town: elem["town"],
-                                  fromDate: elem["from_date"],
-                                  toDate: elem["to_date"],
-                                  moneys: elem["budget"],
-                                  activities: elem["activities"],
-                                  onReturn: () {
-                                    // rebuild the widget
-                                    rebuildAllChildren(context);
-                                  },
-                                ),
-                              );
-                              travels.add(SizedBox(
-                                width: MediaQuery.of(context).size.width - 291,
-                              ));
-                            },
-                          );
-                        }
-
-                        setState(() {
-                          loaded = true;
-                        });
-                      },
-                    ),
-                  },
-                ),
+      ic = 0;
+      for (var elem in content) {
+        setState(
+          () {
+            ic++;
+            travels.add(
+              TravelBlock(
+                id: int.parse(elem["id"]),
+                travelName: elem["plan_name"],
+                town: elem["town"],
+                fromDate: elem["from_date"],
+                toDate: elem["to_date"],
+                moneys: elem["budget"],
+                activities: elem["activities"].runtimeType == String
+                    ? jsonDecode(elem["activities"])
+                    : elem["activities"],
+                onReturn: () {
+                  // rebuild the widget
+                  rebuildAllChildren(context);
+                },
+              ),
+            );
+            travels.add(SizedBox(
+              width: MediaQuery.of(context).size.width - 291,
+            ));
           },
         );
+      }
+    });
+
+    setState(() {
+      loaded = true;
+    });
 
     if (time >= 18 && time < 24) {
       texttime = "Добрый вечер,";

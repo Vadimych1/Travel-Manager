@@ -1,5 +1,6 @@
 import main_cfile as main
 import random
+import tqdm
 
 true_data = ""
 false_data = ""
@@ -24,11 +25,10 @@ def create_batches(data: str, symbols_size: int, symb: dict = {}) -> list:
     batches = []
     print(symb)
 
-    for i in range(0, len(data) - symbols_size, symbols_size):
+    for i in tqdm.tqdm(range(0, len(data) - symbols_size, symbols_size), desc="Creating batches", unit="batch", unit_scale=True):
         try:
             l = [symb[d] for d in data[i : i + symbols_size]]
         except:
-            print("SKIP")
             continue
 
         if len(l) < symbols_size:
@@ -48,5 +48,6 @@ data = true + false
 random.shuffle(data)
 
 model = main.Model()
+model.model.summary()
 model.fit(x_data=[i[0] for i in data], y_data=[i[1] for i in data], epochs=5000)
 model.save()

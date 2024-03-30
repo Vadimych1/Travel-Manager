@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 )
 
 var Db *sql.DB
@@ -119,10 +120,8 @@ func Init(logger *log.Logger) {
 // ! Users block
 // InsertUser inserts a new user into the database.
 func InsertUser(usrname string, pwd string, name string) bool {
-	// fmt.Println("Inserting user...")
-
 	// Prepare the query
-	query := `INSERT INTO users (email, password, name) VALUES ($1, $2, $3)`
+	query := `INSERT INTO users (email, password, name) VALUES (?, ?, ?)`
 
 	// Execute the query with the provided parameters
 	_, err := Db.Exec(query, usrname, pwd, name)
@@ -306,6 +305,25 @@ func DeleteTravel(id int, usrname string) bool {
 	return err == nil
 }
 
+func EditTravel(plan Travel) bool {
+	var err error
+
+	_, err = Db.Exec(`UPDATE plans SET 
+	plan_name = ?, 
+	activities = ?, 
+	from_date = ?, 
+	to_date = ?, 
+	live_place = ?,
+	budget = ?, 
+	expenses = ?, 
+	meta = ?, 
+	town = ?, 
+	people_count = ? WHERE id = ?`, plan.Plan_name, plan.Activities, plan.From_date, plan.To_date, plan.Live_place, plan.Budget,
+		plan.Expenses, plan.Meta, plan.Town, plan.PeopleCount, plan.Id)
+
+	return err == nil
+}
+
 // ! Places block (activities)
 // InsertPlace inserts a place into the database.
 func InsertPlace(activity Place) bool {
@@ -373,16 +391,9 @@ func SearchPlace(id int) (Place, error) {
 func EditPlace(activity Place) bool {
 	var err error
 
-	// Remove old activity
-	_, err = Db.Exec("DELETE FROM activities WHERE id = ?", activity.Id)
-	if err != nil {
-		return false
-	}
-
 	// Insert new activity
 	_, err = Db.Exec(
-		"INSERT INTO activities (id, name, town, lan, lot, address, images, schedule, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		activity.Id,
+		"UPDATE activities SET name = ?, town = ?, lan = ?, lot = ?, address = ?, images = ?, schedule = ?, description = ? WHERE id = ?",
 		activity.Name,
 		activity.Town,
 		activity.Lan,
@@ -391,20 +402,17 @@ func EditPlace(activity Place) bool {
 		activity.Images,
 		activity.Schedule,
 		activity.Description,
+		activity.Id,
 	)
 
 	return err == nil
 }
 
-// DeletePlace deletes a place with the given ID.
 func DeletePlace(id int) bool {
-	// Define the SQL query to delete the place with the given ID
 	query := "DELETE FROM activities WHERE id = ?"
 
-	// Execute the SQL query and check for any errors
 	_, err := Db.Exec(query, id)
 
-	// Return true if there are no errors, indicating that the place was successfully deleted
 	return err == nil
 }
 
@@ -504,6 +512,11 @@ func DeleteReview(id int) error {
 	return err
 }
 
+func EditReview(review Review) bool {
+	_, err := Db.Exec(fmt.Sprintf(`UPDATE %s SET text = ?, stars = ? WHERE id = ?`, TABLE_REVIEWS), review.Text, review.Stars, review.Id)
+	return err == nil
+}
+
 // ! Stories block
 func InsertStory(story Story) bool {
 	_, err := Db.Exec(
@@ -557,4 +570,89 @@ func SearchUserStories(owner string) ([]Story, error) {
 func DeleteStory(id int) error {
 	_, err := Db.Exec(fmt.Sprintf(`DELETE FROM %s WHERE id = ?`, TABLE_STORIES), id)
 	return err
+}
+
+// ! Sessions
+func CreateSession(username string) (string, bool) {
+	user := SearchUser(username)
+
+	if len(user) == 0 {
+		return "", false
+	}
+
+	var err error
+	var counter = 0
+
+	var uuid_ string
+
+	for {
+		uuid_ = uuid.New().String()
+		_, err = Db.Exec("INSERT INTO sessions (uuid, userid) VALUES (?, ?)", uuid_, user[0].Id)
+
+		if err == nil {
+			break
+		}
+
+		counter++
+		if counter > 10 {
+			return "", false
+		}
+	}
+
+	return uuid_, err == nil
+}
+
+func DeleteSession(uuid string) bool {
+	_, err := Db.Exec("DELETE FROM sessions WHERE uuid = ?", uuid)
+
+	return err == nil
+}
+
+func UpdateSession(uuid string) bool {
+	_, err := Db.Exec("UPDATE sessions SET last_used = NOW() WHERE uuid = ?", uuid)
+
+	if err != nil {
+		println(err.Error())
+	}
+
+	return err == nil
+}
+
+func SearchUserBySession(uuid string) (User, error) {
+	var user User
+
+	var userId int
+	var lastActivity string
+	var createdAt string
+
+	var err = Db.QueryRow("SELECT userid, last_used, created FROM sessions WHERE uuid = ?", uuid).Scan(&userId, &createdAt, &lastActivity)
+
+	if err == nil {
+		var err2 = Db.QueryRow("SELECT id, email, password, name, subscribe FROM users WHERE id = ?", userId).Scan(&user.Id, &user.Email, &user.Password, &user.Name, &user.Subscribe)
+
+		if err2 == nil {
+			UpdateSession(uuid)
+			return user, nil
+		}
+	}
+
+	return user, err
+}
+
+func GetSessions(userid int) ([]string, error) {
+	rows, err := Db.Query("SELECT uuid FROM sessions WHERE userid = ?", userid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var uuidArr = make([]string, 0)
+
+	for rows.Next() {
+		var uuid_ string
+		rows.Scan(&uuid_)
+		uuidArr = append(uuidArr, uuid_)
+	}
+
+	return uuidArr, nil
 }

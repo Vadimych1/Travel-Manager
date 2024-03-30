@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:travel_manager_new/uikit/uikit.dart';
 import 'pages/auth/login.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'services.dart';
+
 // import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // import "package:flutter_secure_storage/flutter_secure_storage.dart";
 
+final Service service = Service(serveraddr: serveraddr);
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  service.init();
+
   runApp(const MainApp());
-  // SystemChrome.setEnabledSystemUIMode(
-  //   SystemUiMode.immersiveSticky,
-  // );
   tz.initializeTimeZones();
 }
 

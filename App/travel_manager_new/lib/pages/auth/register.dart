@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:travel_manager_new/pages/main/main_home.dart';
-// import 'package:travel_manager_new/pages/auth/register/step2.dart';
+import '../../main.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
 import 'login.dart';
 import "package:http/http.dart";
@@ -137,64 +137,26 @@ class _RegisterStep1State extends State<RegisterStep1> {
                         ),
                       );
                     } else {
-                      get(
-                        Uri.http(
-                          serveraddr,
-                          "/api/v1/register",
-                          {
-                            "username": _email.text.trim(),
-                            "password": _password.text.trim(),
-                            "name": _name.text.trim(),
-                          },
-                        ),
-                      ).then(
-                        (value) {
-                          var j = {};
-                          try {
-                            j = jsonDecode(value.body);
-                          } catch (e) {
-                            return;
-                          }
+                      Future.delayed(Duration.zero, () async {
+                        var v = await service.auth
+                            .register(_email.text, _password.text, _name.text);
 
-                          if (j["status"] == "success") {
-                            FlutterSecureStorage storage =
-                                const FlutterSecureStorage();
-
-                            storage.write(
-                              key: "username",
-                              value: _email.text.trim(),
-                            );
-                            storage.write(
-                              key: "password",
-                              value: _password.text.trim(),
-                            );
-
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MainHome(),
+                        if (v) {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Такой пользователь уже существует",
                               ),
-                            );
-                          } else {
-                            switch (j["code"]) {
-                              case "user_exists":
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Пользователь с такой почтой уже существует. Попробуйте войти",
-                                    ),
-                                  ),
-                                );
-                              default:
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Произошла ошибка при входе"),
-                                  ),
-                                );
-                            }
-                          }
-                        },
-                      );
+                            ),
+                          );
+                        }
+                      });
                     }
                   },
                   text: "Зарагестрироваться",

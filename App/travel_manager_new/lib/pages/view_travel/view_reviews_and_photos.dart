@@ -21,6 +21,8 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
   var reviews = <Widget>[];
   var photos = <Widget>[];
 
+  var idVas = <int>[];
+
   @override
   Widget build(BuildContext context) {
     storage.read(key: "username").then(
@@ -45,7 +47,9 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
 
                     j.forEach(
                       (r) {
-                        var rText = r["title"] ?? "";
+                        print(r);
+
+                        var rText = r["text"] ?? "";
                         var rStars = r["stars"] ?? 0;
                         var rOwner = r["owner"] ?? "";
 
@@ -62,36 +66,55 @@ class _ViewReviewsAndPhotosState extends State<ViewReviewsAndPhotos> {
                             var j = jsonDecode(req.body);
                             var rUsername = j["username"] ?? "";
 
-                            setState(
-                              () {
-                                reviews.add(
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.black54,
+                            if (!idVas.contains(r["id"])) {
+                              idVas.add(r["id"]);
+
+                              setState(
+                                () {
+                                  reviews.add(
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 10, bottom: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.black54,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            rUsername,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          Text(
+                                            rText,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              for (int i = 0; i < rStars; i++)
+                                                const Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                ),
+                                              for (int i = 0;
+                                                  i < 5 - rStars;
+                                                  i++)
+                                                const Icon(
+                                                  Icons.star_border,
+                                                  color: Colors.amber,
+                                                ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
                                     ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          rUsername,
-                                        ),
-                                        Text(
-                                          rText,
-                                        ),
-                                        Row(
-                                          children: [
-                                            for (int i = 0; i < rStars; i++)
-                                              const Icon(Icons.star),
-                                            for (int i = 0; i < 5 - rStars; i++)
-                                              const Icon(Icons.star_border),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
+                                  );
+                                },
+                              );
+                            }
                           }
                         });
                       },

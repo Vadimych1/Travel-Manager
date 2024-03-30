@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
-
+import "../../main.dart";
 import 'package:flutter/material.dart';
 import 'package:travel_manager_new/uikit/uikit.dart';
-// import 'package:flutter_svg/svg.dart';
 import 'register.dart';
 import '../main/main_home.dart';
-import "package:http/http.dart";
 import "package:flutter_secure_storage/flutter_secure_storage.dart";
 
 class LoginPage extends StatefulWidget {
@@ -25,80 +21,20 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    s.read(key: "username").then(
-      (username) {
-        if (username != null && username != "") {
-          s.read(key: "password").then(
-            (password) {
-              if (password != null && password != "") {
-                get(
-                  Uri.http(
-                    serveraddr,
-                    "/api/v1/login",
-                    {"username": username, "password": password},
-                  ),
-                ).then(
-                  (value) {
-                    var j = jsonDecode(value.body);
+    Future.delayed(Duration.zero, () async {
+      var data_ = await service.auth.verifySession();
 
-                    s.write(key: "name", value: j["name"]);
+      print(data_);
 
-                    if (j["status"] == "success") {
-                      sleep(
-                        const Duration(seconds: 1),
-                      );
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MainHome(),
-                        ),
-                      );
-                    } else {
-                      setState(
-                        () {
-                          loaded = true;
-                        },
-                      );
-
-                      switch (j["code"]) {
-                        case "user_not_exists":
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Пользователь не найден"),
-                            ),
-                          );
-                        case "invalid_password":
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Неверный пароль"),
-                            ),
-                          );
-                        default:
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Произошла ошибка при входе"),
-                            ),
-                          );
-                      }
-                    }
-                  },
-                );
-              } else {
-                setState(
-                  () {
-                    loaded = true;
-                  },
-                );
-              }
-            },
-          );
-        } else {
-          setState(() {
-            loaded = true;
-          });
-        }
-      },
-    );
+      if (data_["valid"]) {
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MainHome()));
+      } else {
+        setState(() {
+          loaded = true;
+        });
+      }
+    });
 
     return Scaffold(
       body: Stack(
@@ -186,69 +122,28 @@ class _LoginPageState extends State<LoginPage> {
                           BlackButton(
                             text: "Войти",
                             buttonKey: const Key('loginButtonKey'),
-                            onPressed: () {
+                            onPressed: () async {
                               if (_email.text.trim() != "" &&
                                   _password.text.trim() != "") {
-                                get(
-                                  Uri.http(
-                                    serveraddr,
-                                    "/api/v1/login",
-                                    {
-                                      "username": _email.text,
-                                      "password": _password.text
-                                    },
-                                  ),
-                                ).then(
-                                  (value) {
-                                    var j = jsonDecode(value.body);
-
-                                    if (j["status"] == "success") {
-                                      s.write(
-                                          key: "username", value: _email.text);
-                                      s.write(
-                                          key: "password",
-                                          value: _password.text);
-                                      s.write(key: "name", value: j["name"]);
-
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) {
-                                            return const MainHome(
-                                              key: Key("mainPageKey"),
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    } else {
-                                      switch (j["code"]) {
-                                        case "user_not_exists":
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  "Пользователь не найден"),
-                                            ),
-                                          );
-                                        case "invalid_password":
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text("Неверный пароль"),
-                                            ),
-                                          );
-                                        default:
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  "Произошла ошибка при входе"),
-                                            ),
-                                          );
-                                      }
-                                    }
-                                  },
-                                );
+                                if (await service.auth
+                                    .login(_email.text, _password.text)) {
+                                  Future.delayed(Duration.zero, () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const MainHome(),
+                                      ),
+                                    );
+                                  });
+                                } else {
+                                  Future.delayed(Duration.zero, () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Неверный логин/пароль"),
+                                      ),
+                                    );
+                                  });
+                                }
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
