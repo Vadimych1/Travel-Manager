@@ -1,3 +1,1 @@
-# travel_manager_final
-
-A new Flutter project.
+# Travel Manager App

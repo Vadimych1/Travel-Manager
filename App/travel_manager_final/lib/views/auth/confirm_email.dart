@@ -1,8 +1,9 @@
 // 28.03.2024 // confirm_email.dart // Confirm email page
 
+import "dart:async";
+
 import "package:flutter/material.dart";
 import 'package:travel_manager_final/views/widgets/interactive.dart';
-import "package:email_validator/email_validator.dart";
 
 class ConfirmEmailPage extends StatefulWidget {
   const ConfirmEmailPage({super.key});
@@ -14,15 +15,45 @@ class ConfirmEmailPage extends StatefulWidget {
 class _ConfirmEmailPageState extends State<ConfirmEmailPage> {
   bool codeValid = false;
   String email = "***@***.***";
+  int timer_ = 59;
+  Timer timer = Timer(Duration.zero, () {});
+
+  void startTimer() {
+    const oneSec = Duration(seconds: 1);
+    setState(() {
+      timer_ = 60;
+    });
+
+    Timer.periodic(oneSec, (t) {
+      timer = t;
+
+      if (timer_ <= 0) {
+        timer.cancel();
+      }
+
+      setState(() {
+        timer_--;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    startTimer();
+  }
 
   @override
   Widget build(BuildContext context) {
     Future.delayed(const Duration(milliseconds: 10), () {
-      setState(() {
-        var args =
-            ModalRoute.of(context)!.settings.arguments as Map<String, String>;
-        email = args["email"]!;
-      });
+      setState(() {});
     });
     return Scaffold(
       appBar: AppBar(
@@ -60,21 +91,43 @@ class _ConfirmEmailPageState extends State<ConfirmEmailPage> {
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 18),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        CodeInput(
-                          code: "1234",
-                          onChanged: (s) {
-                            setState(
-                              () {
-                                codeValid = s;
-                              },
-                            );
-                          },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CodeInput(
+                        code: "1234",
+                        onChanged: (s) {
+                          setState(
+                            () {
+                              codeValid = s;
+                            },
+                          );
+                        },
+                      ),
+                      InkWell(
+                        child: Text(
+                          timer_ > 0
+                              ? "Запросить повторно через $timer_ секунд"
+                              : "Запросить повторно",
                         ),
-                      ],
-                    ),
+                        onTap: () {
+                          print(timer_);
+
+                          if (timer_ <= 0) {
+                            startTimer();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Вы уже запросили код, подождите $timer_ секунд",
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -83,7 +136,10 @@ class _ConfirmEmailPageState extends State<ConfirmEmailPage> {
                   children: [
                     Button(
                       text: "Далее",
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context)
+                            .pushReplacementNamed("/reset_password");
+                      },
                       enabled: codeValid,
                     ),
                     const SizedBox(height: 10),

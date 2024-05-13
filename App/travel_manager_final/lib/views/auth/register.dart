@@ -3,6 +3,7 @@
 import "package:flutter/material.dart";
 import 'package:travel_manager_final/views/widgets/interactive.dart';
 import "package:email_validator/email_validator.dart";
+import "package:travel_manager_final/main.dart";
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -37,13 +38,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Авторизация",
+                      "Регистрация",
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Text("Войдите в аккаунт, чтобы продолжить"),
+                    Text("Создайте аккаунт, чтобы продолжить"),
                   ],
                 ),
               ),
@@ -128,15 +129,35 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     Button(
                       text: "Далее",
-                      onPressed: () {
-                        Navigator.of(context).pushNamed(
-                          "/confirm_email",
-                          arguments: {
-                            "email": _email.text,
-                            "name": _name.text,
-                            "password": _password.text
-                          },
+                      onPressed: () async {
+                        // TODO: email confirm
+                        // Navigator.of(context).pushNamed(
+                        //   "/confirm_email",
+                        //   arguments: {
+                        //     "email": _email.text,
+                        //     "name": _name.text,
+                        //     "password": _password.text
+                        //   },
+                        // );
+
+                        bool res = await service.auth.register(
+                          _email.text.trim(),
+                          _password.text.trim(),
+                          _name.text.trim(),
                         );
+
+                        if (res) {
+                          // TODO: goto home
+                          // Navigator.of(context).pushReplacementNamed("/");
+
+                          Navigator.of(context).pushReplacementNamed("/login");
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Что-то пошло не так"),
+                            ),
+                          );
+                        }
                       },
                       enabled: emailValid &&
                           passwordValid &&
@@ -156,7 +177,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         const SizedBox(width: 6),
                         InkWell(
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.of(context)
+                                .pushReplacementNamed("/login");
+                          },
                           child: const Text(
                             "Вход",
                             style: TextStyle(

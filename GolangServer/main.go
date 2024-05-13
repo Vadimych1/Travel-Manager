@@ -970,41 +970,6 @@ func print_help() {
 	`)
 }
 
-func check() {
-	fmt.Println("Travel Manager Server - checking")
-
-	settings := ReadSettings()
-	module_server_port := settings["module_server_port"]
-	module_server_address := settings["module_server_address"]
-
-	// Ping server
-	resp, err := http.Get("http://" + module_server_address + ":" + module_server_port)
-
-	if err != nil {
-		fmt.Println("Error (while pinging module server): " + err.Error())
-		return
-	}
-
-	if resp.StatusCode != 200 {
-		fmt.Println("Error (while pinging module server): " + resp.Status)
-		return
-	}
-
-	fmt.Println("Module server state: ok")
-
-	// Ping database
-	userdb.Init(logger)
-
-	if err = userdb.Db.Ping(); err != nil {
-		fmt.Println("Error (while pinging database): " + err.Error())
-		return
-	}
-
-	fmt.Println("Database state: ok")
-
-	fmt.Println("All services OK")
-}
-
 func main() {
 	args := os.Args
 
@@ -1014,9 +979,8 @@ func main() {
 			print_help()
 		case "run", "start", "run_server", "startserver":
 			run_server()
-		case "check":
-			check()
 		default:
+			fmt.Println("	Неизвестная команда: " + args[1])
 			print_help()
 		}
 	} else {

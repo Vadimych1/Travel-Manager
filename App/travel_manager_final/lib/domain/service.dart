@@ -1,6 +1,7 @@
 import "package:http/http.dart";
 import "package:flutter_secure_storage/flutter_secure_storage.dart";
 import "dart:convert";
+import "package:flutter/foundation.dart";
 
 const _storage = FlutterSecureStorage();
 
@@ -61,9 +62,12 @@ class AuthService {
     if (value["status"] == "success") {
       result = true;
 
-      storage.write("session", value["session"]);
-      storage.write("name", value["name"]);
-      storage.write("subscribe", value["subscribe"]);
+      await storage.write("session", value["session"]);
+      await storage.write("name", value["name"]);
+      await storage.write("subscribe", value["subscribe"]);
+
+      print(await storage.read("session"));
+      print(await storage.read("name"));
     } else {
       result = false;
     }
@@ -115,10 +119,11 @@ class AuthService {
 }
 
 class DataService {
-  DataService(
-      {required this.serveraddr,
-      required this.authservice,
-      required this.storage});
+  DataService({
+    required this.serveraddr,
+    required this.authservice,
+    required this.storage,
+  });
 
   final String serveraddr;
   final AuthService authservice;
@@ -176,6 +181,10 @@ class DataService {
 
     if (r.statusCode == 200) {
       var value = jsonDecode(r.body);
+
+      if (kDebugMode) {
+        print(value);
+      }
 
       if (value["status"] == "success") {
         result = value["content"];

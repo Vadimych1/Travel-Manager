@@ -3,5 +3,7 @@
     "port": "80",
     "global": "false",
     "path": "/",
-    "admin_pwd": "admin"
+    "admin_pwd": "admin",
+    "module_server_address": "localhost",
+    "module_server_port": "5555"
 }

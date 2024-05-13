@@ -11,6 +11,8 @@ class Input extends StatefulWidget {
     required this.validator,
     required this.onChanged,
     required this.onValidChanged,
+    this.bgColor = Colors.transparent,
+    this.labelColor = const Color(0xFF686868),
   });
 
   final TextEditingController controller;
@@ -19,6 +21,9 @@ class Input extends StatefulWidget {
   final bool Function(String) validator;
   final void Function(String) onChanged;
   final void Function(bool) onValidChanged;
+
+  final Color bgColor;
+  final Color labelColor;
 
   @override
   State<Input> createState() => _InputState();
@@ -36,8 +41,8 @@ class _InputState extends State<Input> {
           widget.label.isNotEmpty
               ? Text(
                   widget.label,
-                  style: const TextStyle(
-                    color: Color(0xFF686868),
+                  style: TextStyle(
+                    color: widget.labelColor,
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                   ),
@@ -94,6 +99,8 @@ class _InputState extends State<Input> {
               contentPadding: const EdgeInsets.only(left: 12),
               errorText: valid ? null : "",
               errorStyle: const TextStyle(fontSize: 0),
+              fillColor: widget.bgColor,
+              filled: true,
             ),
           ),
         ],
@@ -184,6 +191,7 @@ class _CodeInputState extends State<CodeInput> {
   Widget build(BuildContext context) {
     return Container(
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (var i = 0; i < 4; i++)
             Container(
@@ -274,6 +282,39 @@ class _CodeInputState extends State<CodeInput> {
                   widget.onChanged(valid);
                 },
               ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class SideScrollerBlock extends StatefulWidget {
+  const SideScrollerBlock({
+    super.key,
+    required this.children,
+  });
+
+  final List<Widget> children;
+
+  State<SideScrollerBlock> createState() => _SideScrollerBlockState();
+}
+
+class _SideScrollerBlockState extends State<SideScrollerBlock> {
+  ScrollController controller = ScrollController();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: controller,
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var ch in widget.children)
+            Container(
+              alignment: Alignment.center,
+              width: MediaQuery.of(context).size.width,
+              child: ch,
             ),
         ],
       ),
