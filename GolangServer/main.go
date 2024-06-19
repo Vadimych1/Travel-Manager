@@ -479,6 +479,14 @@ func search_activities(w http.ResponseWriter, params map[string]string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if params["session"] != "" && params["q"] != "" && params["town"] != "" {
 
+		// ! Types
+		// ! food
+		// ! attraction
+		// ! housing
+		// ! new
+		// ! event
+		// ! all
+
 		session, _ := url.QueryUnescape(params["session"])
 		_, err := logInBySession(session)
 
@@ -488,17 +496,22 @@ func search_activities(w http.ResponseWriter, params map[string]string) {
 			town, _ := url.QueryUnescape(params["town"])
 			town = strings.ToLower(town)
 
-			res, err := userdb.SearchPlaces(query, town)
+			s_type := params["type"]
+			if s_type == "" {
+				s_type = "all"
+			}
+
+			res, err := userdb.SearchPlaces(query, town, s_type)
 
 			if err != nil {
-				fmt.Fprint(w, `{"status":"error", "code":"server_error"`)
+				fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
 				Log(err.Error())
 			}
 
 			json, err := json.Marshal(res)
 
 			if err != nil {
-				fmt.Fprint(w, `{"status":"error", "code":"server_error"`)
+				fmt.Fprint(w, `{"status":"error", "code":"server_error"}`)
 				Log(err.Error())
 			}
 
@@ -506,6 +519,8 @@ func search_activities(w http.ResponseWriter, params map[string]string) {
 		} else {
 			fmt.Fprint(w, `{"status": "error", "code": "user_not_exists"}`)
 		}
+	} else {
+		fmt.Fprint(w, `{"status": "error", "code": "missing_params"}`)
 	}
 }
 
@@ -819,7 +834,7 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 				case "logout":
 					logout(params, w)
 				default:
-					fmt.Fprint(w, "method not found")
+					fmt.Fprint(w, "method not found 3")
 				}
 			case "activities":
 				switch pathnames[2] {
@@ -849,9 +864,12 @@ func get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 						m, _ := json.Marshal(params)
 						fmt.Fprint(w, "bad request. \n <h1>Попробуйте снова</h1> <p>"+string(m)+"</p>")
 					}
+				default:
+					fmt.Fprint(w, "method not found 1")
 				}
+
 			default:
-				fmt.Fprint(w, "method not found")
+				fmt.Fprint(w, "method not found 2")
 			}
 		} else {
 			fmt.Fprint(w, "method not found")
@@ -970,6 +988,14 @@ func print_help() {
 	`)
 }
 
+func print_methods() {
+	fmt.Println(`
+	Methods (by HTTP):
+
+	
+	`)
+}
+
 func main() {
 	args := os.Args
 
@@ -979,8 +1005,10 @@ func main() {
 			print_help()
 		case "run", "start", "run_server", "startserver":
 			run_server()
+		case "methods", "-m", "--methods":
+			print_methods()
 		default:
-			fmt.Println("	Неизвестная команда: " + args[1])
+			fmt.Println("	Unknown command: " + args[1])
 			print_help()
 		}
 	} else {

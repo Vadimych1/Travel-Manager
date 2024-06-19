@@ -417,14 +417,30 @@ func DeletePlace(id int) bool {
 }
 
 // Search activities from table activities with given name
-func SearchPlaces(query string, town string) ([]Place, error) {
-	rows, err := Db.Query(`SELECT * , MATCH (name, keywords)
+func SearchPlaces(query string, town string, s_type string) ([]Place, error) {
+	var err error
+	var rows *sql.Rows
+
+	fmt.Println(query, town, s_type)
+
+	if s_type == "all" {
+		rows, err = Db.Query(`SELECT * , MATCH (name, keywords)
+		AGAINST (?) as relev FROM activities WHERE
+		MATCH (name, keywords) AGAINST (?)>0 AND MATCH (town) AGAINST (?) ORDER BY relev DESC LIMIT 15`,
+			query,
+			query,
+			town,
+		)
+	} else {
+		rows, err = Db.Query(`SELECT * , MATCH (name, keywords)
 	AGAINST (?) as relev FROM activities WHERE
-	MATCH (name, keywords) AGAINST (?)>0 AND MATCH (town) AGAINST (?) ORDER BY relev DESC LIMIT 15`,
-		query,
-		query,
-		town,
-	)
+	MATCH (name, keywords) AGAINST (?)>0 AND MATCH (town) AGAINST (?) ORDER BY relev DESC AND type = ? LIMIT 15`,
+			query,
+			query,
+			town,
+			s_type,
+		)
+	}
 
 	if err != nil {
 		return nil, err
@@ -435,7 +451,7 @@ func SearchPlaces(query string, town string) ([]Place, error) {
 	var town_ string
 	var lan string
 	var lot string
-	var adress string
+	var address string
 	var images string
 	var schedule string
 	var description string
@@ -444,20 +460,22 @@ func SearchPlaces(query string, town string) ([]Place, error) {
 
 	var activities = make([]Place, 0)
 	for rows.Next() {
-		rows.Scan(&id, &name, &town_, &lan, &lot, &adress, &images, &schedule, &description, &keys, &u)
+		rows.Scan(&id, &name, &town_, &lan, &lot, &address, &images, &schedule, &description, &keys, &u)
 		activities = append(activities, Place{
 			Id:          id,
 			Name:        name,
 			Town:        town_,
 			Lan:         lan,
 			Lot:         lot,
-			Address:     adress,
+			Address:     address,
 			Images:      images,
 			Schedule:    schedule,
 			Description: description,
 			Keys:        keys,
 		})
 	}
+
+	fmt.Println("L", len(activities))
 
 	return activities, nil
 }
