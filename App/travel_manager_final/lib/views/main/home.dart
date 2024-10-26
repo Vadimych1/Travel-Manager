@@ -1,6 +1,11 @@
+// 14.05.2024 // home.dart // Home page
+
 import 'package:flutter/material.dart';
+import 'package:travel_manager_final/model/datatypes.dart';
 import 'package:travel_manager_final/views/widgets/interactive.dart';
+import 'package:travel_manager_final/views/main/stories/stories.dart';
 import 'package:travel_manager_final/main.dart';
+import 'package:travel_manager_final/views/auth/login.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -12,7 +17,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   late final TabController pageController;
   String username = "";
-  List travels = [];
+  List<Travel> travels = [];
   List<Widget> best = [];
 
   @override
@@ -22,7 +27,8 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
     Future.delayed(Duration.zero, () async {
       username = await service.storage.read("name");
-      travels = await service.data.getAllTravels();
+      travels = (await service.data.getAllTravels()).additionalData ??
+          []; // TODO: check for success
 
       setState(() {});
     });
@@ -37,7 +43,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
           indicatorColor: const Color(0xFF659581),
           labelColor: const Color(0xFF659581),
           unselectedLabelColor: const Color(0xFFCDCDCD),
-          overlayColor: MaterialStateProperty.all(Colors.transparent),
+          overlayColor: WidgetStateProperty.all<Color>(Colors.transparent),
           splashFactory: NoSplash.splashFactory,
           controller: pageController,
           tabs: const [
@@ -118,10 +124,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFFFFFFFF),
+                              color: Color(0xFFFFFFFF),
                               shadows: [
                                 Shadow(
-                                  color: const Color(0xFF000000),
+                                  color: Color(0xFF000000),
                                   blurRadius: 16,
                                 )
                               ],
@@ -136,10 +142,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFFFFFFFF),
+                              color: Color(0xFFFFFFFF),
                               shadows: [
                                 Shadow(
-                                  color: const Color(0xFF000000),
+                                  color: Color(0xFF000000),
                                   blurRadius: 16,
                                 )
                               ],
@@ -174,7 +180,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       child: travels.isNotEmpty
                           ? SideScrollerBlock(
                               children: [
-                                for (var t in travels)
+                                for (var _ in travels)
                                   Container(
                                     color: Colors.red,
                                     width: MediaQuery.of(context).size.width,
@@ -198,6 +204,40 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             ),
                     ),
                   ),
+
+                  // Header
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    margin: const EdgeInsets.only(top: 25),
+                    padding: const EdgeInsets.only(left: 20),
+                    child: const Text(
+                      "Лучшие места",
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Color(0xFFFFFFFF),
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+
+                  // Margin
+                  const SizedBox(height: 10),
+
+                  // Best places
+                  ...best.isNotEmpty
+                      ? best
+                      : [
+                          const Text(
+                            "тут пусто, но скоро появятся\nлучшие активности за неделю",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w300,
+                              color: Color(0xFF737373),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
 
                   // Header
                   Container(
@@ -271,47 +311,13 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                     ),
                   ),
 
-                  // Header
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    margin: const EdgeInsets.only(top: 25),
-                    padding: const EdgeInsets.only(left: 20),
-                    child: const Text(
-                      "Лучшие места",
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Color(0xFFFFFFFF),
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-
-                  // Margin
-                  const SizedBox(height: 10),
-
-                  // Best places
-                  ...best.isNotEmpty
-                      ? best
-                      : [
-                          const Text(
-                            "тут пусто, но скоро появятся\nлучшие активности за неделю",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w300,
-                              color: Color(0xFF737373),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-
                   // Margin
                   const SizedBox(height: 70),
                 ],
               ),
             ),
-            Container(),
-            Container(),
+            const Placeholder(), // tours
+            const Stories(),
             SingleChildScrollView(
               child: Column(
                 children: [
@@ -391,7 +397,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         InkWell(
@@ -424,11 +430,19 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         InkWell(
-                          onTap: () {},
+                          onTap: () {
+                            service.auth.logout();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ),
+                              (route) => false,
+                            );
+                          },
                           child: const Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -457,7 +471,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         InkWell(
@@ -490,7 +504,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         const SizedBox(height: 20),
@@ -534,7 +548,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         InkWell(
@@ -567,7 +581,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         const SizedBox(height: 20),
@@ -611,7 +625,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
 
                         InkWell(
@@ -644,7 +658,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           margin: const EdgeInsets.symmetric(vertical: 10),
                           height: 1,
                           width: MediaQuery.of(context).size.width - 40,
-                          color: Color(0xFFE6E6E6),
+                          color: const Color(0xFFE6E6E6),
                         ),
                       ],
                     ),

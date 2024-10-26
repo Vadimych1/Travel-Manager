@@ -1,6 +1,7 @@
 // 28.03.2024 // register.dart // Register page
 
 import "package:flutter/material.dart";
+import "package:travel_manager_final/model/datatypes.dart";
 import 'package:travel_manager_final/views/widgets/interactive.dart';
 import "package:email_validator/email_validator.dart";
 import "package:travel_manager_final/main.dart";
@@ -124,77 +125,78 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
               ),
-              Container(
-                child: Column(
-                  children: [
-                    Button(
-                      text: "Далее",
-                      onPressed: () async {
-                        // TODO: email confirm
-                        // Navigator.of(context).pushNamed(
-                        //   "/confirm_email",
-                        //   arguments: {
-                        //     "email": _email.text,
-                        //     "name": _name.text,
-                        //     "password": _password.text
-                        //   },
-                        // );
+              Column(
+                children: [
+                  Button(
+                    text: "Далее",
+                    onPressed: () async {
+                      // TODO: email confirm
+                      // Navigator.of(context).pushNamed(
+                      //   "/confirm_email",
+                      //   arguments: {
+                      //     "email": _email.text,
+                      //     "name": _name.text,
+                      //     "password": _password.text
+                      //   },
+                      // );
 
-                        bool res = await service.auth.register(
-                          _email.text.trim(),
-                          _password.text.trim(),
-                          _name.text.trim(),
-                        );
+                      AuthResult res = await service.auth.register(
+                        _email.text.trim(),
+                        _password.text.trim(),
+                        _name.text.trim(),
+                      );
 
-                        if (res) {
-                          // TODO: goto home
-                          // Navigator.of(context).pushReplacementNamed("/");
+                      if (res.success) {
+                        // TODO: goto home
+                        // Navigator.of(context).pushReplacementNamed("/");
 
+                        if (mounted) {
                           Navigator.of(context).pushReplacementNamed("/login");
-                        } else {
+                        }
+                      } else {
+                        if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text("Что-то пошло не так"),
                             ),
                           );
                         }
-                      },
-                      enabled: emailValid &&
-                          passwordValid &&
-                          password2Valid &&
-                          nameValid,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Есть аккаунт?",
+                      }
+                    },
+                    enabled: emailValid &&
+                        passwordValid &&
+                        password2Valid &&
+                        nameValid,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Есть аккаунт?",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).pushReplacementNamed("/login");
+                        },
+                        child: const Text(
+                          "Вход",
                           style: TextStyle(
+                            color: Color(0xFF659581),
+                            fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        InkWell(
-                          onTap: () {
-                            Navigator.of(context)
-                                .pushReplacementNamed("/login");
-                          },
-                          child: const Text(
-                            "Вход",
-                            style: TextStyle(
-                              color: Color(0xFF659581),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ],
           ),

@@ -1,6 +1,7 @@
 // 28.03.2024 // login.dart // Login page
 
 import "package:flutter/material.dart";
+import "package:travel_manager_final/model/datatypes.dart";
 import 'package:travel_manager_final/views/widgets/interactive.dart';
 import "package:email_validator/email_validator.dart";
 import "package:travel_manager_final/main.dart";
@@ -95,11 +96,11 @@ class _LoginPageState extends State<LoginPage> {
                       style: ButtonStyle(
                         splashFactory: NoSplash.splashFactory,
                         overlayColor:
-                            MaterialStateProperty.all(Colors.transparent),
-                        foregroundColor: MaterialStateProperty.all(
+                            WidgetStateProperty.all(Colors.transparent),
+                        foregroundColor: WidgetStateProperty.all(
                           const Color(0xFF659581),
                         ),
-                        padding: MaterialStateProperty.all<EdgeInsets>(
+                        padding: WidgetStateProperty.all<EdgeInsets>(
                           EdgeInsets.zero,
                         ),
                       ),
@@ -117,17 +118,25 @@ class _LoginPageState extends State<LoginPage> {
               Button(
                 text: "Войти",
                 onPressed: () async {
-                  bool res = await service.auth
-                      .login(_email.text.trim(), _password.text.trim());
+                  AuthResult res = await service.auth.login(
+                    _email.text.trim(),
+                    _password.text.trim(),
+                  );
 
-                  if (res) {
-                    Navigator.of(context).pushReplacementNamed("/home");
+                  if (res.success) {
+                    if (mounted) {
+                      Navigator.of(context).pushReplacementNamed("/home");
+                    }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Неверная почта или пароль"),
-                      ),
-                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            "Неверная почта или пароль ${service.auth.lastResult} (${res.message})",
+                          ),
+                        ),
+                      );
+                    }
                   }
                 },
                 enabled: emailValid && passwordValid,

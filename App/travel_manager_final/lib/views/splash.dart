@@ -10,10 +10,27 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future.delayed(const Duration(seconds: 1), () async {
-      if ((await service.auth.verifySession())["valid"]) {
-        Navigator.of(context).pushReplacementNamed("/home");
-      } else {
+      try {
+        var r = (await service.auth.verifySession());
+        if (r.success) {
+          Navigator.of(context).pushReplacementNamed("/home");
+        } else {
+          Navigator.of(context).pushReplacementNamed("/login");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(r.message),
+            ),
+          );
+        }
+      } catch (e) {
         Navigator.of(context).pushReplacementNamed("/login");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Не удалось проверить сессию. Войдите заново или попробуйте перезайти в приложение",
+            ),
+          ),
+        );
       }
     });
     return Scaffold(

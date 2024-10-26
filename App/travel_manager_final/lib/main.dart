@@ -9,8 +9,10 @@ import "package:travel_manager_final/views/auth/confirm_email.dart";
 import "package:travel_manager_final/views/auth/reset_password.dart";
 import 'package:travel_manager_final/views/main/home.dart';
 import 'package:travel_manager_final/views/main/create_travel/main_data.dart';
+import 'package:travel_manager_final/views/main/create_travel/select_activities.dart';
+import 'package:travel_manager_final/views/main/create_travel/select_town.dart';
 
-final service = Service(serveraddr: "4pj9zgm4-80.euw.devtunnels.ms");
+final service = Service(serveraddr: "k9cwr7rf-80.euw.devtunnels.ms");
 
 void main() {
   service.init();
@@ -31,11 +33,14 @@ class MainApp extends StatelessWidget {
         "/reset_password": (context) => const ResetPasswordPage(),
         "/home": (context) => const Home(),
         "/create": (context) => const CreateTravelMainData(),
+        "/create/select_town": (context) => const CreateTravelSelectTown(),
+        "/create/select_activities": (context) =>
+            const CreateTravelSelectActivities(),
       },
       theme: ThemeData(
         fontFamily: "Pro",
         colorScheme: const ColorScheme.light(
-          background: Color(0xFFFFFFFF),
+          surface: Color(0xFFFFFFFF),
         ),
       ),
       home: const SplashScreen(),

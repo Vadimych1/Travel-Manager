@@ -1,4 +1,5 @@
 // 28.03.2024 // confirm_email.dart // Confirm email page
+
 import "package:flutter/material.dart";
 import 'package:travel_manager_final/views/widgets/interactive.dart';
 import "package:email_validator/email_validator.dart";
@@ -68,42 +69,40 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   ),
                 ),
               ),
-              Container(
-                child: Column(
-                  children: [
-                    Button(
-                      text: "Далее",
-                      onPressed: () {},
-                      enabled: codeValid,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Вспомнили пароль?",
+              Column(
+                children: [
+                  Button(
+                    text: "Далее",
+                    onPressed: () {},
+                    enabled: codeValid,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Вспомнили пароль?",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () {},
+                        child: const Text(
+                          "Вход",
                           style: TextStyle(
+                            color: Color(0xFF659581),
+                            fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        InkWell(
-                          onTap: () {},
-                          child: const Text(
-                            "Вход",
-                            style: TextStyle(
-                              color: Color(0xFF659581),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ],
           ),

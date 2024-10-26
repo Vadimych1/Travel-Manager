@@ -112,7 +112,7 @@ class _ConfirmEmailPageState extends State<ConfirmEmailPage> {
                               : "Запросить повторно",
                         ),
                         onTap: () {
-                          print(timer_);
+                          // print(timer_);
 
                           if (timer_ <= 0) {
                             startTimer();
@@ -131,45 +131,43 @@ class _ConfirmEmailPageState extends State<ConfirmEmailPage> {
                   ),
                 ),
               ),
-              Container(
-                child: Column(
-                  children: [
-                    Button(
-                      text: "Далее",
-                      onPressed: () {
-                        Navigator.of(context)
-                            .pushReplacementNamed("/reset_password");
-                      },
-                      enabled: codeValid,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Есть аккаунт?",
+              Column(
+                children: [
+                  Button(
+                    text: "Далее",
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pushReplacementNamed("/reset_password");
+                    },
+                    enabled: codeValid,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Есть аккаунт?",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () {},
+                        child: const Text(
+                          "Вход",
                           style: TextStyle(
+                            color: Color(0xFF659581),
+                            fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        InkWell(
-                          onTap: () {},
-                          child: const Text(
-                            "Вход",
-                            style: TextStyle(
-                              color: Color(0xFF659581),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ],
           ),

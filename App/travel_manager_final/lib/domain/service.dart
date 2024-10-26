@@ -3,6 +3,8 @@ import "package:flutter_secure_storage/flutter_secure_storage.dart";
 import "dart:convert";
 import "package:flutter/foundation.dart";
 
+import "package:travel_manager_final/model/datatypes.dart";
+
 const _storage = FlutterSecureStorage();
 
 class AuthService {
@@ -11,7 +13,10 @@ class AuthService {
   final String serveraddr;
   final StorageService storage;
 
-  Future<bool> register(String username, String password, String name) async {
+  String lastResult = "";
+
+  Future<AuthResult> register(
+      String username, String password, String name) async {
     var result = false;
 
     var r = await get(
@@ -40,10 +45,10 @@ class AuthService {
       }
     }
 
-    return result;
+    return AuthResult(result, "");
   }
 
-  Future<bool> login(String username, String password) async {
+  Future<AuthResult> login(String username, String password) async {
     var result = false;
 
     var r = await get(
@@ -65,21 +70,16 @@ class AuthService {
       await storage.write("session", value["session"]);
       await storage.write("name", value["name"]);
       await storage.write("subscribe", value["subscribe"]);
-
-      print(await storage.read("session"));
-      print(await storage.read("name"));
     } else {
       result = false;
     }
 
-    print(value);
+    lastResult = r.body;
 
-    print(result);
-
-    return result;
+    return AuthResult(result, "");
   }
 
-  Future<Map> verifySession() async {
+  Future<AuthResult<Map>> verifySession() async {
     var s = await getSession();
     var t = false;
 
@@ -93,16 +93,19 @@ class AuthService {
       jsn = jsonDecode(r.body);
     }
 
+    lastResult = r.body;
+
     return t
-        ? {"valid": true, "name": jsn["name"], "subscribe": jsn["subscribe"]}
-        : {"valid": false, "code": jsn["code"]};
+        ? AuthResult(
+            true, "", {"name": jsn["name"], "subscribe": jsn["subscribe"]})
+        : AuthResult(false, jsn["code"]);
   }
 
-  Future<String> getSession() async {
-    return await storage.read("session");
+  Future<AuthResult<String>> getSession() async {
+    return AuthResult(true, "", await storage.read("session"));
   }
 
-  Future<bool> logout() async {
+  Future<AuthResult> logout() async {
     var result = false;
 
     var r = await get(Uri.http(serveraddr, "api/v1/logout", {
@@ -114,7 +117,9 @@ class AuthService {
       await storage.clear();
     }
 
-    return result;
+    lastResult = r.body;
+
+    return AuthResult(result, "");
   }
 }
 
@@ -134,33 +139,14 @@ class DataService {
     return r;
   }
 
-  Future<bool> createTravel(
-    String planName,
-    String activities,
-    String fromDate,
-    String toDate,
-    String budget,
-    String livePlace,
-    String expenses,
-    String meta,
-    String peopleCount,
-    String town,
-  ) async {
+  Future<DataResult> createTravel(Travel travel) async {
     var result = false;
 
-    var r = await _get("/api/v1/create_travel", {
-      "session": await authservice.getSession(),
-      "plan_name": planName,
-      "activities": activities,
-      "from_date": fromDate,
-      "to_date": toDate,
-      "budget": budget,
-      "live_place": livePlace,
-      "expenses": expenses,
-      "meta": meta,
-      "people_count": peopleCount,
-      "town": town
-    });
+    var r = await _get(
+      "/api/v1/create_travel",
+      travel.toMap()
+        ..["session"] = (await authservice.getSession()).additionalData!,
+    );
 
     if (r.statusCode == 200) {
       var value = jsonDecode(r.body);
@@ -169,11 +155,11 @@ class DataService {
       result = false;
     }
 
-    return result;
+    return DataResult(result, "");
   }
 
-  Future<List<dynamic>> getAllTravels() async {
-    var result = [];
+  Future<DataResult<List<Travel>>> getAllTravels() async {
+    List<Travel> result = [];
 
     var r = await _get("/api/v1/get_all_travels", {
       "session": await authservice.getSession(),
@@ -182,25 +168,23 @@ class DataService {
     if (r.statusCode == 200) {
       var value = jsonDecode(r.body);
 
-      if (kDebugMode) {
-        print(value);
-      }
-
       if (value["status"] == "success") {
-        result = value["content"];
+        result = List<Travel>.from(
+          value["content"].map(
+            (x) => Travel.parse(x),
+          ),
+        );
       } else {
-        result = [];
+        return DataResult(false, value["code"] ?? "", []);
       }
     } else {
-      result = [];
+      return DataResult(false, r.statusCode.toString(), []);
     }
 
-    return result;
+    return DataResult(true, "", result);
   }
 
-  Future<Map> getTravel(String id) async {
-    var result = {};
-
+  Future<DataResult<Travel>> getTravel(String id) async {
     var r = await _get("/api/v1/get_travel", {
       "session": await authservice.getSession(),
       "id": id,
@@ -210,60 +194,34 @@ class DataService {
       var value = jsonDecode(r.body);
 
       if (value["status"] == "success") {
-        result = value["content"];
+        return DataResult(true, "", Travel.parse(value["content"]));
       } else {
-        result = {};
+        return DataResult(false, value["code"] ?? "", Travel.empty());
       }
     } else {
-      result = {};
+      return DataResult(false, r.statusCode.toString(), Travel.empty());
     }
-
-    return result;
   }
 
-  Future<bool> updateTravel(
-    String id,
-    String planName,
-    String activities,
-    String fromDate,
-    String toDate,
-    String budget,
-    String livePlace,
-    String expenses,
-    String meta,
-    String peopleCount,
-    String town,
-  ) async {
+  Future<DataResult> updateTravel(Travel travel) async {
     var result = false;
 
-    var resp = await _get("/api/v1/edit_travel", {
-      "session": await authservice.getSession(),
-      "id": id,
-      "plan_name": planName,
-      "activities": activities,
-      "from_date": fromDate,
-      "to_date": toDate,
-      "budget": budget,
-      "live_place": livePlace,
-      "expenses": expenses,
-      "meta": meta,
-      "people_count": peopleCount,
-      "town": town
-    });
+    var resp = await _get(
+      "/api/v1/edit_travel",
+      travel.toMap()
+        ..["session"] = (await authservice.getSession()).additionalData!,
+    );
 
     if (resp.statusCode == 200) {
       var value = jsonDecode(resp.body);
       result = value["status"] == "success";
+      return DataResult(result, result ? "" : value["code"] ?? "");
     } else {
-      result = false;
+      return DataResult(false, resp.statusCode.toString());
     }
-
-    return result;
   }
 
-  Future<bool> deleteTravel(String id) async {
-    var result = false;
-
+  Future<DataResult> deleteTravel(String id) async {
     var resp = await _get("/api/v1/delete_travel", {
       "session": await authservice.getSession(),
       "id": id,
@@ -273,19 +231,17 @@ class DataService {
       var value = jsonDecode(resp.body);
 
       if (value["status"] == "success") {
-        result = true;
+        return DataResult(true, "");
       }
+      return DataResult(false, value["code"]);
     } else {
-      result = false;
+      return DataResult(false, resp.statusCode.toString());
     }
-
-    return result;
   }
 
-  Future<List<dynamic>> searchActivities(String town, String query) async {
-    var result = [];
-
-    var r = await _get("/api/v1/search_activities", {
+  Future<DataResult<List<Activity>>> searchActivities(
+      String town, String query) async {
+    var r = await _get("/api/activities/search", {
       "session": await authservice.getSession(),
       "town": town,
       "q": query,
@@ -293,37 +249,41 @@ class DataService {
 
     if (r.statusCode == 200) {
       if (jsonDecode(r.body)["status"] == "success") {
-        result = jsonDecode(r.body)["content"];
+        var result = jsonDecode(r.body)["content"];
+        return DataResult(
+          true,
+          "",
+          List.generate(
+            result.length,
+            (i) {
+              return Activity.parse(result[i]);
+            },
+          ),
+        );
       }
     }
 
-    return result;
+    return DataResult(false, r.statusCode.toString());
   }
 
-  Future<bool> addReview(String id, String stars, String text) async {
-    var result = false;
-
-    var resp = await _get("/api/v1/add_review", {
-      "session": await authservice.getSession(),
-      "id": id,
-      "stars": stars,
-      "text": text,
-    });
+  Future<DataResult> addReview(Review review) async {
+    var resp = await _get(
+        "/api/v1/add_review",
+        review.map
+          ..["session"] = (await authservice.getSession()).additionalData!);
 
     if (resp.statusCode == 200) {
       var value = jsonDecode(resp.body);
 
       if (value["status"] == "success") {
-        result = true;
+        return DataResult(true, "");
       }
     }
 
-    return result;
+    return DataResult(false, resp.statusCode.toString());
   }
 
-  Future<List<dynamic>> getReviews(String id) async {
-    var result = [];
-
+  Future<DataResult<List<Review>>> getReviews(String id) async {
     var r = await _get("/api/v1/get_reviews", {
       "session": await authservice.getSession(),
       "placeid": id,
@@ -331,16 +291,24 @@ class DataService {
 
     if (r.statusCode == 200) {
       if (jsonDecode(r.body)["status"] == "success") {
-        result = jsonDecode(r.body)["content"];
+        var result = jsonDecode(r.body)["content"];
+        return DataResult(
+          true,
+          "",
+          List.generate(
+            result.length,
+            (i) => Review.parse(
+              result[i],
+            ),
+          ),
+        );
       }
     }
 
-    return result;
+    return DataResult(false, r.statusCode.toString(), []);
   }
 
-  Future<Map> getReview(String id) async {
-    var result = {};
-
+  Future<DataResult<Review>> getReview(String id) async {
     var r = await _get("/api/v1/get_review", {
       "session": await authservice.getSession(),
       "id": id,
@@ -350,16 +318,14 @@ class DataService {
       var value = jsonDecode(r.body);
 
       if (value["status"] == "success") {
-        result = value["content"];
+        return DataResult(true, "", Review.parse(value["content"]));
       }
     }
 
-    return result;
+    return DataResult(false, r.statusCode.toString(), Review.empty());
   }
 
-  Future<bool> deleteReview(String id) async {
-    var result = false;
-
+  Future<DataResult> deleteReview(String id) async {
     var resp = await _get("/api/v1/delete_review", {
       "session": await authservice.getSession(),
       "id": id,
@@ -368,15 +334,13 @@ class DataService {
     if (resp.statusCode == 200) {
       var value = jsonDecode(resp.body);
 
-      result = value["status"] == "success";
+      return DataResult(value["status"] == "success", value["code"] ?? "");
     }
 
-    return result;
+    return DataResult(false, resp.statusCode.toString());
   }
 
-  Future<String> getUsername(String otherUser) async {
-    var result = "";
-
+  Future<DataResult<String>> getUsername(String otherUser) async {
     var r = await _get("/api/v1/get_username", {
       "session": await authservice.getSession(),
       "other_user": otherUser,
@@ -385,7 +349,30 @@ class DataService {
     if (r.statusCode == 200) {
       var value = jsonDecode(r.body);
 
-      result = value["name"];
+      DataResult(true, "", value["name"]);
+    }
+
+    return DataResult(false, r.statusCode.toString(), "");
+  }
+
+  // TODO: add Town to datatypes and replace
+  Future<List<Map<String, dynamic>>> searchTowns(String query) async {
+    List<Map<String, dynamic>> result = [];
+
+    var r = await _get("/api/v1/search_town", {
+      "session": await authservice.getSession(),
+      "q": query,
+    });
+
+    if (r.statusCode == 200) {
+      // decode bytes to utf-8
+      var value = jsonDecode(const Utf8Decoder().convert(r.bodyBytes));
+
+      try {
+        result = List<Map<String, dynamic>>.from(value["content"]);
+      } catch (e) {
+        if (kDebugMode) print(e);
+      }
     }
 
     return result;
