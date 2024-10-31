@@ -19,6 +19,7 @@ const (
 	TABLE_PLANS      string = "plans"
 	TABLE_USERS      string = "users"
 	TABLE_STORIES    string = "stories"
+	TABLE_TOWNS      string = "towns"
 )
 
 // STORY TYPES
@@ -55,16 +56,17 @@ type Travel struct {
 
 // Place
 type Place struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	Town        string `json:"town"`
-	Lan         string `json:"lan"`
-	Lot         string `json:"lot"`
-	Address     string `json:"address"`
-	Images      string `json:"images"`
-	Schedule    string `json:"schedule"`
-	Description string `json:"description"`
-	Keys        string `json:"keys"`
+	Id          int     `json:"id"`
+	Name        string  `json:"name"`
+	Town        string  `json:"town"`
+	Lan         string  `json:"lan"`
+	Lot         string  `json:"lot"`
+	Address     string  `json:"address"`
+	Images      string  `json:"images"`
+	Schedule    string  `json:"schedule"`
+	Description string  `json:"description"`
+	Type        string  `json:"type"`
+	Relev       float64 `json:"relev"`
 }
 
 // Review
@@ -83,6 +85,13 @@ type Story struct {
 	Text        string `json:"text"`
 	VideoPath   string `json:"videopath"`
 	PublishDate string `json:"publish_date"`
+}
+
+type Town struct {
+	Name        string  `json:"name"`
+	DisplayName string  `json:"display_name"`
+	Type        string  `json:"type"`
+	Relev       float64 `json:"relev"`
 }
 
 var Logger *log.Logger
@@ -331,7 +340,7 @@ func InsertPlace(activity Place) bool {
 
 	// SQL query to insert a new activity into the activities table
 	query := `INSERT INTO activities 
-	(name, town, lan, lot, adress, images, schedule, description, keywords) 
+	(name, town, lan, lot, adress, images, schedule, description, type) 
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// Arguments for the SQL query
@@ -344,7 +353,7 @@ func InsertPlace(activity Place) bool {
 		activity.Images,
 		activity.Schedule,
 		activity.Description,
-		activity.Keys,
+		activity.Type,
 	}
 
 	// Execute the SQL query with the arguments
@@ -376,7 +385,7 @@ func SearchPlace(id int) (Place, error) {
 	// Process the query result
 	if rows.Next() {
 		var activity Place
-		err := rows.Scan(&activity.Id, &activity.Name, &activity.Town, &activity.Lan, &activity.Lot, &activity.Address, &activity.Images, &activity.Schedule, &activity.Description, &activity.Keys)
+		err := rows.Scan(&activity.Id, &activity.Name, &activity.Town, &activity.Lan, &activity.Lot, &activity.Address, &activity.Images, &activity.Schedule, &activity.Description, &activity.Type)
 		if err != nil {
 			return Place{}, err
 		}
@@ -421,22 +430,24 @@ func SearchPlaces(query string, town string, s_type string) ([]Place, error) {
 	var err error
 	var rows *sql.Rows
 
-	fmt.Println(query, town, s_type)
+	// fmt.Println(query, town, s_type)
 
 	if s_type == "all" {
-		rows, err = Db.Query(`SELECT * , MATCH (name, keywords)
-		AGAINST (?) as relev FROM activities WHERE
-		MATCH (name, keywords) AGAINST (?)>0 AND MATCH (town) AGAINST (?) ORDER BY relev DESC LIMIT 15`,
-			query,
-			query,
+		rows, err = Db.Query(`SELECT *, MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relev FROM activities
+		WHERE name LIKE ? AND town = ?
+		ORDER BY relev DESC
+		LIMIT 15`,
+			"%"+query+"%",
+			"%"+query+"%",
 			town,
 		)
 	} else {
-		rows, err = Db.Query(`SELECT * , MATCH (name, keywords)
-	AGAINST (?) as relev FROM activities WHERE
-	MATCH (name, keywords) AGAINST (?)>0 AND MATCH (town) AGAINST (?) ORDER BY relev DESC AND type = ? LIMIT 15`,
-			query,
-			query,
+		rows, err = Db.Query(`SELECT *, MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relev FROM activities
+		WHERE name LIKE ? AND town = ? AND type = ?
+		ORDER BY relev DESC
+		LIMIT 15`,
+			"%"+query+"%",
+			"%"+query+"%",
 			town,
 			s_type,
 		)
@@ -455,12 +466,12 @@ func SearchPlaces(query string, town string, s_type string) ([]Place, error) {
 	var images string
 	var schedule string
 	var description string
-	var keys string
-	var u string
+	var type_ string
+	var relev float64
 
 	var activities = make([]Place, 0)
 	for rows.Next() {
-		rows.Scan(&id, &name, &town_, &lan, &lot, &address, &images, &schedule, &description, &keys, &u)
+		rows.Scan(&id, &name, &town_, &lan, &lot, &address, &images, &schedule, &description, &type_, &relev)
 		activities = append(activities, Place{
 			Id:          id,
 			Name:        name,
@@ -471,11 +482,10 @@ func SearchPlaces(query string, town string, s_type string) ([]Place, error) {
 			Images:      images,
 			Schedule:    schedule,
 			Description: description,
-			Keys:        keys,
+			Type:        type_,
+			Relev:       relev,
 		})
 	}
-
-	fmt.Println("L", len(activities))
 
 	return activities, nil
 }
@@ -673,4 +683,40 @@ func GetSessions(userid int) ([]string, error) {
 	}
 
 	return uuidArr, nil
+}
+
+// ! Towns
+
+// ? Town types
+// ? beautiful
+// ? plain
+// ? regional_center
+// ? resort_town
+
+func SearchTown(query string) ([]Town, error) {
+	rows, err := Db.Query("SELECT *, MATCH (name) AGAINST (? IN NATURAL LANGUAGE MODE) AS relev FROM towns WHERE name LIKE ? ORDER BY relev DESC LIMIT 10", "%"+query+"%", "%"+query+"%")
+
+	if err != nil {
+		return nil, err
+	}
+
+	var name string
+	var display_name string
+	var type_ string
+	var relev float64
+
+	var towns = make([]Town, 0)
+
+	for rows.Next() {
+		rows.Scan(&name, &display_name, &type_, &relev)
+
+		towns = append(towns, Town{
+			Name:        name,
+			DisplayName: display_name,
+			Relev:       relev,
+			Type:        type_,
+		})
+	}
+
+	return towns, nil
 }
