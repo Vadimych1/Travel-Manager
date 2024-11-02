@@ -111,7 +111,8 @@ class Activity {
     images = map["images"].split(",");
     schedule = Schedule.empty();
     description = map["description"];
-    type = ActivityType.values[map["type"]];
+    type = ActivityType.values
+        .firstWhere((e) => e.toString() == "ActivityType.${map["type"]}");
   }
 
   Activity.empty() {

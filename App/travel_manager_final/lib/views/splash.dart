@@ -3,6 +3,7 @@
 import "package:flutter/material.dart";
 import "package:flutter_svg/flutter_svg.dart";
 import "package:travel_manager_final/main.dart";
+import "package:travel_manager_final/model/datatypes.dart";
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -11,7 +12,8 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Future.delayed(const Duration(seconds: 1), () async {
       try {
-        var r = (await service.auth.verifySession());
+        AuthResult<Map<dynamic, dynamic>> r =
+            (await service.auth.verifySession());
         if (r.success) {
           Navigator.of(context).pushReplacementNamed("/home");
         } else {
@@ -23,6 +25,8 @@ class SplashScreen extends StatelessWidget {
           );
         }
       } catch (e) {
+        print(e);
+
         Navigator.of(context).pushReplacementNamed("/login");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

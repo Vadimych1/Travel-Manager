@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -51,16 +49,22 @@ class _ActivityBlock extends StatefulWidget {
   State<_ActivityBlock> createState() => _ActivityBlockState();
 }
 
-class _ActivityBlockState extends State<_ActivityBlock> {
+class _ActivityBlockState extends State<_ActivityBlock>
+    with TickerProviderStateMixin {
   final double nameSizePercent =
       0.63; // size of block where texts displayed in each activity in percents of screen size
   bool curOpened = false; // is menu currently opened?
 
-  double curHeight = 0; // current menu height
   final double maxHeight = 60; // max menu height
 
-  Timer?
-      animTimer; // animation timer, can be null if animation was`t played before
+  AnimationController? heightController;
+  AnimationController? opacityController;
+
+  Animation<double>? heightAnimation;
+  Animation<double>? opacityAnimation;
+
+  Tween<double>? heightTween;
+  Tween<double>? opacityTween;
 
   bool selected = false; // determines how Add to plan button works
   void setSelected(bool s) {
@@ -84,39 +88,60 @@ class _ActivityBlockState extends State<_ActivityBlock> {
       selected = true;
     }
 
+    heightController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    opacityController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    heightTween = Tween<double>(begin: 0, end: maxHeight);
+    opacityTween = Tween<double>(begin: 0, end: 1);
+
+    heightAnimation = heightTween!.animate(
+      CurvedAnimation(parent: heightController!, curve: Curves.easeInOut),
+    );
+
+    opacityAnimation = opacityTween!.animate(
+      CurvedAnimation(parent: opacityController!, curve: Curves.easeInOut),
+    );
+
+    heightAnimation!.addListener(() {
+      setState(() {
+        print(widget.activity.name);
+        print(heightAnimation!.value);
+      });
+    });
+
+    opacityAnimation!.addListener(() {
+      setState(() {});
+    });
+
     // Done to prevent values of opacity and width smaller than 0
-    assert(maxHeight > 30);
+    assert(maxHeight > 10);
   }
 
   void animate(bool open) {
     if (curOpened == open) return;
     if (open) curOpened = open;
 
-    if (animTimer != null && animTimer!.isActive) {
-      animTimer!.cancel();
+    if (open) {
+      print("Open animation");
+      heightController!.forward();
+      opacityController!.forward();
+    } else {
+      print("Close animation");
+      heightController!.reverse();
+      opacityController!.reverse();
     }
 
-    int n = 0; // current animation step
-    int maxN = 60; // number of updates in all animation
-    int animTime = 400; // ms
-
-    void anim(Timer duration) {
-      n++;
-      if (n >= maxN) {
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      setState(() {
         curOpened = open;
-        duration.cancel();
-      }
-
-      setState(
-        () {
-          curHeight =
-              Curves.easeInOut.transform(open ? n / maxN : (1 - n / maxN)) *
-                  maxHeight;
-        },
-      );
-    }
-
-    Timer.periodic(Duration(milliseconds: (animTime / maxN).truncate()), anim);
+      });
+    });
   }
 
   @override
@@ -216,72 +241,66 @@ class _ActivityBlockState extends State<_ActivityBlock> {
           if (curOpened)
             SizedBox(
               // opened box
-              height: curHeight,
-              child: (maxHeight - curHeight) <= 100
-                  ? Opacity(
-                      opacity: (curHeight - 30) / (maxHeight - 30) <= 1
-                          ? max(0, (curHeight - 30) / (maxHeight - 30))
-                          : 1,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              // TODO: see reviews and pics
-                            },
-                            style: ButtonStyle(
-                              foregroundColor: WidgetStateProperty.all<Color>(
-                                const Color(0xFF000000),
-                              ),
-                              textStyle: WidgetStateProperty.all(
-                                const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              shape: WidgetStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  side: const BorderSide(
-                                    color: Color(0xFF000000),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            child: const Text("Отзывы и картинки"),
+              height: (heightAnimation?.value) ?? 0,
+              child: Opacity(
+                opacity: (opacityAnimation?.value) ?? 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        // TODO: see reviews and pics
+                      },
+                      style: ButtonStyle(
+                        foregroundColor: WidgetStateProperty.all<Color>(
+                          const Color(0xFF000000),
+                        ),
+                        textStyle: WidgetStateProperty.all(
+                          const TextStyle(
+                            fontWeight: FontWeight.bold,
                           ),
-                          TextButton(
-                            onPressed: () {
-                              if (selected) {
-                                widget.remove(widget.activity.id, widget.index);
-                              } else {
-                                widget.add(widget.activity.id, widget.index);
-                              }
-                            },
-                            style: ButtonStyle(
-                              foregroundColor: WidgetStateProperty.all<Color>(
-                                const Color(0xFFFFFFFF),
-                              ),
-                              shape: WidgetStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                              ),
-                              backgroundColor: WidgetStateProperty.all<Color>(
-                                selected
-                                    ? const Color(0xFFACACAC)
-                                    : const Color(0xFF659581),
-                              ),
-                            ),
-                            child: Text(
-                              selected ? "Убрать из плана" : "Добавить в план",
+                        ),
+                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                            side: const BorderSide(
+                              color: Color(0xFF000000),
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    )
-                  : Container(),
+                      child: const Text("Отзывы и картинки"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (selected) {
+                          widget.remove(widget.activity.id, widget.index);
+                        } else {
+                          widget.add(widget.activity.id, widget.index);
+                        }
+                      },
+                      style: ButtonStyle(
+                        foregroundColor: WidgetStateProperty.all<Color>(
+                          const Color(0xFFFFFFFF),
+                        ),
+                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        backgroundColor: WidgetStateProperty.all<Color>(
+                          selected
+                              ? const Color(0xFFACACAC)
+                              : const Color(0xFF659581),
+                        ),
+                      ),
+                      child: Text(
+                        selected ? "Убрать из плана" : "Добавить в план",
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
         ],
       ),

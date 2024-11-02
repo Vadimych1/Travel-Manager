@@ -37,9 +37,9 @@ class AuthService {
       if (value["status"] == "success") {
         result = true;
 
-        await storage.write("session", value["session"]);
-        await storage.write("name", value["name"]);
-        await storage.write("subscribe", value["subscribe"]);
+        await storage.write("session", value["data"]["session"]);
+        await storage.write("name", value["data"]["name"]);
+        await storage.write("subscribe", value["data"]["subscribe"]);
       } else {
         result = false;
       }
@@ -67,9 +67,9 @@ class AuthService {
     if (value["status"] == "success") {
       result = true;
 
-      await storage.write("session", value["session"]);
-      await storage.write("name", value["name"]);
-      await storage.write("subscribe", value["subscribe"]);
+      await storage.write("session", value["data"]["session"]);
+      await storage.write("name", value["data"]["name"]);
+      await storage.write("subscribe", value["data"]["subscribe"]);
     } else {
       result = false;
     }
@@ -85,20 +85,29 @@ class AuthService {
 
     var jsn = {};
 
-    var r =
-        await get(Uri.http(serveraddr, "api/v1/check_session", {"session": s}));
+    var r = await get(Uri.http(
+        serveraddr, "api/v1/check_session", {"session": s.additionalData}));
 
-    if (r.statusCode == 200 && jsonDecode(r.body)["status"] == "success") {
-      t = true;
+    if (r.statusCode == 200) {
       jsn = jsonDecode(r.body);
+
+      if (jsn["status"] == "success") {
+        t = true;
+      }
     }
 
     lastResult = r.body;
 
     return t
         ? AuthResult(
-            true, "", {"name": jsn["name"], "subscribe": jsn["subscribe"]})
-        : AuthResult(false, jsn["code"]);
+            true,
+            "",
+            {
+              "name": jsn["data"]["name"],
+              "subscribe": jsn["data"]["subscribe"]
+            },
+          )
+        : AuthResult(false, jsn["code"] ?? "");
   }
 
   Future<AuthResult<String>> getSession() async {
@@ -108,9 +117,15 @@ class AuthService {
   Future<AuthResult> logout() async {
     var result = false;
 
-    var r = await get(Uri.http(serveraddr, "api/v1/logout", {
-      "session": await storage.read("session"),
-    }));
+    var r = await get(
+      Uri.http(
+        serveraddr,
+        "api/v1/logout",
+        {
+          "session": await storage.read("session"),
+        },
+      ),
+    );
 
     if (r.statusCode == 200) {
       result = jsonDecode(r.body)["status"] == "success";
@@ -162,7 +177,7 @@ class DataService {
     List<Travel> result = [];
 
     var r = await _get("/api/v1/get_all_travels", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData,
     });
 
     if (r.statusCode == 200) {
@@ -170,7 +185,7 @@ class DataService {
 
       if (value["status"] == "success") {
         result = List<Travel>.from(
-          value["content"].map(
+          value["data"].map(
             (x) => Travel.parse(x),
           ),
         );
@@ -186,7 +201,7 @@ class DataService {
 
   Future<DataResult<Travel>> getTravel(String id) async {
     var r = await _get("/api/v1/get_travel", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "id": id,
     });
 
@@ -194,7 +209,7 @@ class DataService {
       var value = jsonDecode(r.body);
 
       if (value["status"] == "success") {
-        return DataResult(true, "", Travel.parse(value["content"]));
+        return DataResult(true, "", Travel.parse(value["data"]));
       } else {
         return DataResult(false, value["code"] ?? "", Travel.empty());
       }
@@ -223,7 +238,7 @@ class DataService {
 
   Future<DataResult> deleteTravel(String id) async {
     var resp = await _get("/api/v1/delete_travel", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData,
       "id": id,
     });
 
@@ -242,21 +257,21 @@ class DataService {
   Future<DataResult<List<Activity>>> searchActivities(
       String town, String query) async {
     var r = await _get("/api/activities/search", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "town": town,
       "q": query,
     });
 
     if (r.statusCode == 200) {
-      if (jsonDecode(r.body)["status"] == "success") {
-        var result = jsonDecode(r.body)["content"];
+      var value = jsonDecode(r.body);
+      if (value["status"] == "success") {
         return DataResult(
           true,
           "",
           List.generate(
-            result.length,
+            value["data"].length,
             (i) {
-              return Activity.parse(result[i]);
+              return Activity.parse(value["data"][i]);
             },
           ),
         );
@@ -285,13 +300,14 @@ class DataService {
 
   Future<DataResult<List<Review>>> getReviews(String id) async {
     var r = await _get("/api/v1/get_reviews", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "placeid": id,
     });
 
     if (r.statusCode == 200) {
-      if (jsonDecode(r.body)["status"] == "success") {
-        var result = jsonDecode(r.body)["content"];
+      var value = jsonDecode(r.body);
+      if (value["status"] == "success") {
+        var result = value["data"];
         return DataResult(
           true,
           "",
@@ -310,7 +326,7 @@ class DataService {
 
   Future<DataResult<Review>> getReview(String id) async {
     var r = await _get("/api/v1/get_review", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "id": id,
     });
 
@@ -318,7 +334,7 @@ class DataService {
       var value = jsonDecode(r.body);
 
       if (value["status"] == "success") {
-        return DataResult(true, "", Review.parse(value["content"]));
+        return DataResult(true, "", Review.parse(value["data"]));
       }
     }
 
@@ -327,7 +343,7 @@ class DataService {
 
   Future<DataResult> deleteReview(String id) async {
     var resp = await _get("/api/v1/delete_review", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "id": id,
     });
 
@@ -342,7 +358,7 @@ class DataService {
 
   Future<DataResult<String>> getUsername(String otherUser) async {
     var r = await _get("/api/v1/get_username", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "other_user": otherUser,
     });
 
@@ -360,7 +376,7 @@ class DataService {
     List<Map<String, dynamic>> result = [];
 
     var r = await _get("/api/v1/search_town", {
-      "session": await authservice.getSession(),
+      "session": (await authservice.getSession()).additionalData!,
       "q": query,
     });
 
@@ -369,7 +385,7 @@ class DataService {
       var value = jsonDecode(const Utf8Decoder().convert(r.bodyBytes));
 
       try {
-        result = List<Map<String, dynamic>>.from(value["content"]);
+        result = List<Map<String, dynamic>>.from(value["data"]);
       } catch (e) {
         if (kDebugMode) print(e);
       }
@@ -417,8 +433,14 @@ class Service {
 
   void init() {
     storage = StorageService();
-    auth = AuthService(serveraddr: serveraddr, storage: storage);
+    auth = AuthService(
+      serveraddr: serveraddr,
+      storage: storage,
+    );
     data = DataService(
-        serveraddr: serveraddr, authservice: auth, storage: storage);
+      serveraddr: serveraddr,
+      authservice: auth,
+      storage: storage,
+    );
   }
 }
