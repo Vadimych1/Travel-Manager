@@ -91,6 +91,8 @@ class CreateTravelSelectTownState extends State<CreateTravelSelectTown> {
   String selectedTownName = "";
   List<Map<String, dynamic>> towns = [];
 
+  late Map<String, dynamic> modalData;
+
   void _search(String q) async {
     if (q.isEmpty) {
       towns = await service.data.searchTowns("%");
@@ -106,14 +108,35 @@ class CreateTravelSelectTownState extends State<CreateTravelSelectTown> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _search("");
-  }
+  bool _doneSearchAfterRestore = false;
+  bool initialized = false;
 
   @override
   Widget build(BuildContext context) {
+    modalData =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+
+    if (modalData["town"] != null && !_doneSearchAfterRestore) {
+      _doneSearchAfterRestore = true;
+      Future.delayed(
+        const Duration(milliseconds: 20),
+        () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Вы продолжили создание поездки. Автоматически ищем предыдущий город...",
+              ),
+            ),
+          );
+        },
+      );
+
+      _search(modalData["town"]);
+    } else if (!initialized) {
+      initialized = true;
+      _search("");
+    }
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFF162125),
@@ -203,11 +226,12 @@ class CreateTravelSelectTownState extends State<CreateTravelSelectTown> {
                   return;
                 }
 
-                var args = ModalRoute.of(context)!.settings.arguments
-                    as Map<String, dynamic>;
+                var args = modalData;
                 args["town"] = selectedTown;
 
-                // print(args);
+                var actargs = Map<String, dynamic>.from(args)
+                  ..["stage"] = "town";
+                service.storage.saveLastActivity(actargs);
 
                 Navigator.of(context).pushNamed(
                   "/create/select_activities",

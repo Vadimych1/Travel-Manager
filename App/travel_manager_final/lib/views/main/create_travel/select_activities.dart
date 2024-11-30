@@ -29,21 +29,17 @@ class _ActivityBlock extends StatefulWidget {
   const _ActivityBlock({
     required this.activity,
     required this.currentActive,
-    required this.setSelected,
+    required this.selected,
     required this.add,
     required this.remove,
-    required this.activeList,
-    required this.index,
   });
 
-  final int index;
   final Activity activity;
-  final SelectActivityAnimateCall currentActive;
-  final SelectActivityAnimateCall setSelected;
-  final List<int> activeList;
+  final bool currentActive;
+  final bool selected;
 
-  final void Function(int, int) add;
-  final void Function(int, int) remove;
+  final void Function(Activity) add;
+  final void Function(Activity) remove;
 
   @override
   State<_ActivityBlock> createState() => _ActivityBlockState();
@@ -67,26 +63,12 @@ class _ActivityBlockState extends State<_ActivityBlock>
   Tween<double>? opacityTween;
 
   bool selected = false; // determines how Add to plan button works
-  void setSelected(bool s) {
-    setState(() {
-      selected = s;
-    });
-  }
 
   @override
   void initState() {
     super.initState();
     if (kDebugMode) print("Initializing state for ${widget.activity.name}");
-
-    // provide a call function to main widget
-    widget.currentActive.call = animate;
-
-    // provide a call function to main widget
-    widget.setSelected.call = setSelected;
-
-    if (widget.activeList.contains(widget.activity.id)) {
-      selected = true;
-    }
+    selected = widget.selected;
 
     heightController = AnimationController(
       vsync: this,
@@ -109,10 +91,7 @@ class _ActivityBlockState extends State<_ActivityBlock>
     );
 
     heightAnimation!.addListener(() {
-      setState(() {
-        print(widget.activity.name);
-        print(heightAnimation!.value);
-      });
+      setState(() {});
     });
 
     opacityAnimation!.addListener(() {
@@ -121,6 +100,13 @@ class _ActivityBlockState extends State<_ActivityBlock>
 
     // Done to prevent values of opacity and width smaller than 0
     assert(maxHeight > 10);
+  }
+
+  @override
+  void dispose() {
+    heightController!.dispose();
+    opacityController!.dispose();
+    super.dispose();
   }
 
   void animate(bool open) {
@@ -146,6 +132,8 @@ class _ActivityBlockState extends State<_ActivityBlock>
 
   @override
   Widget build(BuildContext context) {
+    animate(widget.currentActive);
+
     return Container(
       padding: const EdgeInsets.only(top: 10, bottom: 0, left: 10, right: 6),
       margin: const EdgeInsets.symmetric(vertical: 5),
@@ -215,7 +203,7 @@ class _ActivityBlockState extends State<_ActivityBlock>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "4.5",
+                      "???",
                       style: TextStyle(
                         color: Color(0xFFFFFFFF),
                         fontSize: 14,
@@ -273,10 +261,10 @@ class _ActivityBlockState extends State<_ActivityBlock>
                     ),
                     TextButton(
                       onPressed: () {
-                        if (selected) {
-                          widget.remove(widget.activity.id, widget.index);
+                        if (widget.selected) {
+                          widget.remove(widget.activity);
                         } else {
-                          widget.add(widget.activity.id, widget.index);
+                          widget.add(widget.activity);
                         }
                       },
                       style: ButtonStyle(
@@ -289,13 +277,13 @@ class _ActivityBlockState extends State<_ActivityBlock>
                           ),
                         ),
                         backgroundColor: WidgetStateProperty.all<Color>(
-                          selected
+                          widget.selected
                               ? const Color(0xFFACACAC)
                               : const Color(0xFF659581),
                         ),
                       ),
                       child: Text(
-                        selected ? "Убрать из плана" : "Добавить в план",
+                        widget.selected ? "Убрать из плана" : "Добавить в план",
                       ),
                     ),
                   ],
@@ -313,48 +301,41 @@ class CreateTravelSelectActivities extends StatefulWidget {
 
   @override
   State<CreateTravelSelectActivities> createState() =>
-      CreateTravelSelectActivitiesState();
+      _CreateTravelSelectActivitiesState();
 }
 
-class CreateTravelSelectActivitiesState
+class _CreateTravelSelectActivitiesState
     extends State<CreateTravelSelectActivities> {
   // VARIABLES
   final TextEditingController search =
       TextEditingController(); // search controller
 
-  List<Widget> searchResult = []; // search result widgets
-  List<SelectActivityAnimateCall> currentActiveCalls =
-      []; // all search`s widgets animate function providers
-
-  List<SelectActivityAnimateCall> pressedCalls =
-      []; // all search`s widgets set active providers
-
-  int currentActiveIndex = -1; // index of currently active widget (opened0)
-
   bool searchValid = false; // is search valid?
   bool loaded = false; // is search loaded?
 
-  String town = ""; // town (initializes in iniState from prev screens)
-
-  Map<int, Activity> allActivitiesWidgets = {}; // searched previously widgets
-  List<int> selectedActivities = []; // selected as in-plan activities list
+  String town = ""; // town (initializes in initState from prev screens)
 
   // fix of non-initializing state
   bool needsRebuild = false;
 
   // open check activities window
   bool activityCheckWindowOpened = false;
+  List<Activity> currentActivities = [];
+  List<Activity> selectedActivities = [];
+  List<bool> activityCurrentActive = [];
+
+  bool isLoading = false;
 
   // FUNCTIONS
   @override
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       town = (ModalRoute.of(context)!.settings.arguments
           as Map<String, dynamic>)["town"];
     }).then((v) {
-      _search("%");
+      _search("");
       loaded = true;
     });
   }
@@ -367,81 +348,72 @@ class CreateTravelSelectActivitiesState
 
   // search by text
   void _search(String q) async {
-    if (q.isEmpty) {
-      searchResult = [];
-      currentActiveCalls = [];
-      currentActiveIndex = -1;
-      searchValid = false;
-    } else {
-      var ss = await service.data.searchActivities(town, q);
-      var data = ss.additionalData ?? [];
+    if (q.trim().isEmpty) {
+      var data = await service.data.searchActivities(town, "%");
+      print(data.additionalData);
+      currentActivities = data.additionalData ?? [];
+    }
 
-      currentActiveIndex = -1;
-      currentActiveCalls = [];
-      searchResult = [];
+    activityCurrentActive =
+        List.generate(currentActivities.length, (i) => false);
 
-      for (var i = 0; i < data.length; i++) {
-        currentActiveCalls.add(SelectActivityAnimateCall(call: null));
-        pressedCalls.add(SelectActivityAnimateCall(call: null));
-
-        allActivitiesWidgets[data[i].id] = data[i];
-
-        searchResult.add(
-          InkWell(
-            splashFactory: NoSplash.splashFactory,
-            onTap: () {
-              if (currentActiveIndex == i) {
-                currentActiveIndex = -1;
-              } else {
-                currentActiveIndex = i;
-              }
-
-              reanimate();
-            },
-            child: _ActivityBlock(
-              index: i,
-              activity: data[i],
-              currentActive: currentActiveCalls[i],
-              setSelected: pressedCalls[i],
-              add: addActivity,
-              remove: removeActivity,
-              activeList: selectedActivities,
-            ),
-          ),
-        );
-      }
-
+    print("Got result!");
+    setState(() {
       searchValid = true;
-      needsRebuild = true;
-    }
-    setState(() {});
+    });
   }
 
-  // reanimate all opened or closed widgets
-  void reanimate() {
-    for (var call in currentActiveCalls) {
-      if (call.call != null) {
-        call.call!(false);
-      }
-    }
+  void _finish_plan() {
+    setState(() {
+      isLoading = true;
+    });
 
-    if (currentActiveIndex == -1) return;
+    var args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    service.data
+        .createTravel(
+      Travel(
+        args["title"],
+        selectedActivities.map((e) => e.id).toList(),
+        args["start_date"].toString(),
+        args["end_date"].toString(),
+        int.tryParse(args["budget"]) ?? 0,
+        "-",
+        ['-'],
+        "-",
+        0,
+        town,
+      ),
+    )
+        .then(
+      (value) {
+        if (value.success) {
+          setState(() {
+            isLoading = false;
+          });
 
-    if (currentActiveCalls[currentActiveIndex].call != null) {
-      currentActiveCalls[currentActiveIndex].call!(true);
-    }
-  }
+          Navigator.popUntil(
+            context,
+            (route) => route.settings.name == "/home",
+          );
 
-  // add activity to selected activity list
-  void addActivity(int id, int index) {
-    selectedActivities.add(id);
-    pressedCalls[index].call!(true);
-  }
+          service.storage.clearLastActivity();
+        } else {
+          print(value);
+          setState(() {
+            isLoading = false;
+          });
 
-  // remove activity from selected activity list
-  void removeActivity(int id, int index) {
-    selectedActivities.remove(id);
-    pressedCalls[index].call!(false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Произошла ошибка! Повторите попытку.\nCode: ${value.message} | ${value.additionalData} | ${value.success}",
+              ),
+            ),
+          );
+        }
+      },
+    );
   }
 
   // BUILD
@@ -471,243 +443,327 @@ class CreateTravelSelectActivitiesState
             color: Color(0xFFFFFFFF),
           ),
         ),
-        body: Stack(
-          children: [
-            Column(
-              children: [
-                // Top search bar
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.81),
-                      child: Input(
-                        controller: search,
-                        label: "",
-                        placeholder: "Введите что-нибудь для начала",
-                        validator: (s) {
-                          return s.length > 1;
-                        },
-                        onChanged: _search,
-                        onValidChanged: (b) {},
-                        bgColor: const Color(0xFFFFFFFF),
-                        borderRadius: 10.0,
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Stack(
+                children: [
+                  Column(
+                    children: [
+                      // Top search bar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.81),
+                            child: Input(
+                              controller: search,
+                              label: "",
+                              placeholder: "Введите что-нибудь для начала",
+                              validator: (s) {
+                                return s.length > 1;
+                              },
+                              onChanged: _search,
+                              onValidChanged: (b) {},
+                              bgColor: const Color(0xFFFFFFFF),
+                              borderRadius: 10.0,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              // TODO: Search
+                            },
+                            splashFactory: NoSplash.splashFactory,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFFFFF),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.all(11),
+                              child: const Icon(Icons.search),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        // TODO: Search
-                      },
-                      splashFactory: NoSplash.splashFactory,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.all(11),
-                        child: const Icon(Icons.search),
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 30),
+                      const SizedBox(height: 30),
 
-                // Search results and reccommendations
-                !loaded
-                    ? const Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(
-                              color: Color(0xFFFFFFFF),
+                      // Search results and reccommendations
+                      !loaded
+                          ? const Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: Color(0xFFFFFFFF),
+                                  )
+                                ],
+                              ),
                             )
-                          ],
-                        ),
-                      )
-                    : searchValid
-                        ? Expanded(
-                            child: SingleChildScrollView(
-                            child: Column(
-                              children: searchResult.isNotEmpty
-                                  ? searchResult
-                                  : [
-                                      const Text(
-                                        "По вашему запросу ничего не найдено",
-                                        style:
-                                            TextStyle(color: Color(0xFFFFFFFF)),
+                          : searchValid
+                              ? Expanded(
+                                  child: SingleChildScrollView(
+                                  child: Column(
+                                    children: currentActivities.isNotEmpty
+                                        // ! ГЕНЕРАЦИЯ БЛОКОВ АКТИВНОСТЕЙ
+                                        ? List<Widget>.generate(
+                                            currentActivities.length,
+                                            (i) {
+                                              Activity activity =
+                                                  currentActivities[i];
+                                              return InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      activityCurrentActive[i] =
+                                                          !activityCurrentActive[
+                                                              i];
+                                                    });
+                                                  },
+                                                  child: _ActivityBlock(
+                                                    activity: activity,
+                                                    currentActive:
+                                                        activityCurrentActive[
+                                                            i],
+                                                    selected: selectedActivities
+                                                        .where((element) =>
+                                                            element.id ==
+                                                            activity.id)
+                                                        .isNotEmpty,
+                                                    add: (aactivity) {
+                                                      print("Addding");
+                                                      print(selectedActivities);
+                                                      setState(() {
+                                                        selectedActivities
+                                                            .add(aactivity);
+                                                      });
+                                                      print(selectedActivities);
+                                                    },
+                                                    remove: (ractivity) {
+                                                      setState(() {
+                                                        print("Removing");
+                                                        print(
+                                                            selectedActivities);
+                                                        selectedActivities
+                                                            .removeWhere(
+                                                          (element) =>
+                                                              element.id ==
+                                                              ractivity.id,
+                                                        );
+                                                        print(
+                                                            selectedActivities);
+                                                      });
+                                                    },
+                                                  ));
+                                            },
+                                          )
+                                        : [
+                                            const Text(
+                                              "По вашему запросу ничего не найдено",
+                                              style: TextStyle(
+                                                  color: Color(0xFFFFFFFF)),
+                                            ),
+                                          ],
+                                  ),
+                                ))
+                              : SingleChildScrollView(
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          ActivitiesSelectPreset(
+                                            onChanged: category,
+                                            name: "Развлечения",
+                                            icon: const Icon(
+                                              Icons.gamepad_outlined,
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
+                                            callbackQuery: "развлечения",
+                                            type: "entertainment",
+                                          ),
+                                          ActivitiesSelectPreset(
+                                            onChanged: category,
+                                            name: "Где перекусить",
+                                            icon: const Icon(
+                                              Icons.fastfood_outlined,
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
+                                            callbackQuery: "еда",
+                                            type: "food",
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 15),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          ActivitiesSelectPreset(
+                                              onChanged: category,
+                                              name: "Что посмотреть",
+                                              icon: const Icon(
+                                                Icons.museum,
+                                                color: Colors.white,
+                                                size: 40,
+                                              ),
+                                              callbackQuery:
+                                                  "достопримечательности",
+                                              type: "attraction"),
+                                          ActivitiesSelectPreset(
+                                            onChanged: category,
+                                            name: "Куда сходить",
+                                            icon: const Icon(
+                                              Icons.directions_walk_outlined,
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
+                                            callbackQuery: "события",
+                                            type: "event",
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 15),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          ActivitiesSelectPreset(
+                                              onChanged: category,
+                                              name: "Торговые центры",
+                                              icon: const Icon(
+                                                Icons.museum,
+                                                color: Colors.white,
+                                                size: 40,
+                                              ),
+                                              callbackQuery: "магазины",
+                                              type: "shop"),
+                                          ActivitiesSelectPreset(
+                                            onChanged: category,
+                                            name: "Новое",
+                                            icon: const Icon(
+                                              Icons.time_to_leave,
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
+                                            callbackQuery: "новое",
+                                            type: "new",
+                                          ),
+                                        ],
                                       ),
                                     ],
-                            ),
-                          ))
-                        : SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    ActivitiesSelectPreset(
-                                      onChanged: category,
-                                      name: "Развлечения",
-                                      icon: const Icon(
-                                        Icons.gamepad_outlined,
-                                        color: Colors.white,
-                                        size: 40,
-                                      ),
-                                      callbackQuery: "развлечения",
-                                      type: "entertainment",
-                                    ),
-                                    ActivitiesSelectPreset(
-                                      onChanged: category,
-                                      name: "Где перекусить",
-                                      icon: const Icon(
-                                        Icons.fastfood_outlined,
-                                        color: Colors.white,
-                                        size: 40,
-                                      ),
-                                      callbackQuery: "еда",
-                                      type: "food",
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                                const SizedBox(height: 15),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    ActivitiesSelectPreset(
-                                        onChanged: category,
-                                        name: "Что посмотреть",
-                                        icon: const Icon(
-                                          Icons.museum,
-                                          color: Colors.white,
-                                          size: 40,
-                                        ),
-                                        callbackQuery: "достопримечательности",
-                                        type: "attraction"),
-                                    ActivitiesSelectPreset(
-                                      onChanged: category,
-                                      name: "Куда сходить",
-                                      icon: const Icon(
-                                        Icons.directions_walk_outlined,
-                                        color: Colors.white,
-                                        size: 40,
-                                      ),
-                                      callbackQuery: "события",
-                                      type: "event",
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 15),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    ActivitiesSelectPreset(
-                                        onChanged: category,
-                                        name: "Торговые центры",
-                                        icon: const Icon(
-                                          Icons.museum,
-                                          color: Colors.white,
-                                          size: 40,
-                                        ),
-                                        callbackQuery: "магазины",
-                                        type: "shop"),
-                                    ActivitiesSelectPreset(
-                                      onChanged: category,
-                                      name: "Новое",
-                                      icon: const Icon(
-                                        Icons.time_to_leave,
-                                        color: Colors.white,
-                                        size: 40,
-                                      ),
-                                      callbackQuery: "новое",
-                                      type: "new",
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
 
-                // loaded ? const Spacer() : Container(),
+                      // loaded ? const Spacer() : Container(),
 
-                // Bottom menu
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          activityCheckWindowOpened = true;
-                        });
-                      },
-                      style: ButtonStyle(
-                        foregroundColor: WidgetStateProperty.all<Color>(
-                          const Color(0xFFFFFFFF),
-                        ),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            side: const BorderSide(
-                              color: Color(0xFFFFFFFF),
+                      // Bottom menu
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                activityCheckWindowOpened = true;
+                              });
+                            },
+                            style: ButtonStyle(
+                              foregroundColor: WidgetStateProperty.all<Color>(
+                                const Color(0xFFFFFFFF),
+                              ),
+                              shape: WidgetStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  side: const BorderSide(
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                              ),
                             ),
+                            child: const Text("Просмотр плана"),
                           ),
-                        ),
-                      ),
-                      child: const Text("Просмотр плана"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: save plan
-                      },
-                      style: ButtonStyle(
-                        foregroundColor: WidgetStateProperty.all<Color>(
-                          const Color(0xFFFFFFFF),
-                        ),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+                          TextButton(
+                            onPressed: () {
+                              _finish_plan();
+                            },
+                            style: ButtonStyle(
+                              foregroundColor: WidgetStateProperty.all<Color>(
+                                const Color(0xFFFFFFFF),
+                              ),
+                              shape: WidgetStateProperty.all<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                              ),
+                              backgroundColor: WidgetStateProperty.all<Color>(
+                                const Color(0xFF659581),
+                              ),
+                            ),
+                            child: const Text("Завершить план"),
                           ),
-                        ),
-                        backgroundColor: WidgetStateProperty.all<Color>(
-                          const Color(0xFF659581),
-                        ),
+                        ],
                       ),
-                      child: const Text("Завершить план"),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-              ],
-            ),
-            activityCheckWindowOpened
-                ? Container(
-                    width: MediaQuery.of(context).size.width,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF162125),
-                    ),
-                    child: const Column(
-                      children: [
-                        Text("Ваш план"),
-                        SingleChildScrollView(
-                          child: Column(),
-                        ),
-                      ],
-                    ),
-                  )
-                : Container(),
-          ],
-        ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                  activityCheckWindowOpened
+                      ? Container(
+                          width: MediaQuery.of(context).size.width,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF162125),
+                          ),
+                          child: Column(
+                            children: [
+                              const Text(
+                                "Ваш план",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 20),
+                              ),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    children: List<Widget>.generate(
+                                      selectedActivities.length,
+                                      (i) => Text(selectedActivities[i].name),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Button(
+                                    enabled: false,
+                                    text: "Назад",
+                                    onPressed: () {
+                                      setState(() {
+                                        activityCheckWindowOpened = false;
+                                      });
+                                    },
+                                  ),
+                                  Button(
+                                    text: "Завершить план",
+                                    onPressed: () {
+                                      _finish_plan();
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        )
+                      : Container(),
+                ],
+              ),
       ),
     );
   }
-}
-
-class SelectActivityAnimateCall {
-  SelectActivityAnimateCall({this.call});
-  Function(bool)? call;
 }

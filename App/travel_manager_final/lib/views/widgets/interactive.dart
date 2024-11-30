@@ -335,6 +335,7 @@ class DatePickerInput extends StatefulWidget {
     super.key,
     required this.onChanged,
     required this.startDate,
+    this.currentDate,
     this.text = "Выберите дату",
     this.bgColor = const Color(0xFFFFFFFF),
     this.canSelect = true,
@@ -344,6 +345,7 @@ class DatePickerInput extends StatefulWidget {
   final void Function(DateTime?) onChanged;
   final Color bgColor;
   final DateTime startDate;
+  final DateTime? currentDate;
   final bool canSelect;
 
   @override
@@ -355,6 +357,7 @@ class _DatePickerInputState extends State<DatePickerInput> {
 
   @override
   Widget build(BuildContext context) {
+    date = widget.currentDate;
     return InkWell(
       onTap: () async {
         if (!widget.canSelect) {
@@ -370,7 +373,8 @@ class _DatePickerInputState extends State<DatePickerInput> {
           helpText: "Выберите дату",
           cancelText: "Отмена",
           confirmText: "Выбрать",
-          initialDate: widget.startDate.add(const Duration(days: 1)),
+          initialDate: widget.currentDate ??
+              widget.startDate.add(const Duration(days: 1)),
           initialEntryMode: DatePickerEntryMode.calendarOnly,
           firstDate: widget.startDate,
           lastDate: DateTime.now().add(const Duration(days: 365 * 10)),

@@ -27,11 +27,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
     Future.delayed(Duration.zero, () async {
       username = await service.storage.read("name");
-      travels = (await service.data.getAllTravels()).additionalData ??
-          []; // TODO: check for success
-
+      setState(() {});
+      travels = (await service.data.getAllTravels()).additionalData ?? [];
       setState(() {});
     });
+  }
+
+  void _openTravel(Travel travel) {
+    // !!! TODO !!!
   }
 
   @override
@@ -180,11 +183,72 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       child: travels.isNotEmpty
                           ? SideScrollerBlock(
                               children: [
-                                for (var _ in travels)
-                                  Container(
-                                    color: Colors.red,
-                                    width: MediaQuery.of(context).size.width,
-                                    height: 200,
+                                for (var travel in travels)
+                                  InkWell(
+                                    onTap: () => _openTravel(travel),
+                                    child: SizedBox(
+                                      width: MediaQuery.of(context).size.width,
+                                      height: 180,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color.fromRGBO(
+                                                0,
+                                                0,
+                                                0,
+                                                0.25,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            height: 140,
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width -
+                                                60,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  travel.name,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 17,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  travel.town
+                                                      .split(" ")
+                                                      .map((x) =>
+                                                          x[0].toUpperCase() +
+                                                          x.substring(1))
+                                                      .join(" "),
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "${travel.fromDate.split(" ")[0]} - ${travel.toDate.split(" ")[0]}",
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   )
                               ],
                             )
@@ -204,6 +268,23 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             ),
                     ),
                   ),
+
+                  travels.isEmpty
+                      ? Container()
+                      : InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(context, "/create");
+                          },
+                          child: const Text(
+                            "нажмите сюда,\nчтобы создать поездку",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w300,
+                              color: Color(0xFF737373),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
 
                   // Header
                   Container(

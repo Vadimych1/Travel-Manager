@@ -8,10 +8,13 @@ import "package:travel_manager_final/model/datatypes.dart";
 const _storage = FlutterSecureStorage();
 
 class AuthService {
-  AuthService({required this.serveraddr, required this.storage});
+  // TODO: check for secure/not secure
+  AuthService(
+      {required this.serveraddr, required this.storage, this.secure = false});
 
   final String serveraddr;
   final StorageService storage;
+  final bool secure;
 
   String lastResult = "";
 
@@ -20,7 +23,7 @@ class AuthService {
     var result = false;
 
     var r = await get(
-      Uri.http(
+      (secure ? Uri.https : Uri.http)(
         serveraddr,
         "api/v1/register",
         {
@@ -85,8 +88,15 @@ class AuthService {
 
     var jsn = {};
 
-    var r = await get(Uri.http(
-        serveraddr, "api/v1/check_session", {"session": s.additionalData}));
+    Response r;
+    try {
+      r = await get(Uri.http(
+          serveraddr, "api/v1/check_session", {"session": s.additionalData}));
+    } catch (e) {
+      if (kDebugMode) print(e);
+
+      return AuthResult(false, "");
+    }
 
     if (r.statusCode == 200) {
       jsn = jsonDecode(r.body);
@@ -156,12 +166,14 @@ class DataService {
 
   Future<DataResult> createTravel(Travel travel) async {
     var result = false;
+    var mdata = travel.toMap()
+      ..["session"] = (await authservice.getSession()).additionalData!;
 
-    var r = await _get(
-      "/api/v1/create_travel",
-      travel.toMap()
-        ..["session"] = (await authservice.getSession()).additionalData!,
-    );
+    print("Travel:");
+    print(mdata);
+    // session=895765db-edfb-48a0-9868-47e6aca900ce&plan_name=TEST&expenses=-&activities=[]&from_date=1212&to_date=12312&live_place=none&budget=10000&people_count=0&meta=0&town=odi
+
+    var r = await _get("/api/v1/create_travel", mdata);
 
     if (r.statusCode == 200) {
       var value = jsonDecode(r.body);
@@ -420,6 +432,23 @@ class StorageService {
     var value = await _storage.containsKey(key: key);
 
     return value;
+  }
+
+  // Надстройки
+  Future<Map<String, dynamic>?> restoreLastActivity() async {
+    if (!await containsKey("not_finished_activity")) return null;
+    return jsonDecode(await read("not_finished_activity"));
+  }
+
+  Future<void> saveLastActivity(Map<String, dynamic> activity) async {
+    activity["start_date"] = activity["start_date"].toString();
+    activity["end_date"] = activity["end_date"].toString();
+
+    await write("not_finished_activity", jsonEncode(activity));
+  }
+
+  Future<void> clearLastActivity() async {
+    await delete("not_finished_activity");
   }
 }
 

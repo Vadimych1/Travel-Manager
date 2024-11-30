@@ -13,6 +13,8 @@ import 'package:travel_manager_final/views/main/create_travel/select_activities.
 import 'package:travel_manager_final/views/main/create_travel/select_town.dart';
 
 final service = Service(serveraddr: "k9cwr7rf-80.euw.devtunnels.ms");
+// final service = Service(serveraddr: "192.168.0.13");
+
 
 void main() {
   service.init();

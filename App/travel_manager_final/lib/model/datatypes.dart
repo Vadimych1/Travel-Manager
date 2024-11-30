@@ -30,9 +30,10 @@ class Travel {
   ]);
 
   Travel.parse(Map<String, dynamic> map) {
-    id = map["id"];
-    name = map["name"];
-    activities = map["activities"].split(",");
+    id = int.parse(map["id"]);
+    name = map["plan_name"];
+    activities =
+        List<int>.from(map["activities"].split(",").map((x) => int.parse(x)));
     fromDate = map["from_date"];
     toDate = map["to_date"];
     budget = int.parse(map["budget"]);
@@ -59,7 +60,7 @@ class Travel {
 
   late int id;
   late String name;
-  late List<Activity> activities;
+  late List<int> activities;
   late String fromDate;
   late String toDate;
   late int budget;
@@ -69,12 +70,11 @@ class Travel {
   late int peopleCount;
   late String town;
 
+  // session=895765db-edfb-48a0-9868-47e6aca900ce&plan_name=TEST&expenses=-&activities=[]&from_date=1212&to_date=12312&live_place=none&budget=10000&people_count=0&meta=0&town=odi
   Map<String, String> toMap() {
     return {
-      "name": name,
-      "activities":
-          List.generate(activities.length, (index) => activities[index].sid)
-              .join(","),
+      "plan_name": name,
+      "activities": activities.join(","),
       "from_date": fromDate,
       "to_date": toDate,
       "budget": budget.toString(),
