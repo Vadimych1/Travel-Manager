@@ -111,7 +111,7 @@ func run_server() {
 		} else if r.Method == "POST" {
 			handler.Post(s, w, r)
 		} else {
-			resp.UnknownMethod(w)
+			resp.UnknownMethod(w, "GET or POST")
 		}
 
 	})

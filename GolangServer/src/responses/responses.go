@@ -20,6 +20,7 @@ func Success(w http.ResponseWriter, additionalData string) {
 //
 // Ex: Fail(w, `{"key": "value"}`, "server_error")
 func Fail(w http.ResponseWriter, additionalData string, cause string) {
+	println("Request Failed:", cause)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write([]byte(`{"status": "error", "code": "` + cause + `", "data": ` + additionalData + `}`))
 }
@@ -29,8 +30,8 @@ func ServerError(w http.ResponseWriter) {
 	Fail(w, "{}", "server_error")
 }
 
-func BadRequest(w http.ResponseWriter) {
-	Fail(w, "{}", "bad_request")
+func BadRequest(w http.ResponseWriter, bad string) {
+	Fail(w, "{\"reason\": \""+bad+"\"}", "bad_request")
 }
 
 func UserExists(w http.ResponseWriter) {
@@ -57,6 +58,6 @@ func NotYourReview(w http.ResponseWriter) {
 	Fail(w, "{}", "not_your_review")
 }
 
-func UnknownMethod(w http.ResponseWriter) {
-	Fail(w, "{}", "unknown_method")
+func UnknownMethod(w http.ResponseWriter, try string) {
+	Fail(w, "{\"try\": \""+try+"\"}", "unknown_method")
 }

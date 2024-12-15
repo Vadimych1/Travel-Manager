@@ -10,7 +10,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"time"
 
 	"net/http"
 	"net/url"
@@ -19,15 +18,17 @@ import (
 	resp "travel_server/src/responses"
 )
 
-var encode_key string
+var encode_key string = ""
 var logger *log.Logger
+var cipher, _ = aes.NewCipher([]byte(encode_key))
 
 func SetEncodeKey(key string) {
-    encode_key = key
+	encode_key = key
+	cipher, _ = aes.NewCipher([]byte(encode_key))
 }
 
 func SetLogger(l *log.Logger) {
-    logger = l
+	logger = l
 }
 
 // Print log
@@ -50,13 +51,19 @@ func ReadSettings() map[string]string {
 }
 
 // check if all parameters from map[string]string are set
-func checkParams(params map[string]string, required []string) bool {
+func checkParams(params map[string]string, required []string) (bool, string) {
+	var bad = ""
 	for _, v := range required {
 		if params[v] == "" {
-			return false
+			bad += v + ", "
 		}
 	}
-	return true
+
+	if bad != "" {
+		return false, bad
+	}
+
+	return true, ""
 }
 
 // get string from field
@@ -68,13 +75,8 @@ func getFieldString(e *userdb.User, field string) string {
 
 // EncryptAES encrypts the given plaintext using AES encryption with the provided key.
 func EncryptAES(key []byte, plaintext string) string {
-	// create cipher
-	c, err := aes.NewCipher(key)
-	if err != nil {
-		log.Fatal(err)
-	}
 	out := make([]byte, len(plaintext))
-	c.Encrypt(out, []byte(plaintext))
+	cipher.Encrypt(out, []byte(plaintext))
 	return hex.EncodeToString(out)
 }
 
@@ -86,7 +88,9 @@ func logInBySession(session string) (userdb.User, error) {
 
 // Create user
 func register(params map[string]string, w http.ResponseWriter) {
-	if checkParams(params, []string{"username", "password", "name"}) {
+	valid, check := checkParams(params, []string{"username", "password", "name"})
+
+	if valid {
 		hash := sha256.New()
 		res, _ := url.QueryUnescape(params["password"])
 		hash.Write([]byte(res))
@@ -109,14 +113,14 @@ func register(params map[string]string, w http.ResponseWriter) {
 			resp.UserExists(w)
 		}
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Login user
 func login(params map[string]string, w http.ResponseWriter) {
-
-	if checkParams(params, []string{"username", "password"}) {
+	valid, check := checkParams(params, []string{"username", "password"})
+	if valid {
 
 		r, _ := url.QueryUnescape(params["username"])
 		res := userdb.SearchUser(r)
@@ -161,14 +165,15 @@ func login(params map[string]string, w http.ResponseWriter) {
 			resp.UserNotExists(w)
 		}
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Create plan in DB
 func createTravel(params map[string]string, w http.ResponseWriter) {
-
-	if checkParams(params, []string{"session", "plan_name", "activities", "from_date", "to_date", "live_place", "budget", "expenses", "people_count", "meta", "town"}) {
+	valid, check := checkParams(params, []string{"session", "plan_name", "activities", "from_date", "to_date", "live_place", "budget", "expenses", "people_count", "meta", "town"})
+	if valid {
+		fmt.Println("Got create travel request:", params)
 
 		session, _ := url.QueryUnescape(params["session"])
 		res, err := logInBySession(session)
@@ -197,17 +202,15 @@ func createTravel(params map[string]string, w http.ResponseWriter) {
 		} else {
 			resp.ServerError(w)
 		}
-
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Fetch all travels
 func getAllTravels(params map[string]string, w http.ResponseWriter) {
-
-	if checkParams(params, []string{"session"}) {
-
+	valid, check := checkParams(params, []string{"session"})
+	if valid {
 		r, _ := url.QueryUnescape(params["session"])
 		res, err := logInBySession(r)
 
@@ -239,15 +242,15 @@ func getAllTravels(params map[string]string, w http.ResponseWriter) {
 
 		resp.Success(w, string(j))
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Fetch travel plan from db
 func getTravel(params map[string]string, w http.ResponseWriter) {
+	valid, check := checkParams(params, []string{"session", "id"})
 
-	if checkParams(params, []string{"session", "id"}) {
-
+	if valid {
 		r, _ := url.QueryUnescape(params["session"])
 		res, err := logInBySession(r)
 
@@ -271,14 +274,14 @@ func getTravel(params map[string]string, w http.ResponseWriter) {
 
 		resp.Success(w, string(j))
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Edit travel in DB
 func editTravel(params map[string]string, w http.ResponseWriter) {
-
-	if checkParams(params, []string{"session", "plan_name", "activities", "from_date", "to_date", "live_place", "budget", "expenses", "people_count", "meta", "town", "id"}) {
+	valid, check := checkParams(params, []string{"session", "plan_name", "activities", "from_date", "to_date", "live_place", "budget", "expenses", "people_count", "meta", "town", "id"})
+	if valid {
 
 		session := params["session"]
 		planName := params["plan_name"]
@@ -321,15 +324,15 @@ func editTravel(params map[string]string, w http.ResponseWriter) {
 		}
 
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Delete travel plan from DB
 func deleteTravel(params map[string]string, w http.ResponseWriter) {
+	valid, check := checkParams(params, []string{"session", "id"})
 
-	if checkParams(params, []string{"session", "id"}) {
-
+	if valid {
 		session, _ := url.QueryUnescape(params["session"])
 		res, err := logInBySession(session)
 
@@ -347,7 +350,7 @@ func deleteTravel(params map[string]string, w http.ResponseWriter) {
 		}
 
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
@@ -431,6 +434,7 @@ func default_get(w http.ResponseWriter, s string) {
 	fmt.Fprint(w, sd)
 }
 
+// TODO: move to `db.go`
 // Remove travels that expired
 func ClearTravels() {
 	rows, err := userdb.Db.Query("SELECT * FROM plans")
@@ -460,17 +464,17 @@ func ClearTravels() {
 			continue
 		}
 
-		time_, err := time.Parse("02.01.2006", from_date)
+		// time_, err := time.Parse("02-01-2006 15:04:05.000", from_date) // TODO: FIX PLEASE
 
-		if err != nil {
-			Log(err.Error())
-			continue
-		}
+		// if err != nil {
+		// 	Log(err.Error())
+		// 	continue
+		// }
 
-		if time_.Compare(time.Now()) < 0 {
-			userdb.DeleteTravel(id, owner)
-			// Log("Deleting...")
-		}
+		// if time_.Compare(time.Now()) < 0 {
+		// 	userdb.DeleteTravel(id, owner)
+		// 	// Log("Deleting...")
+		// }
 	}
 
 	rows.Close()
@@ -489,8 +493,8 @@ func replacePlaceholders(content string, settings map[string]string, log string)
 
 // Fetch activities from DB
 func search_activities(w http.ResponseWriter, params map[string]string) {
-
-	if checkParams(params, []string{"session", "q", "town"}) {
+	valid, check := checkParams(params, []string{"session", "q", "town"})
+	if valid {
 
 		// Types
 		// food
@@ -533,15 +537,15 @@ func search_activities(w http.ResponseWriter, params map[string]string) {
 			resp.SessionNotExists(w)
 		}
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Add a new review to DB
 func addReview(params map[string]string, w http.ResponseWriter) {
+	valid, check := checkParams(params, []string{"session", "id", "stars", "text"})
 
-	if checkParams(params, []string{"session", "id", "stars", "text"}) {
-
+	if valid {
 		session := params["session"]
 		place_id := params["id"]
 		stars := params["stars"]
@@ -557,12 +561,12 @@ func addReview(params map[string]string, w http.ResponseWriter) {
 
 		stars_p, err := strconv.Atoi(stars)
 		if err != nil {
-			resp.BadRequest(w)
+			resp.BadRequest(w, "stars")
 		}
 
 		place_id_p, err := strconv.Atoi(place_id)
 		if err != nil {
-			resp.BadRequest(w)
+			resp.BadRequest(w, "place_id")
 		}
 
 		if userdb.InsertReview(userdb.Review{
@@ -577,14 +581,14 @@ func addReview(params map[string]string, w http.ResponseWriter) {
 		}
 
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Fetch all reviews from DB
 func getReviews(params map[string]string, w http.ResponseWriter) {
-
-	if checkParams(params, []string{"session", "place_id"}) {
+	valid, check := checkParams(params, []string{"session", "place_id"})
+	if valid {
 
 		var session = params["session"]
 		var place_id = params["place_id"]
@@ -599,7 +603,7 @@ func getReviews(params map[string]string, w http.ResponseWriter) {
 
 		place_id_p, err := strconv.Atoi(place_id)
 		if err != nil {
-			resp.BadRequest(w)
+			resp.BadRequest(w, "place_id")
 			return
 		}
 
@@ -620,13 +624,15 @@ func getReviews(params map[string]string, w http.ResponseWriter) {
 		resp.Success(w, string(json))
 
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Fetch review from DB
 func getReview(params map[string]string, w http.ResponseWriter) {
-	if checkParams(params, []string{"session", "id"}) {
+	valid, check := checkParams(params, []string{"session", "id"})
+
+	if valid {
 		var session = params["session"]
 		var id = params["id"]
 
@@ -640,7 +646,7 @@ func getReview(params map[string]string, w http.ResponseWriter) {
 
 		id_p, err := strconv.Atoi(id)
 		if err != nil {
-			resp.BadRequest(w)
+			resp.BadRequest(w, "id")
 			return
 		}
 
@@ -664,14 +670,15 @@ func getReview(params map[string]string, w http.ResponseWriter) {
 
 		resp.Success(w, string(json))
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 // Delete review from DB
 func deleteReview(params map[string]string, w http.ResponseWriter) {
 
-	if checkParams(params, []string{"session", "id"}) {
+	valid, check := checkParams(params, []string{"session", "id"})
+	if valid {
 
 		var session = params["session"]
 		var id = params["id"]
@@ -686,7 +693,7 @@ func deleteReview(params map[string]string, w http.ResponseWriter) {
 
 		id_p, err := strconv.Atoi(id)
 		if err != nil {
-			resp.BadRequest(w)
+			resp.BadRequest(w, "id")
 			return
 		}
 
@@ -710,12 +717,15 @@ func deleteReview(params map[string]string, w http.ResponseWriter) {
 			resp.NotYourReview(w)
 		}
 
+	} else {
+		resp.BadRequest(w, check)
 	}
 }
 
 // Fetch username from db
 func getUsername(params map[string]string, w http.ResponseWriter) {
-	if checkParams(params, []string{"session", "other_user"}) {
+	valid, check := checkParams(params, []string{"session", "other_user"})
+	if valid {
 		var session = params["session"]
 		var otherUsername = params["other_user"]
 
@@ -734,15 +744,19 @@ func getUsername(params map[string]string, w http.ResponseWriter) {
 		} else {
 			resp.UserNotExists(w)
 		}
+	} else {
+		resp.BadRequest(w, check)
 	}
 }
 
 func checkSession(params map[string]string, w http.ResponseWriter) {
-	if checkParams(params, []string{"session"}) {
+	valid, check := checkParams(params, []string{"session"})
+
+	if valid {
 		var session, err = url.QueryUnescape(params["session"])
 
 		if err != nil {
-			resp.BadRequest(w)
+			resp.BadRequest(w, "session")
 			return
 		}
 
@@ -755,13 +769,13 @@ func checkSession(params map[string]string, w http.ResponseWriter) {
 
 		resp.Success(w, `{"name":"`+user.Name+`", "subscribe": "`+user.Subscribe+`"}`)
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 func logout(params map[string]string, w http.ResponseWriter) {
-
-	if checkParams(params, []string{"session"}) {
+	valid, check := checkParams(params, []string{"session"})
+	if valid {
 		var session = params["session"]
 
 		sess, _ := url.QueryUnescape(session)
@@ -769,13 +783,14 @@ func logout(params map[string]string, w http.ResponseWriter) {
 
 		resp.Success(w, "{}")
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
 func searchTown(params map[string]string, w http.ResponseWriter) {
+	valid, check := checkParams(params, []string{"session", "q"})
 
-	if checkParams(params, []string{"session", "q"}) {
+	if valid {
 		var session = params["session"]
 		var query = params["q"]
 
@@ -807,7 +822,7 @@ func searchTown(params map[string]string, w http.ResponseWriter) {
 
 		resp.Success(w, string(json))
 	} else {
-		resp.BadRequest(w)
+		resp.BadRequest(w, check)
 	}
 }
 
@@ -858,7 +873,7 @@ func Get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 				case "search_town":
 					searchTown(params, w)
 				default:
-					fmt.Fprint(w, "method not found")
+					resp.UnknownMethod(w, "register|login|get_username|create_travel|get_all_travels|get_travel|edit_travel|delete_travel|add_review|get_reviews|delete_review|get_review|check_session|logout|search_town")
 				}
 			case "activities":
 				switch pathnames[2] {
@@ -889,14 +904,13 @@ func Get(s string, params map[string]string, w http.ResponseWriter, r *http.Requ
 						fmt.Fprint(w, "bad request\r\n"+string(m))
 					}
 				default:
-					fmt.Fprint(w, "method not found")
+					resp.UnknownMethod(w, "search|insert")
 				}
-
 			default:
-				fmt.Fprint(w, "method not found")
+				resp.UnknownMethod(w, "v1|activitiies")
 			}
 		} else {
-			fmt.Fprint(w, "method not found")
+			resp.UnknownMethod(w, "v1|activitiies")
 		}
 	case "admins":
 		admins(params, w, r, settings)
@@ -922,7 +936,7 @@ func Post(s string, w http.ResponseWriter, r *http.Request) {
 				// case "add_story":
 				// 	add_story(r, w)
 				default:
-					fmt.Fprint(w, `{"status":"error", "code":"method_not_found"}`)
+					resp.UnknownMethod(w, "<empty>")
 				}
 			}
 		}

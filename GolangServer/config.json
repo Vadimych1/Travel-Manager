@@ -1,9 +1,7 @@
 {
     "encode_key": "Ie467fHcP8UiscTrGPU537gu9EDQ9eRC",
     "port": "80",
-    "global": "false",
+    "global": "true",
     "path": "/",
-    "admin_pwd": "admin",
-    "module_server_address": "localhost",
-    "module_server_port": "5555"
+    "admin_pwd": "admin"
 }
